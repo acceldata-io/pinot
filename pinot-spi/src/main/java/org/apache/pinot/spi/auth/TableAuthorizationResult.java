@@ -24,14 +24,14 @@ import java.util.List;
 import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.HashSet;
 
 /**
  * Implementation of the AuthorizationResult interface that provides authorization results
  * at the table level, including which tables failed authorization.
  */
 public class TableAuthorizationResult implements AuthorizationResult {
-
-  private static final TableAuthorizationResult SUCCESS = new TableAuthorizationResult(Set.of());
+  private static final TableAuthorizationResult SUCCESS = new TableAuthorizationResult(Collections.emptySet());
   private final Set<String> _failedTables;
 
   public TableAuthorizationResult(Set<String> failedTables) {

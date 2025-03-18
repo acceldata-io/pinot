@@ -38,6 +38,8 @@ import org.apache.pinot.spi.utils.BytesUtils;
 import org.apache.pinot.spi.utils.EqualityUtils;
 import org.apache.pinot.spi.utils.JsonUtils;
 import org.apache.pinot.spi.utils.TimestampUtils;
+import javax.annotation.Nullable;
+
 
 
 /**
@@ -58,7 +60,7 @@ import org.apache.pinot.spi.utils.TimestampUtils;
 @JsonTypeInfo(
     use = JsonTypeInfo.Id.NAME,
     property = "fieldType",
-    requireTypeIdForSubtypes = OptBoolean.FALSE
+    requireTypeIdForSubtypes = false
 )
 @JsonSubTypes({
     @JsonSubTypes.Type(value = DimensionFieldSpec.class, name = "DIMENSION"),
@@ -90,8 +92,8 @@ public abstract class FieldSpec implements Comparable<FieldSpec>, Serializable {
   public static final byte[] DEFAULT_METRIC_NULL_VALUE_OF_BYTES = new byte[0];
   public static final FieldSpecMetadata FIELD_SPEC_METADATA;
 
-  public static final Map DEFAULT_COMPLEX_NULL_VALUE_OF_MAP = Map.of();
-  public static final List DEFAULT_COMPLEX_NULL_VALUE_OF_LIST = List.of();
+  public static final Map DEFAULT_COMPLEX_NULL_VALUE_OF_MAP = new HashMap<>();
+  public static final List DEFAULT_COMPLEX_NULL_VALUE_OF_LIST = new java.util.ArrayList<>();
 
   static {
     // The metadata on the valid list of {@link DataType} for each {@link FieldType}
@@ -805,3 +807,4 @@ public abstract class FieldSpec implements Comparable<FieldSpec>, Serializable {
     }
   }
 }
+
