@@ -482,7 +482,7 @@ public class QueryRoutingTest {
     ServerRoutingInstance serverRoutingInstance2 =
         serverInstance2.toServerRoutingInstance(TableType.OFFLINE, ServerInstance.RoutingType.NETTY);
     Map<ServerInstance, Pair<List<String>, List<String>>> routingTable =
-        Map.of(serverInstance1, Pair.of(Collections.emptyList(), Collections.emptyList()), serverInstance2,
+        Collections.singletonMap(serverInstance1, Pair.of(Collections.emptyList(), Collections.emptyList()), serverInstance2,
             Pair.of(Collections.emptyList(), Collections.emptyList()));
 
     long requestId = 123;

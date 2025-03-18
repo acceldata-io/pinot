@@ -61,7 +61,7 @@ public class TaskConfigUtilsTest {
 
       @Override
       public List<PinotTaskConfig> generateTasks(List<TableConfig> tableConfigs) {
-        return List.of(new PinotTaskConfig(TEST_TASK_TYPE, new HashMap<>()));
+        return Arrays.asList(new PinotTaskConfig(TEST_TASK_TYPE, new HashMap<>()));
       }
 
       @Override
@@ -77,7 +77,7 @@ public class TaskConfigUtilsTest {
   @Test(expectedExceptions = RuntimeException.class)
   public void testValidateTableTaskConfigsValidationException() {
     TableTaskConfig tableTaskConfig =
-        new TableTaskConfig(ImmutableMap.of(TEST_TASK_TYPE, ImmutableMap.of("schedule", "0 */10 * ? * * *")));
+        new TableTaskConfig(ImmutableCollections.singletonMap(TEST_TASK_TYPE, ImmutableCollections.singletonMap("schedule", "0 */10 * ? * * *")));
     TableConfig tableConfig =
         new TableConfigBuilder(TableType.OFFLINE).setTableName(TEST_TABLE_NAME).setTaskConfig(tableTaskConfig).build();
     TaskConfigUtils.validateTaskConfigs(tableConfig, new Schema(), _mockTaskManager, null);
@@ -86,7 +86,7 @@ public class TaskConfigUtilsTest {
   @Test(expectedExceptions = RuntimeException.class)
   public void testValidateTableTaskConfigsUnknownTaskType() {
     TableTaskConfig tableTaskConfig =
-        new TableTaskConfig(ImmutableMap.of("otherTask", ImmutableMap.of("schedule", "0 */10 * ? * * *")));
+        new TableTaskConfig(ImmutableCollections.singletonMap("otherTask", ImmutableCollections.singletonMap("schedule", "0 */10 * ? * * *")));
     TableConfig tableConfig =
         new TableConfigBuilder(TableType.OFFLINE).setTableName(TEST_TABLE_NAME).setTaskConfig(tableTaskConfig).build();
     TaskConfigUtils.validateTaskConfigs(tableConfig, new Schema(), _mockTaskManager, null);
@@ -98,7 +98,7 @@ public class TaskConfigUtilsTest {
     HashMap<String, String> invalidScheduleConfig = new HashMap<>();
     invalidScheduleConfig.put("schedule", "invalidSchedule");
     TableConfig tableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(TEST_TABLE_NAME).setTaskConfig(
-        new TableTaskConfig(ImmutableMap.of(TEST_TASK_TYPE, invalidScheduleConfig))).build();
+        new TableTaskConfig(ImmutableCollections.singletonMap(TEST_TASK_TYPE, invalidScheduleConfig))).build();
 
     try {
       TaskConfigUtils.doCommonTaskValidations(tableConfig, TEST_TASK_TYPE, invalidScheduleConfig);
@@ -111,7 +111,7 @@ public class TaskConfigUtilsTest {
     HashMap<String, String> invalidAllowDownloadFromServerConfig = new HashMap<>();
     invalidAllowDownloadFromServerConfig.put("allowDownloadFromServer", "true");
     tableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(TEST_TABLE_NAME).setTaskConfig(
-        new TableTaskConfig(ImmutableMap.of(TEST_TASK_TYPE, invalidAllowDownloadFromServerConfig))).build();
+        new TableTaskConfig(ImmutableCollections.singletonMap(TEST_TASK_TYPE, invalidAllowDownloadFromServerConfig))).build();
     try {
       TaskConfigUtils.doCommonTaskValidations(tableConfig, TEST_TASK_TYPE, invalidAllowDownloadFromServerConfig);
       Assert.fail();

@@ -54,7 +54,7 @@ public class JsonMalformedIndexTest extends BaseQueriesTest {
       .build();
   //@formatter:on
   private static final TableConfig TABLE_CONFIG =
-      new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME).setJsonIndexColumns(List.of(JSON_COLUMN))
+      new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME).setJsonIndexColumns(Arrays.asList(JSON_COLUMN))
           .build();
   private IndexSegment _indexSegment;
   private List<IndexSegment> _indexSegments;
@@ -100,7 +100,7 @@ public class JsonMalformedIndexTest extends BaseQueriesTest {
     IndexLoadingConfig indexLoadingConfig = new IndexLoadingConfig(TABLE_CONFIG, SCHEMA);
     ImmutableSegment segment = ImmutableSegmentLoader.load(new File(indexDir, SEGMENT_NAME), indexLoadingConfig);
     _indexSegment = segment;
-    _indexSegments = List.of(segment, segment);
+    _indexSegments = Arrays.asList(segment, segment);
 
     Object[][] expected = {{"von drake"}, {"von drake"}, {"von drake"}, {"von drake"}};
     checkResult("SELECT jsonextractscalar(jsonColumn, '$.name.last', 'STRING') FROM testTable", expected);

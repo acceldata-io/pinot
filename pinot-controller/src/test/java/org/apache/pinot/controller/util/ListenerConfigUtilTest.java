@@ -201,7 +201,7 @@ public class ListenerConfigUtilTest {
 
   @Test
   public void testFindLastTlsPort() {
-    List<ListenerConfig> configs = ImmutableList.of(new ListenerConfig("conf1", "host1", 9000, "http", null,
+    List<ListenerConfig> configs = ImmutableArrays.asList(new ListenerConfig("conf1", "host1", 9000, "http", null,
             HttpServerThreadPoolConfig.defaultInstance()),
         new ListenerConfig("conf2", "host2", 9001, "https", null,
             HttpServerThreadPoolConfig.defaultInstance()),
@@ -217,7 +217,7 @@ public class ListenerConfigUtilTest {
 
   @Test
   public void testFindLastTlsPortMissing() {
-    List<ListenerConfig> configs = ImmutableList.of(new ListenerConfig("conf1", "host1", 9000, "http", null,
+    List<ListenerConfig> configs = ImmutableArrays.asList(new ListenerConfig("conf1", "host1", 9000, "http", null,
             HttpServerThreadPoolConfig.defaultInstance()),
         new ListenerConfig("conf2", "host2", 9001, "http", null,
             HttpServerThreadPoolConfig.defaultInstance()),

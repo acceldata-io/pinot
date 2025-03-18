@@ -419,21 +419,21 @@ public class PinotHelixResourceManagerStatelessTest extends ControllerTest {
 
     // Test retrieving table name to live broker mapping for table without type suffix
     Map<String, List<InstanceInfo>> rawTableToLiveBrokersMapping =
-        _helixResourceManager.getTableToLiveBrokersMapping(null, List.of(RAW_TABLE_NAME));
+        _helixResourceManager.getTableToLiveBrokersMapping(null, Arrays.asList(RAW_TABLE_NAME));
     assertEquals(rawTableToLiveBrokersMapping.size(), 2);
     assertEquals(rawTableToLiveBrokersMapping.get(OFFLINE_TABLE_NAME).size(), NUM_BROKER_INSTANCES);
     assertEquals(rawTableToLiveBrokersMapping.get(REALTIME_TABLE_NAME).size(), NUM_BROKER_INSTANCES);
 
     // Test retrieving table names list to live broker mapping for each table without type suffix
     Map<String, List<InstanceInfo>> tablesListToLiveBrokersMapping =
-        _helixResourceManager.getTableToLiveBrokersMapping(List.of(OFFLINE_TABLE_NAME, REALTIME_TABLE_NAME));
+        _helixResourceManager.getTableToLiveBrokersMapping(Arrays.asList(OFFLINE_TABLE_NAME, REALTIME_TABLE_NAME));
     assertEquals(tablesListToLiveBrokersMapping.size(), 2);
     assertEquals(tablesListToLiveBrokersMapping.get(OFFLINE_TABLE_NAME).size(), NUM_BROKER_INSTANCES);
     assertEquals(tablesListToLiveBrokersMapping.get(REALTIME_TABLE_NAME).size(), NUM_BROKER_INSTANCES);
 
     // Test retrieving table name to live broker mapping for table with type suffix
     Map<String, List<InstanceInfo>> offlineTableToLiveBrokersMapping =
-        _helixResourceManager.getTableToLiveBrokersMapping(List.of(OFFLINE_TABLE_NAME));
+        _helixResourceManager.getTableToLiveBrokersMapping(Arrays.asList(OFFLINE_TABLE_NAME));
     assertEquals(offlineTableToLiveBrokersMapping.size(), 1);
     assertEquals(offlineTableToLiveBrokersMapping.get(OFFLINE_TABLE_NAME).size(), NUM_BROKER_INSTANCES);
 
@@ -670,20 +670,20 @@ public class PinotHelixResourceManagerStatelessTest extends ControllerTest {
     TableConfig realtimeTableConfig = new TableConfigBuilder(TableType.REALTIME).setTableName(RAW_TABLE_NAME).build();
 
     Map<String, String> segmentGenerationAndPushTaskConfig =
-        Map.of("invalidRecordsThresholdCount", "1", "schedule", "0 */30 * ? * *", "tableMaxNumTasks", "1",
+        Collections.singletonMap("invalidRecordsThresholdCount", "1", "schedule", "0 */30 * ? * *", "tableMaxNumTasks", "1",
             "validDocIdsType", "SNAPSHOT");
 
     Map<String, String> upsertCompactionTask =
-        Map.of("invalidRecordsThresholdCount", "1", "schedule", "0 */30 * ? * *", "tableMaxNumTasks", "1",
+        Collections.singletonMap("invalidRecordsThresholdCount", "1", "schedule", "0 */30 * ? * *", "tableMaxNumTasks", "1",
             "validDocIdsType", "SNAPSHOT", "minionInstanceTag", "minionTenant");
 
     Map<String, String> segmentGenerationAndPushTaskConfig2 =
-        Map.of("schedule", "0 */30 * ? * *", "tableMaxNumTasks", "1", "validDocIdsType", "SNAPSHOT",
+        Collections.singletonMap("schedule", "0 */30 * ? * *", "tableMaxNumTasks", "1", "validDocIdsType", "SNAPSHOT",
             "minionInstanceTag", "anotherMinionTenant");
 
     // Minion instance tag set but no minion present
     realtimeTableConfig.setTaskConfig(new TableTaskConfig(
-        ImmutableMap.of(MinionConstants.RealtimeToOfflineSegmentsTask.TASK_TYPE, upsertCompactionTask)));
+        ImmutableCollections.singletonMap(MinionConstants.RealtimeToOfflineSegmentsTask.TASK_TYPE, upsertCompactionTask)));
 
     assertThrows(InvalidTableConfigException.class, () -> {
       try {
@@ -702,11 +702,11 @@ public class PinotHelixResourceManagerStatelessTest extends ControllerTest {
     //Untag minion instance
     untagMinions();
     realtimeTableConfig.setTaskConfig(new TableTaskConfig(
-        ImmutableMap.of(MinionConstants.RealtimeToOfflineSegmentsTask.TASK_TYPE, segmentGenerationAndPushTaskConfig)));
+        ImmutableCollections.singletonMap(MinionConstants.RealtimeToOfflineSegmentsTask.TASK_TYPE, segmentGenerationAndPushTaskConfig)));
     _helixResourceManager.validateTableTaskMinionInstanceTagConfig(realtimeTableConfig);
 
     realtimeTableConfig.setTaskConfig(new TableTaskConfig(
-        ImmutableMap.of(MinionConstants.RealtimeToOfflineSegmentsTask.TASK_TYPE, segmentGenerationAndPushTaskConfig2)));
+        ImmutableCollections.singletonMap(MinionConstants.RealtimeToOfflineSegmentsTask.TASK_TYPE, segmentGenerationAndPushTaskConfig2)));
     assertThrows(InvalidTableConfigException.class, () -> {
       try {
         _helixResourceManager.validateTableTaskMinionInstanceTagConfig(realtimeTableConfig);

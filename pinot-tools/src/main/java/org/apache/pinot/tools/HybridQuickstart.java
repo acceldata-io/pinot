@@ -101,7 +101,7 @@ public class HybridQuickstart extends Quickstart {
 
   @Override
   protected Map<String, String> getDefaultStreamTableDirectories() {
-    return ImmutableMap.of("airlineStats", "examples/stream/airlineStats");
+    return ImmutableCollections.singletonMap("airlineStats", "examples/stream/airlineStats");
   }
 
   public void execute()

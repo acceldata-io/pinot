@@ -74,13 +74,13 @@ public class MailboxReceiveOperatorTest {
 
   @BeforeClass
   public void setUp() {
-    MailboxInfos mailboxInfosBoth = new SharedMailboxInfos(new MailboxInfo("localhost", 1234, List.of(0, 1)));
+    MailboxInfos mailboxInfosBoth = new SharedMailboxInfos(new MailboxInfo("localhost", 1234, Arrays.asList(0, 1)));
     _stageMetadataBoth = new StageMetadata(0,
-        Stream.of(0, 1).map(workerId -> new WorkerMetadata(workerId, Map.of(1, mailboxInfosBoth), Map.of()))
-            .collect(Collectors.toList()), Map.of());
-    MailboxInfos mailboxInfos1 = new SharedMailboxInfos(new MailboxInfo("localhost", 1234, List.of(0)));
+        Stream.of(0, 1).map(workerId -> new WorkerMetadata(workerId, Collections.singletonMap(1, mailboxInfosBoth), new HashMap<>()))
+            .collect(Collectors.toList()), new HashMap<>());
+    MailboxInfos mailboxInfos1 = new SharedMailboxInfos(new MailboxInfo("localhost", 1234, Arrays.asList(0)));
     _stageMetadata1 =
-        new StageMetadata(0, List.of(new WorkerMetadata(0, Map.of(1, mailboxInfos1), Map.of())), Map.of());
+        new StageMetadata(0, Arrays.asList(new WorkerMetadata(0, Collections.singletonMap(1, mailboxInfos1), new HashMap<>())), new HashMap<>());
   }
 
   @BeforeMethod

@@ -2570,7 +2570,7 @@ SqlNode RowConstructor() :
             // LOOKAHEAD in TableConstructor().  It would be so much more
             // reasonable to require parentheses.  Sigh.
             s = Span.of(value);
-            valueList = new SqlNodeList(ImmutableList.of(value),
+            valueList = new SqlNodeList(ImmutableArrays.asList(value),
                 value.getParserPosition());
         }
     )
@@ -2612,7 +2612,7 @@ SqlNodeList GroupBy() :
     list = GroupingElementList() {
         final SqlParserPos pos = s.end(this);
         final List<SqlNode> list2 = distinct
-            ? ImmutableList.of(
+            ? ImmutableArrays.asList(
                 SqlInternalOperators.GROUP_BY_DISTINCT.createCall(pos, list))
             : list;
         return new SqlNodeList(list2, pos);
@@ -4069,13 +4069,13 @@ SqlNode RowExpressionExtension() :
         (
             LOOKAHEAD(2) <LPAREN> <STAR> {
                 quantifier = null;
-                args = ImmutableList.of(SqlIdentifier.star(getPos()));
+                args = ImmutableArrays.asList(SqlIdentifier.star(getPos()));
             }
             <RPAREN>
         |
             LOOKAHEAD(2) <LPAREN> <RPAREN> {
                 quantifier = null;
-                args = ImmutableList.of();
+                args = ImmutableArrays.asList();
             }
         |
             args = FunctionParameterList(ExprContext.ACCEPT_SUB_QUERY) {
@@ -7533,12 +7533,12 @@ SqlCall NamedCall() :
     }
     (
         LOOKAHEAD(2) <LPAREN> <STAR> {
-            args = ImmutableList.of(SqlIdentifier.star(getPos()));
+            args = ImmutableArrays.asList(SqlIdentifier.star(getPos()));
         }
         <RPAREN>
     |
         LOOKAHEAD(2) <LPAREN> <RPAREN> {
-            args = ImmutableList.of();
+            args = ImmutableArrays.asList();
         }
     |
         args = FunctionParameterList(ExprContext.ACCEPT_SUB_QUERY) {

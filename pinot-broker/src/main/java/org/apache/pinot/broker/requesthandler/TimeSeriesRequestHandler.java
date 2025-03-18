@@ -130,7 +130,7 @@ public class TimeSeriesRequestHandler extends BaseBrokerRequestHandler {
   @Override
   public Map<Long, String> getRunningQueries() {
     // TODO: Implement this.
-    return Map.of();
+    return new HashMap<>();
   }
 
   @Override

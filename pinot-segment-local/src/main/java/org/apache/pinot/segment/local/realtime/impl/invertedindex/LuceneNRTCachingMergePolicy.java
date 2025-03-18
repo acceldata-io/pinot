@@ -50,7 +50,7 @@ public class LuceneNRTCachingMergePolicy extends TieredMergePolicy {
       throws IOException {
     SegmentInfos inMemorySegmentInfos = new SegmentInfos(segmentInfos.getIndexCreatedVersionMajor());
     // Collect all segment commit infos that still have all files in memory
-    Set<String> cachedFiles = new HashSet<>(List.of(_nrtCachingDirectory.listCachedFiles()));
+    Set<String> cachedFiles = new HashSet<>(Arrays.asList(_nrtCachingDirectory.listCachedFiles()));
     for (SegmentCommitInfo info : segmentInfos) {
       for (String file : info.files()) {
         if (!cachedFiles.contains(file)) {

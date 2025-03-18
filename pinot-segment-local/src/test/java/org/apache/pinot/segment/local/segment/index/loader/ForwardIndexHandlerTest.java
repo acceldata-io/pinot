@@ -172,25 +172,25 @@ public class ForwardIndexHandlerTest {
       "DIM_SV_FORWARD_INDEX_DISABLED_INTEGER_WITH_RANGE_INDEX";
 
   private static final List<String> RAW_SNAPPY_COLUMNS =
-      List.of(DIM_SNAPPY_STRING, DIM_SNAPPY_LONG, DIM_SNAPPY_INTEGER, DIM_SNAPPY_BYTES, METRIC_SNAPPY_BIG_DECIMAL,
+      Arrays.asList(DIM_SNAPPY_STRING, DIM_SNAPPY_LONG, DIM_SNAPPY_INTEGER, DIM_SNAPPY_BYTES, METRIC_SNAPPY_BIG_DECIMAL,
           METRIC_SNAPPY_INTEGER);
 
-  private static final List<String> RAW_SORTED_COLUMNS = List.of(DIM_RAW_SORTED_INTEGER);
+  private static final List<String> RAW_SORTED_COLUMNS = Arrays.asList(DIM_RAW_SORTED_INTEGER);
 
   private static final List<String> RAW_ZSTANDARD_COLUMNS =
-      List.of(DIM_ZSTANDARD_STRING, DIM_ZSTANDARD_LONG, DIM_ZSTANDARD_INTEGER, DIM_ZSTANDARD_BYTES,
+      Arrays.asList(DIM_ZSTANDARD_STRING, DIM_ZSTANDARD_LONG, DIM_ZSTANDARD_INTEGER, DIM_ZSTANDARD_BYTES,
           METRIC_ZSTANDARD_BIG_DECIMAL, METRIC_ZSTANDARD_INTEGER);
 
   private static final List<String> RAW_PASS_THROUGH_COLUMNS =
-      List.of(DIM_PASS_THROUGH_STRING, DIM_PASS_THROUGH_LONG, DIM_PASS_THROUGH_INTEGER, DIM_PASS_THROUGH_BYTES,
+      Arrays.asList(DIM_PASS_THROUGH_STRING, DIM_PASS_THROUGH_LONG, DIM_PASS_THROUGH_INTEGER, DIM_PASS_THROUGH_BYTES,
           METRIC_PASS_THROUGH_BIG_DECIMAL, METRIC_PASS_THROUGH_INTEGER, DIM_MV_PASS_THROUGH_INTEGER,
           DIM_MV_PASS_THROUGH_LONG, DIM_MV_PASS_THROUGH_STRING, DIM_MV_PASS_THROUGH_BYTES);
 
   private static final List<String> RAW_LZ4_COLUMNS =
-      List.of(DIM_LZ4_STRING, DIM_LZ4_LONG, DIM_LZ4_INTEGER, DIM_LZ4_BYTES, METRIC_LZ4_BIG_DECIMAL, METRIC_LZ4_INTEGER);
+      Arrays.asList(DIM_LZ4_STRING, DIM_LZ4_LONG, DIM_LZ4_INTEGER, DIM_LZ4_BYTES, METRIC_LZ4_BIG_DECIMAL, METRIC_LZ4_INTEGER);
 
   private static final List<String> RAW_GZIP_COLUMNS =
-      List.of(DIM_GZIP_STRING, DIM_GZIP_LONG, DIM_GZIP_INTEGER, DIM_GZIP_BYTES, METRIC_GZIP_BIG_DECIMAL,
+      Arrays.asList(DIM_GZIP_STRING, DIM_GZIP_LONG, DIM_GZIP_INTEGER, DIM_GZIP_BYTES, METRIC_GZIP_BIG_DECIMAL,
           METRIC_GZIP_INTEGER);
 
   private static final List<String> RAW_COLUMNS_WITH_FORWARD_INDEX;
@@ -206,26 +206,26 @@ public class ForwardIndexHandlerTest {
   }
 
   private static final List<String> DICT_ENABLED_COLUMNS_WITH_FORWARD_INDEX =
-      List.of(DIM_DICT_INTEGER, DIM_DICT_LONG, DIM_DICT_STRING, DIM_DICT_BYES, DIM_DICT_MV_BYTES, DIM_DICT_MV_STRING,
+      Arrays.asList(DIM_DICT_INTEGER, DIM_DICT_LONG, DIM_DICT_STRING, DIM_DICT_BYES, DIM_DICT_MV_BYTES, DIM_DICT_MV_STRING,
           DIM_DICT_MV_INTEGER, DIM_DICT_MV_LONG);
 
   private static final List<String> DICT_ENABLED_MV_COLUMNS_WITH_FORWARD_INDEX =
-      List.of(DIM_DICT_MV_INTEGER, DIM_DICT_MV_LONG, DIM_DICT_MV_STRING, DIM_DICT_MV_BYTES);
+      Arrays.asList(DIM_DICT_MV_INTEGER, DIM_DICT_MV_LONG, DIM_DICT_MV_STRING, DIM_DICT_MV_BYTES);
 
   private static final List<String> SV_FORWARD_INDEX_DISABLED_COLUMNS =
-      List.of(DIM_SV_FORWARD_INDEX_DISABLED_INTEGER, DIM_SV_FORWARD_INDEX_DISABLED_LONG,
+      Arrays.asList(DIM_SV_FORWARD_INDEX_DISABLED_INTEGER, DIM_SV_FORWARD_INDEX_DISABLED_LONG,
           DIM_SV_FORWARD_INDEX_DISABLED_STRING, DIM_SV_FORWARD_INDEX_DISABLED_BYTES);
 
   private static final List<String> MV_FORWARD_INDEX_DISABLED_COLUMNS =
-      List.of(DIM_MV_FORWARD_INDEX_DISABLED_INTEGER, DIM_MV_FORWARD_INDEX_DISABLED_LONG,
+      Arrays.asList(DIM_MV_FORWARD_INDEX_DISABLED_INTEGER, DIM_MV_FORWARD_INDEX_DISABLED_LONG,
           DIM_MV_FORWARD_INDEX_DISABLED_STRING, DIM_MV_FORWARD_INDEX_DISABLED_BYTES);
 
   private static final List<String> MV_FORWARD_INDEX_DISABLED_DUPLICATES_COLUMNS =
-      List.of(DIM_MV_FORWARD_INDEX_DISABLED_DUPLICATES_INTEGER, DIM_MV_FORWARD_INDEX_DISABLED_DUPLICATES_LONG,
+      Arrays.asList(DIM_MV_FORWARD_INDEX_DISABLED_DUPLICATES_INTEGER, DIM_MV_FORWARD_INDEX_DISABLED_DUPLICATES_LONG,
           DIM_MV_FORWARD_INDEX_DISABLED_DUPLICATES_STRING, DIM_MV_FORWARD_INDEX_DISABLED_DUPLICATES_BYTES);
 
   private static final List<String> FORWARD_INDEX_DISABLED_RAW_COLUMNS =
-      List.of(DIM_RAW_SV_FORWARD_INDEX_DISABLED_INTEGER, DIM_RAW_MV_FORWARD_INDEX_DISABLED_INTEGER);
+      Arrays.asList(DIM_RAW_SV_FORWARD_INDEX_DISABLED_INTEGER, DIM_RAW_MV_FORWARD_INDEX_DISABLED_INTEGER);
 
   private static final List<CompressionCodec> RAW_COMPRESSION_TYPES =
       Arrays.stream(CompressionCodec.values()).filter(CompressionCodec::isApplicableToRawIndex)
@@ -507,54 +507,54 @@ public class ForwardIndexHandlerTest {
     _fieldConfigMap = new HashMap<>();
     for (String column : RAW_SNAPPY_COLUMNS) {
       _fieldConfigMap.put(column,
-          new FieldConfig(column, FieldConfig.EncodingType.RAW, List.of(), CompressionCodec.SNAPPY, null));
+          new FieldConfig(column, FieldConfig.EncodingType.RAW, Arrays.asList(), CompressionCodec.SNAPPY, null));
     }
     for (String column : RAW_SORTED_COLUMNS) {
       _fieldConfigMap.put(column,
-          new FieldConfig(column, FieldConfig.EncodingType.RAW, List.of(FieldConfig.IndexType.SORTED),
+          new FieldConfig(column, FieldConfig.EncodingType.RAW, Arrays.asList(FieldConfig.IndexType.SORTED),
               CompressionCodec.SNAPPY, null));
     }
     for (String column : RAW_ZSTANDARD_COLUMNS) {
       _fieldConfigMap.put(column,
-          new FieldConfig(column, FieldConfig.EncodingType.RAW, List.of(), CompressionCodec.ZSTANDARD, null));
+          new FieldConfig(column, FieldConfig.EncodingType.RAW, Arrays.asList(), CompressionCodec.ZSTANDARD, null));
     }
     for (String column : RAW_PASS_THROUGH_COLUMNS) {
       _fieldConfigMap.put(column,
-          new FieldConfig(column, FieldConfig.EncodingType.RAW, List.of(), CompressionCodec.PASS_THROUGH, null));
+          new FieldConfig(column, FieldConfig.EncodingType.RAW, Arrays.asList(), CompressionCodec.PASS_THROUGH, null));
     }
     for (String column : RAW_LZ4_COLUMNS) {
       _fieldConfigMap.put(column,
-          new FieldConfig(column, FieldConfig.EncodingType.RAW, List.of(), CompressionCodec.LZ4, null));
+          new FieldConfig(column, FieldConfig.EncodingType.RAW, Arrays.asList(), CompressionCodec.LZ4, null));
     }
     for (String column : RAW_GZIP_COLUMNS) {
       _fieldConfigMap.put(column,
-          new FieldConfig(column, FieldConfig.EncodingType.RAW, List.of(), CompressionCodec.GZIP, null));
+          new FieldConfig(column, FieldConfig.EncodingType.RAW, Arrays.asList(), CompressionCodec.GZIP, null));
     }
     for (String column : SV_FORWARD_INDEX_DISABLED_COLUMNS) {
       _fieldConfigMap.put(column,
-          new FieldConfig(column, FieldConfig.EncodingType.DICTIONARY, List.of(FieldConfig.IndexType.INVERTED), null,
-              Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+          new FieldConfig(column, FieldConfig.EncodingType.DICTIONARY, Arrays.asList(FieldConfig.IndexType.INVERTED), null,
+              Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
     }
     for (String column : MV_FORWARD_INDEX_DISABLED_COLUMNS) {
       _fieldConfigMap.put(column,
-          new FieldConfig(column, FieldConfig.EncodingType.DICTIONARY, List.of(FieldConfig.IndexType.INVERTED), null,
-              Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+          new FieldConfig(column, FieldConfig.EncodingType.DICTIONARY, Arrays.asList(FieldConfig.IndexType.INVERTED), null,
+              Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
     }
     for (String column : MV_FORWARD_INDEX_DISABLED_DUPLICATES_COLUMNS) {
       _fieldConfigMap.put(column,
-          new FieldConfig(column, FieldConfig.EncodingType.DICTIONARY, List.of(FieldConfig.IndexType.INVERTED), null,
-              Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+          new FieldConfig(column, FieldConfig.EncodingType.DICTIONARY, Arrays.asList(FieldConfig.IndexType.INVERTED), null,
+              Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
     }
     for (String column : FORWARD_INDEX_DISABLED_RAW_COLUMNS) {
-      _fieldConfigMap.put(column, new FieldConfig(column, FieldConfig.EncodingType.RAW, List.of(), CompressionCodec.LZ4,
-          Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+      _fieldConfigMap.put(column, new FieldConfig(column, FieldConfig.EncodingType.RAW, Arrays.asList(), CompressionCodec.LZ4,
+          Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
     }
     _fieldConfigMap.put(DIM_SV_FORWARD_INDEX_DISABLED_INTEGER_WITHOUT_INV_IDX,
         new FieldConfig(DIM_SV_FORWARD_INDEX_DISABLED_INTEGER_WITHOUT_INV_IDX, FieldConfig.EncodingType.DICTIONARY,
-            List.of(), null, Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+            Arrays.asList(), null, Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
     _fieldConfigMap.put(DIM_SV_FORWARD_INDEX_DISABLED_INTEGER_WITH_RANGE_INDEX,
         new FieldConfig(DIM_SV_FORWARD_INDEX_DISABLED_INTEGER_WITH_RANGE_INDEX, FieldConfig.EncodingType.DICTIONARY,
-            List.of(FieldConfig.IndexType.RANGE), null, Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+            Arrays.asList(FieldConfig.IndexType.RANGE), null, Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
   }
 
   private TableConfig createTableConfig() {
@@ -615,22 +615,22 @@ public class ForwardIndexHandlerTest {
       _noDictionaryColumns.remove(DIM_ZSTANDARD_STRING);
       _fieldConfigMap.remove(DIM_ZSTANDARD_STRING);
       assertEquals(computeOperations(),
-          Map.of(DIM_ZSTANDARD_STRING, List.of(ForwardIndexHandler.Operation.ENABLE_DICTIONARY)));
+          Collections.singletonMap(DIM_ZSTANDARD_STRING, Arrays.asList(ForwardIndexHandler.Operation.ENABLE_DICTIONARY)));
 
       // TEST2: Enable dictionary for an MV column.
       resetIndexConfigs();
       _noDictionaryColumns.remove(DIM_MV_PASS_THROUGH_STRING);
       _fieldConfigMap.remove(DIM_MV_PASS_THROUGH_STRING);
       assertEquals(computeOperations(),
-          Map.of(DIM_MV_PASS_THROUGH_STRING, List.of(ForwardIndexHandler.Operation.ENABLE_DICTIONARY)));
+          Collections.singletonMap(DIM_MV_PASS_THROUGH_STRING, Arrays.asList(ForwardIndexHandler.Operation.ENABLE_DICTIONARY)));
 
       // TEST3: Add text index. ForwardIndexHandler should be a No-Op.
       resetIndexConfigs();
       _fieldConfigMap.put(DIM_DICT_STRING,
-          new FieldConfig(DIM_DICT_STRING, FieldConfig.EncodingType.DICTIONARY, List.of(FieldConfig.IndexType.TEXT),
+          new FieldConfig(DIM_DICT_STRING, FieldConfig.EncodingType.DICTIONARY, Arrays.asList(FieldConfig.IndexType.TEXT),
               null, null));
       _fieldConfigMap.put(DIM_LZ4_STRING,
-          new FieldConfig(DIM_LZ4_STRING, FieldConfig.EncodingType.RAW, List.of(FieldConfig.IndexType.TEXT),
+          new FieldConfig(DIM_LZ4_STRING, FieldConfig.EncodingType.RAW, Arrays.asList(FieldConfig.IndexType.TEXT),
               CompressionCodec.LZ4, null));
       assertTrue(computeOperations().isEmpty());
 
@@ -640,14 +640,14 @@ public class ForwardIndexHandlerTest {
       _rangeIndexColumns.add(METRIC_LZ4_INTEGER);
       _fieldConfigMap.remove(METRIC_LZ4_INTEGER);
       assertEquals(computeOperations(),
-          Map.of(METRIC_LZ4_INTEGER, List.of(ForwardIndexHandler.Operation.ENABLE_DICTIONARY)));
+          Collections.singletonMap(METRIC_LZ4_INTEGER, Arrays.asList(ForwardIndexHandler.Operation.ENABLE_DICTIONARY)));
 
       // TEST5: Enable Dictionary for sorted column.
       resetIndexConfigs();
       _noDictionaryColumns.remove(DIM_RAW_SORTED_INTEGER);
       _fieldConfigMap.remove(DIM_RAW_SORTED_INTEGER);
       assertEquals(computeOperations(),
-          Map.of(DIM_RAW_SORTED_INTEGER, List.of(ForwardIndexHandler.Operation.ENABLE_DICTIONARY)));
+          Collections.singletonMap(DIM_RAW_SORTED_INTEGER, Arrays.asList(ForwardIndexHandler.Operation.ENABLE_DICTIONARY)));
     }
   }
 
@@ -662,13 +662,13 @@ public class ForwardIndexHandlerTest {
       // TEST1: Disable dictionary for a dictionary SV column.
       _noDictionaryColumns.add(DIM_DICT_INTEGER);
       assertEquals(computeOperations(),
-          Map.of(DIM_DICT_INTEGER, List.of(ForwardIndexHandler.Operation.DISABLE_DICTIONARY)));
+          Collections.singletonMap(DIM_DICT_INTEGER, Arrays.asList(ForwardIndexHandler.Operation.DISABLE_DICTIONARY)));
 
       // TEST2: Disable dictionary for a dictionary MV column.
       resetIndexConfigs();
       _noDictionaryColumns.add(DIM_DICT_MV_BYTES);
       assertEquals(computeOperations(),
-          Map.of(DIM_DICT_MV_BYTES, List.of(ForwardIndexHandler.Operation.DISABLE_DICTIONARY)));
+          Collections.singletonMap(DIM_DICT_MV_BYTES, Arrays.asList(ForwardIndexHandler.Operation.DISABLE_DICTIONARY)));
 
       // TEST3: Disable dictionary and enable inverted index. Should be a no-op.
       resetIndexConfigs();
@@ -698,22 +698,22 @@ public class ForwardIndexHandlerTest {
         }
       }
       _fieldConfigMap.put(column,
-          new FieldConfig(column, FieldConfig.EncodingType.RAW, List.of(), newCompressionCodec, null));
+          new FieldConfig(column, FieldConfig.EncodingType.RAW, Arrays.asList(), newCompressionCodec, null));
       assertEquals(computeOperations(),
-          Map.of(column, List.of(ForwardIndexHandler.Operation.CHANGE_INDEX_COMPRESSION_TYPE)));
+          Collections.singletonMap(column, Arrays.asList(ForwardIndexHandler.Operation.CHANGE_INDEX_COMPRESSION_TYPE)));
 
       // TEST2: Change compression and add index. Change compressionType for more than 1 column.
       resetIndexConfigs();
       _rangeIndexColumns.add(DIM_SNAPPY_INTEGER);
       _fieldConfigMap.put(DIM_SNAPPY_INTEGER,
-          new FieldConfig(DIM_SNAPPY_INTEGER, FieldConfig.EncodingType.RAW, List.of(FieldConfig.IndexType.RANGE),
+          new FieldConfig(DIM_SNAPPY_INTEGER, FieldConfig.EncodingType.RAW, Arrays.asList(FieldConfig.IndexType.RANGE),
               CompressionCodec.ZSTANDARD, null));
       _fieldConfigMap.put(DIM_SNAPPY_STRING,
-          new FieldConfig(DIM_SNAPPY_STRING, FieldConfig.EncodingType.RAW, List.of(FieldConfig.IndexType.TEXT),
+          new FieldConfig(DIM_SNAPPY_STRING, FieldConfig.EncodingType.RAW, Arrays.asList(FieldConfig.IndexType.TEXT),
               CompressionCodec.ZSTANDARD, null));
       assertEquals(computeOperations(),
-          Map.of(DIM_SNAPPY_INTEGER, List.of(ForwardIndexHandler.Operation.CHANGE_INDEX_COMPRESSION_TYPE),
-              DIM_SNAPPY_STRING, List.of(ForwardIndexHandler.Operation.CHANGE_INDEX_COMPRESSION_TYPE)));
+          Collections.singletonMap(DIM_SNAPPY_INTEGER, Arrays.asList(ForwardIndexHandler.Operation.CHANGE_INDEX_COMPRESSION_TYPE),
+              DIM_SNAPPY_STRING, Arrays.asList(ForwardIndexHandler.Operation.CHANGE_INDEX_COMPRESSION_TYPE)));
     }
   }
 
@@ -728,9 +728,9 @@ public class ForwardIndexHandlerTest {
       // TEST1: Disable forward index for a dictionary column with forward index enabled
       _invertedIndexColumns.add(DIM_DICT_INTEGER);
       _fieldConfigMap.put(DIM_DICT_INTEGER, new FieldConfig(DIM_DICT_INTEGER, FieldConfig.EncodingType.DICTIONARY,
-          List.of(FieldConfig.IndexType.INVERTED), null, Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+          Arrays.asList(FieldConfig.IndexType.INVERTED), null, Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
       assertEquals(computeOperations(),
-          Map.of(DIM_DICT_INTEGER, List.of(ForwardIndexHandler.Operation.DISABLE_FORWARD_INDEX)));
+          Collections.singletonMap(DIM_DICT_INTEGER, Arrays.asList(ForwardIndexHandler.Operation.DISABLE_FORWARD_INDEX)));
 
       // TEST2: Disable forward index for a raw column with forward index enabled and enable inverted index and
       // dictionary
@@ -738,10 +738,10 @@ public class ForwardIndexHandlerTest {
       _noDictionaryColumns.remove(DIM_LZ4_INTEGER);
       _invertedIndexColumns.add(DIM_LZ4_INTEGER);
       _fieldConfigMap.put(DIM_LZ4_INTEGER,
-          new FieldConfig(DIM_LZ4_INTEGER, FieldConfig.EncodingType.DICTIONARY, List.of(FieldConfig.IndexType.INVERTED),
-              null, Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
-      assertEquals(computeOperations(), Map.of(DIM_LZ4_INTEGER,
-          List.of(ForwardIndexHandler.Operation.DISABLE_FORWARD_INDEX,
+          new FieldConfig(DIM_LZ4_INTEGER, FieldConfig.EncodingType.DICTIONARY, Arrays.asList(FieldConfig.IndexType.INVERTED),
+              null, Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+      assertEquals(computeOperations(), Collections.singletonMap(DIM_LZ4_INTEGER,
+          Arrays.asList(ForwardIndexHandler.Operation.DISABLE_FORWARD_INDEX,
               ForwardIndexHandler.Operation.ENABLE_DICTIONARY)));
 
       // TEST3: Disable forward index for two dictionary columns with forward index enabled
@@ -749,14 +749,14 @@ public class ForwardIndexHandlerTest {
       _invertedIndexColumns.add(DIM_DICT_LONG);
       _invertedIndexColumns.add(DIM_DICT_STRING);
       _fieldConfigMap.put(DIM_DICT_LONG,
-          new FieldConfig(DIM_DICT_LONG, FieldConfig.EncodingType.DICTIONARY, List.of(FieldConfig.IndexType.INVERTED),
-              null, Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+          new FieldConfig(DIM_DICT_LONG, FieldConfig.EncodingType.DICTIONARY, Arrays.asList(FieldConfig.IndexType.INVERTED),
+              null, Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
       _fieldConfigMap.put(DIM_DICT_STRING,
-          new FieldConfig(DIM_DICT_STRING, FieldConfig.EncodingType.DICTIONARY, List.of(FieldConfig.IndexType.INVERTED),
-              null, Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+          new FieldConfig(DIM_DICT_STRING, FieldConfig.EncodingType.DICTIONARY, Arrays.asList(FieldConfig.IndexType.INVERTED),
+              null, Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
       assertEquals(computeOperations(),
-          Map.of(DIM_DICT_LONG, List.of(ForwardIndexHandler.Operation.DISABLE_FORWARD_INDEX), DIM_DICT_STRING,
-              List.of(ForwardIndexHandler.Operation.DISABLE_FORWARD_INDEX)));
+          Collections.singletonMap(DIM_DICT_LONG, Arrays.asList(ForwardIndexHandler.Operation.DISABLE_FORWARD_INDEX), DIM_DICT_STRING,
+              Arrays.asList(ForwardIndexHandler.Operation.DISABLE_FORWARD_INDEX)));
 
       // TEST4: Disable forward index for two raw columns with forward index enabled and enable dictionary
       resetIndexConfigs();
@@ -765,13 +765,13 @@ public class ForwardIndexHandlerTest {
       _invertedIndexColumns.add(DIM_LZ4_LONG);
       _invertedIndexColumns.add(DIM_SNAPPY_STRING);
       _fieldConfigMap.put(DIM_LZ4_LONG,
-          new FieldConfig(DIM_LZ4_LONG, FieldConfig.EncodingType.DICTIONARY, List.of(FieldConfig.IndexType.INVERTED),
-              null, Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+          new FieldConfig(DIM_LZ4_LONG, FieldConfig.EncodingType.DICTIONARY, Arrays.asList(FieldConfig.IndexType.INVERTED),
+              null, Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
       _fieldConfigMap.put(DIM_SNAPPY_STRING, new FieldConfig(DIM_SNAPPY_STRING, FieldConfig.EncodingType.DICTIONARY,
-          List.of(FieldConfig.IndexType.INVERTED), null, Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
-      assertEquals(computeOperations(), Map.of(DIM_LZ4_LONG,
-          List.of(ForwardIndexHandler.Operation.DISABLE_FORWARD_INDEX, ForwardIndexHandler.Operation.ENABLE_DICTIONARY),
-          DIM_SNAPPY_STRING, List.of(ForwardIndexHandler.Operation.DISABLE_FORWARD_INDEX,
+          Arrays.asList(FieldConfig.IndexType.INVERTED), null, Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+      assertEquals(computeOperations(), Collections.singletonMap(DIM_LZ4_LONG,
+          Arrays.asList(ForwardIndexHandler.Operation.DISABLE_FORWARD_INDEX, ForwardIndexHandler.Operation.ENABLE_DICTIONARY),
+          DIM_SNAPPY_STRING, Arrays.asList(ForwardIndexHandler.Operation.DISABLE_FORWARD_INDEX,
               ForwardIndexHandler.Operation.ENABLE_DICTIONARY)));
 
       // TEST5: Disable forward index for a dictionary and a raw column with forward index enabled
@@ -781,30 +781,30 @@ public class ForwardIndexHandlerTest {
       _invertedIndexColumns.add(DIM_DICT_STRING);
       _fieldConfigMap.put(DIM_ZSTANDARD_INTEGER,
           new FieldConfig(DIM_ZSTANDARD_INTEGER, FieldConfig.EncodingType.DICTIONARY,
-              List.of(FieldConfig.IndexType.INVERTED), null, Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+              Arrays.asList(FieldConfig.IndexType.INVERTED), null, Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
       _fieldConfigMap.put(DIM_DICT_STRING,
-          new FieldConfig(DIM_DICT_STRING, FieldConfig.EncodingType.DICTIONARY, List.of(FieldConfig.IndexType.INVERTED),
-              null, Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
-      assertEquals(computeOperations(), Map.of(DIM_ZSTANDARD_INTEGER,
-          List.of(ForwardIndexHandler.Operation.DISABLE_FORWARD_INDEX, ForwardIndexHandler.Operation.ENABLE_DICTIONARY),
-          DIM_DICT_STRING, List.of(ForwardIndexHandler.Operation.DISABLE_FORWARD_INDEX)));
+          new FieldConfig(DIM_DICT_STRING, FieldConfig.EncodingType.DICTIONARY, Arrays.asList(FieldConfig.IndexType.INVERTED),
+              null, Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+      assertEquals(computeOperations(), Collections.singletonMap(DIM_ZSTANDARD_INTEGER,
+          Arrays.asList(ForwardIndexHandler.Operation.DISABLE_FORWARD_INDEX, ForwardIndexHandler.Operation.ENABLE_DICTIONARY),
+          DIM_DICT_STRING, Arrays.asList(ForwardIndexHandler.Operation.DISABLE_FORWARD_INDEX)));
 
       // TEST6: Disable forward index for a raw column without enabling dictionary or inverted index
       resetIndexConfigs();
       _fieldConfigMap.put(DIM_LZ4_INTEGER,
-          new FieldConfig(DIM_LZ4_INTEGER, FieldConfig.EncodingType.RAW, List.of(), CompressionCodec.LZ4,
-              Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+          new FieldConfig(DIM_LZ4_INTEGER, FieldConfig.EncodingType.RAW, Arrays.asList(), CompressionCodec.LZ4,
+              Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
       assertEquals(computeOperations(),
-          Map.of(DIM_LZ4_INTEGER, List.of(ForwardIndexHandler.Operation.DISABLE_FORWARD_INDEX)));
+          Collections.singletonMap(DIM_LZ4_INTEGER, Arrays.asList(ForwardIndexHandler.Operation.DISABLE_FORWARD_INDEX)));
 
       // TEST7: Disable forward index for a dictionary column and also disable dictionary and inverted index
       resetIndexConfigs();
       _noDictionaryColumns.add(DIM_DICT_LONG);
       _fieldConfigMap.put(DIM_DICT_LONG,
-          new FieldConfig(DIM_DICT_LONG, FieldConfig.EncodingType.RAW, List.of(), CompressionCodec.LZ4,
-              Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
-      assertEquals(computeOperations(), Map.of(DIM_DICT_LONG,
-          List.of(ForwardIndexHandler.Operation.DISABLE_FORWARD_INDEX,
+          new FieldConfig(DIM_DICT_LONG, FieldConfig.EncodingType.RAW, Arrays.asList(), CompressionCodec.LZ4,
+              Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+      assertEquals(computeOperations(), Collections.singletonMap(DIM_DICT_LONG,
+          Arrays.asList(ForwardIndexHandler.Operation.DISABLE_FORWARD_INDEX,
               ForwardIndexHandler.Operation.DISABLE_DICTIONARY)));
 
       // TEST8: Disable dictionary on a column that already has forward index disabled
@@ -812,17 +812,17 @@ public class ForwardIndexHandlerTest {
       _noDictionaryColumns.add(DIM_SV_FORWARD_INDEX_DISABLED_INTEGER);
       _invertedIndexColumns.remove(DIM_SV_FORWARD_INDEX_DISABLED_INTEGER);
       _fieldConfigMap.put(DIM_SV_FORWARD_INDEX_DISABLED_INTEGER,
-          new FieldConfig(DIM_SV_FORWARD_INDEX_DISABLED_INTEGER, FieldConfig.EncodingType.RAW, List.of(),
-              CompressionCodec.LZ4, Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+          new FieldConfig(DIM_SV_FORWARD_INDEX_DISABLED_INTEGER, FieldConfig.EncodingType.RAW, Arrays.asList(),
+              CompressionCodec.LZ4, Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
       assertEquals(computeOperations(),
-          Map.of(DIM_SV_FORWARD_INDEX_DISABLED_INTEGER, List.of(ForwardIndexHandler.Operation.DISABLE_DICTIONARY)));
+          Collections.singletonMap(DIM_SV_FORWARD_INDEX_DISABLED_INTEGER, Arrays.asList(ForwardIndexHandler.Operation.DISABLE_DICTIONARY)));
 
       // TEST9: Disable inverted index on a column that already has forward index disabled
       resetIndexConfigs();
       _invertedIndexColumns.remove(DIM_SV_FORWARD_INDEX_DISABLED_INTEGER);
       _fieldConfigMap.put(DIM_SV_FORWARD_INDEX_DISABLED_INTEGER,
-          new FieldConfig(DIM_SV_FORWARD_INDEX_DISABLED_INTEGER, FieldConfig.EncodingType.DICTIONARY, List.of(), null,
-              Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+          new FieldConfig(DIM_SV_FORWARD_INDEX_DISABLED_INTEGER, FieldConfig.EncodingType.DICTIONARY, Arrays.asList(), null,
+              Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
       assertTrue(computeOperations().isEmpty());
 
       // TEST10: Disable dictionary on a column that already has forward index disabled and inverted index disabled
@@ -830,16 +830,16 @@ public class ForwardIndexHandlerTest {
       _noDictionaryColumns.add(DIM_SV_FORWARD_INDEX_DISABLED_INTEGER_WITHOUT_INV_IDX);
       _fieldConfigMap.put(DIM_SV_FORWARD_INDEX_DISABLED_INTEGER_WITHOUT_INV_IDX,
           new FieldConfig(DIM_SV_FORWARD_INDEX_DISABLED_INTEGER_WITHOUT_INV_IDX, FieldConfig.EncodingType.RAW,
-              List.of(), CompressionCodec.LZ4, Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
-      assertEquals(computeOperations(), Map.of(DIM_SV_FORWARD_INDEX_DISABLED_INTEGER_WITHOUT_INV_IDX,
-          List.of(ForwardIndexHandler.Operation.DISABLE_DICTIONARY)));
+              Arrays.asList(), CompressionCodec.LZ4, Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+      assertEquals(computeOperations(), Collections.singletonMap(DIM_SV_FORWARD_INDEX_DISABLED_INTEGER_WITHOUT_INV_IDX,
+          Arrays.asList(ForwardIndexHandler.Operation.DISABLE_DICTIONARY)));
 
       // TEST11: Enable dictionary on a column that already has forward index disabled and dictionary disabled
       resetIndexConfigs();
       _noDictionaryColumns.remove(DIM_RAW_SV_FORWARD_INDEX_DISABLED_INTEGER);
       _fieldConfigMap.put(DIM_RAW_SV_FORWARD_INDEX_DISABLED_INTEGER,
-          new FieldConfig(DIM_RAW_SV_FORWARD_INDEX_DISABLED_INTEGER, FieldConfig.EncodingType.DICTIONARY, List.of(),
-              null, Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+          new FieldConfig(DIM_RAW_SV_FORWARD_INDEX_DISABLED_INTEGER, FieldConfig.EncodingType.DICTIONARY, Arrays.asList(),
+              null, Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
       try {
         computeOperations();
         fail("Enabling dictionary on forward index disabled column is not possible");
@@ -855,8 +855,8 @@ public class ForwardIndexHandlerTest {
       _noDictionaryColumns.add(DIM_SV_FORWARD_INDEX_DISABLED_INTEGER_WITH_RANGE_INDEX);
       _fieldConfigMap.put(DIM_SV_FORWARD_INDEX_DISABLED_INTEGER_WITH_RANGE_INDEX,
           new FieldConfig(DIM_SV_FORWARD_INDEX_DISABLED_INTEGER_WITH_RANGE_INDEX, FieldConfig.EncodingType.RAW,
-              List.of(FieldConfig.IndexType.RANGE), CompressionCodec.LZ4,
-              Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+              Arrays.asList(FieldConfig.IndexType.RANGE), CompressionCodec.LZ4,
+              Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
       try {
         computeOperations();
         fail("Disabling dictionary on forward index disabled column without inverted index but which has a "
@@ -874,8 +874,8 @@ public class ForwardIndexHandlerTest {
       _rangeIndexColumns.add(DIM_SV_FORWARD_INDEX_DISABLED_INTEGER);
       _fieldConfigMap.put(DIM_SV_FORWARD_INDEX_DISABLED_INTEGER,
           new FieldConfig(DIM_SV_FORWARD_INDEX_DISABLED_INTEGER, FieldConfig.EncodingType.RAW,
-              List.of(FieldConfig.IndexType.INVERTED, FieldConfig.IndexType.RANGE), CompressionCodec.LZ4,
-              Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+              Arrays.asList(FieldConfig.IndexType.INVERTED, FieldConfig.IndexType.RANGE), CompressionCodec.LZ4,
+              Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
       try {
         computeOperations();
         fail("Disabling dictionary on forward index disabled column with inverted index and a range index "
@@ -904,14 +904,14 @@ public class ForwardIndexHandlerTest {
       _noDictionaryColumns.add(column);
       _invertedIndexColumns.remove(column);
       _fieldConfigMap.put(column,
-          new FieldConfig(column, FieldConfig.EncodingType.RAW, List.of(), CompressionCodec.LZ4, null));
-      assertEquals(computeOperations(), Map.of(column, List.of(ForwardIndexHandler.Operation.ENABLE_FORWARD_INDEX)));
+          new FieldConfig(column, FieldConfig.EncodingType.RAW, Arrays.asList(), CompressionCodec.LZ4, null));
+      assertEquals(computeOperations(), Collections.singletonMap(column, Arrays.asList(ForwardIndexHandler.Operation.ENABLE_FORWARD_INDEX)));
 
       // TEST2: Enable forward index in dictionary format for a column with forward index disabled
       resetIndexConfigs();
       _fieldConfigMap.remove(DIM_SV_FORWARD_INDEX_DISABLED_BYTES);
       assertEquals(computeOperations(),
-          Map.of(DIM_SV_FORWARD_INDEX_DISABLED_BYTES, List.of(ForwardIndexHandler.Operation.ENABLE_FORWARD_INDEX)));
+          Collections.singletonMap(DIM_SV_FORWARD_INDEX_DISABLED_BYTES, Arrays.asList(ForwardIndexHandler.Operation.ENABLE_FORWARD_INDEX)));
 
       // TEST3: Enable forward index in raw format for a column with forward index disabled. Remove column from inverted
       // index as well (inverted index needs dictionary)
@@ -919,10 +919,10 @@ public class ForwardIndexHandlerTest {
       _noDictionaryColumns.add(DIM_MV_FORWARD_INDEX_DISABLED_INTEGER);
       _invertedIndexColumns.remove(DIM_MV_FORWARD_INDEX_DISABLED_INTEGER);
       _fieldConfigMap.put(DIM_MV_FORWARD_INDEX_DISABLED_INTEGER,
-          new FieldConfig(DIM_MV_FORWARD_INDEX_DISABLED_INTEGER, FieldConfig.EncodingType.RAW, List.of(),
+          new FieldConfig(DIM_MV_FORWARD_INDEX_DISABLED_INTEGER, FieldConfig.EncodingType.RAW, Arrays.asList(),
               CompressionCodec.LZ4, null));
       assertEquals(computeOperations(),
-          Map.of(DIM_MV_FORWARD_INDEX_DISABLED_INTEGER, List.of(ForwardIndexHandler.Operation.ENABLE_FORWARD_INDEX)));
+          Collections.singletonMap(DIM_MV_FORWARD_INDEX_DISABLED_INTEGER, Arrays.asList(ForwardIndexHandler.Operation.ENABLE_FORWARD_INDEX)));
 
       // TEST4: Enable forward index in dictionary format for two columns with forward index disabled. Disable inverted
       // index for one of them
@@ -931,8 +931,8 @@ public class ForwardIndexHandlerTest {
       _fieldConfigMap.remove(DIM_SV_FORWARD_INDEX_DISABLED_LONG);
       _fieldConfigMap.remove(DIM_MV_FORWARD_INDEX_DISABLED_STRING);
       assertEquals(computeOperations(),
-          Map.of(DIM_SV_FORWARD_INDEX_DISABLED_LONG, List.of(ForwardIndexHandler.Operation.ENABLE_FORWARD_INDEX),
-              DIM_MV_FORWARD_INDEX_DISABLED_STRING, List.of(ForwardIndexHandler.Operation.ENABLE_FORWARD_INDEX)));
+          Collections.singletonMap(DIM_SV_FORWARD_INDEX_DISABLED_LONG, Arrays.asList(ForwardIndexHandler.Operation.ENABLE_FORWARD_INDEX),
+              DIM_MV_FORWARD_INDEX_DISABLED_STRING, Arrays.asList(ForwardIndexHandler.Operation.ENABLE_FORWARD_INDEX)));
 
       // TEST5: Enable forward index in raw format for two columns with forward index disabled. Remove column from
       // inverted index as well (inverted index needs dictionary)
@@ -942,31 +942,31 @@ public class ForwardIndexHandlerTest {
       _invertedIndexColumns.remove(DIM_SV_FORWARD_INDEX_DISABLED_STRING);
       _invertedIndexColumns.remove(DIM_MV_FORWARD_INDEX_DISABLED_LONG);
       _fieldConfigMap.put(DIM_SV_FORWARD_INDEX_DISABLED_STRING,
-          new FieldConfig(DIM_SV_FORWARD_INDEX_DISABLED_STRING, FieldConfig.EncodingType.RAW, List.of(),
+          new FieldConfig(DIM_SV_FORWARD_INDEX_DISABLED_STRING, FieldConfig.EncodingType.RAW, Arrays.asList(),
               CompressionCodec.LZ4, null));
       _fieldConfigMap.put(DIM_MV_FORWARD_INDEX_DISABLED_LONG,
-          new FieldConfig(DIM_MV_FORWARD_INDEX_DISABLED_LONG, FieldConfig.EncodingType.RAW, List.of(),
+          new FieldConfig(DIM_MV_FORWARD_INDEX_DISABLED_LONG, FieldConfig.EncodingType.RAW, Arrays.asList(),
               CompressionCodec.LZ4, null));
       assertEquals(computeOperations(),
-          Map.of(DIM_SV_FORWARD_INDEX_DISABLED_STRING, List.of(ForwardIndexHandler.Operation.ENABLE_FORWARD_INDEX),
-              DIM_MV_FORWARD_INDEX_DISABLED_LONG, List.of(ForwardIndexHandler.Operation.ENABLE_FORWARD_INDEX)));
+          Collections.singletonMap(DIM_SV_FORWARD_INDEX_DISABLED_STRING, Arrays.asList(ForwardIndexHandler.Operation.ENABLE_FORWARD_INDEX),
+              DIM_MV_FORWARD_INDEX_DISABLED_LONG, Arrays.asList(ForwardIndexHandler.Operation.ENABLE_FORWARD_INDEX)));
 
       // TEST6: Enable forward index in dictionary format and one in raw format for columns with forward index disabled
       resetIndexConfigs();
       _noDictionaryColumns.add(DIM_MV_FORWARD_INDEX_DISABLED_LONG);
       _invertedIndexColumns.remove(DIM_MV_FORWARD_INDEX_DISABLED_LONG);
       _fieldConfigMap.put(DIM_MV_FORWARD_INDEX_DISABLED_LONG,
-          new FieldConfig(DIM_MV_FORWARD_INDEX_DISABLED_LONG, FieldConfig.EncodingType.RAW, List.of(),
+          new FieldConfig(DIM_MV_FORWARD_INDEX_DISABLED_LONG, FieldConfig.EncodingType.RAW, Arrays.asList(),
               CompressionCodec.LZ4, null));
       _fieldConfigMap.remove(DIM_SV_FORWARD_INDEX_DISABLED_BYTES);
       assertEquals(computeOperations(),
-          Map.of(DIM_MV_FORWARD_INDEX_DISABLED_LONG, List.of(ForwardIndexHandler.Operation.ENABLE_FORWARD_INDEX),
-              DIM_SV_FORWARD_INDEX_DISABLED_BYTES, List.of(ForwardIndexHandler.Operation.ENABLE_FORWARD_INDEX)));
+          Collections.singletonMap(DIM_MV_FORWARD_INDEX_DISABLED_LONG, Arrays.asList(ForwardIndexHandler.Operation.ENABLE_FORWARD_INDEX),
+              DIM_SV_FORWARD_INDEX_DISABLED_BYTES, Arrays.asList(ForwardIndexHandler.Operation.ENABLE_FORWARD_INDEX)));
 
       // TEST7: Enable forward index for a raw column with forward index disabled and keep it as raw
       resetIndexConfigs();
       _fieldConfigMap.put(DIM_RAW_MV_FORWARD_INDEX_DISABLED_INTEGER,
-          new FieldConfig(DIM_RAW_MV_FORWARD_INDEX_DISABLED_INTEGER, FieldConfig.EncodingType.RAW, List.of(),
+          new FieldConfig(DIM_RAW_MV_FORWARD_INDEX_DISABLED_INTEGER, FieldConfig.EncodingType.RAW, Arrays.asList(),
               CompressionCodec.LZ4, null));
       assertTrue(computeOperations().isEmpty());
 
@@ -991,7 +991,7 @@ public class ForwardIndexHandlerTest {
 
           existingSegmentMetadata = segmentDirectory.getSegmentMetadata();
           FieldConfig existingFieldConfig = _fieldConfigMap.put(column,
-              new FieldConfig(column, FieldConfig.EncodingType.RAW, List.of(), compressionType, null));
+              new FieldConfig(column, FieldConfig.EncodingType.RAW, Arrays.asList(), compressionType, null));
           assertNotNull(existingFieldConfig);
           ForwardIndexHandler handler = createForwardIndexHandler();
           if (existingFieldConfig.getCompressionCodec() == compressionType) {
@@ -1102,7 +1102,7 @@ public class ForwardIndexHandlerTest {
     // Change to MV_ENTRY_DICT compression
     for (String column : DICT_ENABLED_MV_COLUMNS_WITH_FORWARD_INDEX) {
       _fieldConfigMap.put(column,
-          new FieldConfig(column, FieldConfig.EncodingType.DICTIONARY, List.of(), CompressionCodec.MV_ENTRY_DICT,
+          new FieldConfig(column, FieldConfig.EncodingType.DICTIONARY, Arrays.asList(), CompressionCodec.MV_ENTRY_DICT,
               null));
 
       try (SegmentDirectory segmentDirectory = new SegmentLocalFSDirectory(INDEX_DIR, ReadMode.mmap);
@@ -1112,7 +1112,7 @@ public class ForwardIndexHandlerTest {
 
         ForwardIndexHandler handler = createForwardIndexHandler();
         assertEquals(handler.computeOperations(writer),
-            Map.of(column, List.of(ForwardIndexHandler.Operation.CHANGE_INDEX_COMPRESSION_TYPE)));
+            Collections.singletonMap(column, Arrays.asList(ForwardIndexHandler.Operation.CHANGE_INDEX_COMPRESSION_TYPE)));
         assertTrue(handler.needUpdateIndices(writer));
         handler.updateIndices(writer);
         handler.postUpdateIndicesCleanup(writer);
@@ -1139,7 +1139,7 @@ public class ForwardIndexHandlerTest {
 
         ForwardIndexHandler handler = createForwardIndexHandler();
         assertEquals(handler.computeOperations(writer),
-            Map.of(column, List.of(ForwardIndexHandler.Operation.CHANGE_INDEX_COMPRESSION_TYPE)));
+            Collections.singletonMap(column, Arrays.asList(ForwardIndexHandler.Operation.CHANGE_INDEX_COMPRESSION_TYPE)));
         assertTrue(handler.needUpdateIndices(writer));
         handler.updateIndices(writer);
         handler.postUpdateIndicesCleanup(writer);
@@ -1170,9 +1170,9 @@ public class ForwardIndexHandlerTest {
       existingSegmentMetadata = segmentDirectory.getSegmentMetadata();
 
       _fieldConfigMap.put(column1,
-          new FieldConfig(column1, FieldConfig.EncodingType.RAW, List.of(), newCompressionType, null));
+          new FieldConfig(column1, FieldConfig.EncodingType.RAW, Arrays.asList(), newCompressionType, null));
       _fieldConfigMap.put(column2,
-          new FieldConfig(column2, FieldConfig.EncodingType.RAW, List.of(), newCompressionType, null));
+          new FieldConfig(column2, FieldConfig.EncodingType.RAW, Arrays.asList(), newCompressionType, null));
       updateIndices();
       // Tear down before validation. Because columns.psf and index map cleanup happens at segmentDirectory.close()
     }
@@ -1311,8 +1311,8 @@ public class ForwardIndexHandlerTest {
         _writer = writer;
         existingSegmentMetadata = segmentDirectory.getSegmentMetadata();
 
-        _fieldConfigMap.put(column, new FieldConfig(column, FieldConfig.EncodingType.DICTIONARY, List.of(), null,
-            Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+        _fieldConfigMap.put(column, new FieldConfig(column, FieldConfig.EncodingType.DICTIONARY, Arrays.asList(), null,
+            Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
         updateIndices();
         // Tear down before validation. Because columns.psf and index map cleanup happens at segmentDirectory.close()
       }
@@ -1344,10 +1344,10 @@ public class ForwardIndexHandlerTest {
       _writer = writer;
       existingSegmentMetadata = segmentDirectory.getSegmentMetadata();
 
-      _fieldConfigMap.put(column1, new FieldConfig(column1, FieldConfig.EncodingType.DICTIONARY, List.of(), null,
-          Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
-      _fieldConfigMap.put(column2, new FieldConfig(column2, FieldConfig.EncodingType.DICTIONARY, List.of(), null,
-          Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+      _fieldConfigMap.put(column1, new FieldConfig(column1, FieldConfig.EncodingType.DICTIONARY, Arrays.asList(), null,
+          Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+      _fieldConfigMap.put(column2, new FieldConfig(column2, FieldConfig.EncodingType.DICTIONARY, Arrays.asList(), null,
+          Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
       updateIndices();
       // Tear down before validation. Because columns.psf and index map cleanup happens at segmentDirectory.close()
     }
@@ -1470,8 +1470,8 @@ public class ForwardIndexHandlerTest {
         _noDictionaryColumns.remove(column);
         _invertedIndexColumns.add(column);
         _fieldConfigMap.put(column,
-            new FieldConfig(column, FieldConfig.EncodingType.DICTIONARY, List.of(FieldConfig.IndexType.INVERTED), null,
-                Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+            new FieldConfig(column, FieldConfig.EncodingType.DICTIONARY, Arrays.asList(FieldConfig.IndexType.INVERTED), null,
+                Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
         updateIndices();
         // Tear down before validation. Because columns.psf and index map cleanup happens at segmentDirectory.close()
       }
@@ -1513,11 +1513,11 @@ public class ForwardIndexHandlerTest {
       _invertedIndexColumns.add(column1);
       _invertedIndexColumns.add(column2);
       _fieldConfigMap.put(column1,
-          new FieldConfig(column1, FieldConfig.EncodingType.DICTIONARY, List.of(FieldConfig.IndexType.INVERTED), null,
-              Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+          new FieldConfig(column1, FieldConfig.EncodingType.DICTIONARY, Arrays.asList(FieldConfig.IndexType.INVERTED), null,
+              Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
       _fieldConfigMap.put(column2,
-          new FieldConfig(column2, FieldConfig.EncodingType.DICTIONARY, List.of(FieldConfig.IndexType.INVERTED), null,
-              Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+          new FieldConfig(column2, FieldConfig.EncodingType.DICTIONARY, Arrays.asList(FieldConfig.IndexType.INVERTED), null,
+              Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
       updateIndices();
       // Tear down before validation. Because columns.psf and index map cleanup happens at segmentDirectory.close()
     }
@@ -1574,8 +1574,8 @@ public class ForwardIndexHandlerTest {
         _writer = writer;
         existingSegmentMetadata = segmentDirectory.getSegmentMetadata();
 
-        _fieldConfigMap.put(column, new FieldConfig(column, FieldConfig.EncodingType.RAW, List.of(), null,
-            Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+        _fieldConfigMap.put(column, new FieldConfig(column, FieldConfig.EncodingType.RAW, Arrays.asList(), null,
+            Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
         updateIndices();
         // Tear down before validation. Because columns.psf and index map cleanup happens at segmentDirectory.close()
       }
@@ -1609,8 +1609,8 @@ public class ForwardIndexHandlerTest {
         existingSegmentMetadata = segmentDirectory.getSegmentMetadata();
 
         _noDictionaryColumns.remove(column);
-        _fieldConfigMap.put(column, new FieldConfig(column, FieldConfig.EncodingType.DICTIONARY, List.of(), null,
-            Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+        _fieldConfigMap.put(column, new FieldConfig(column, FieldConfig.EncodingType.DICTIONARY, Arrays.asList(), null,
+            Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
         updateIndices();
         // Tear down before validation. Because columns.psf and index map cleanup happens at segmentDirectory.close()
       }

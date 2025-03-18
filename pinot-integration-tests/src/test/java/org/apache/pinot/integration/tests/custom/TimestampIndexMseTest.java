@@ -191,7 +191,7 @@ public class TimestampIndexMseTest extends BaseClusterIntegrationTest implements
     }
     FieldConfig newTimeFieldConfig = new FieldConfig.Builder(colName)
         .withTimestampConfig(
-            new TimestampConfig(List.of(TimestampIndexGranularity.SECOND))
+            new TimestampConfig(Arrays.asList(TimestampIndexGranularity.SECOND))
         )
         .build();
     fieldConfigList.add(newTimeFieldConfig);

@@ -49,7 +49,7 @@ public abstract class MinionPrometheusMetricsTest extends PinotPrometheusMetrics
     } else {
       _minionMetrics.addTimedValue(ExportedLabelValues.MINION_TASK_SEGMENT_IMPORT, timer, 30L, TimeUnit.MILLISECONDS);
       assertTimerExportedCorrectly(timer.getTimerName(),
-          List.of(ExportedLabelKeys.ID, ExportedLabelValues.MINION_TASK_SEGMENT_IMPORT), EXPORTED_METRIC_PREFIX);
+          Arrays.asList(ExportedLabelKeys.ID, ExportedLabelValues.MINION_TASK_SEGMENT_IMPORT), EXPORTED_METRIC_PREFIX);
       _minionMetrics.addTimedTableValue(TABLE_NAME_WITH_TYPE, ExportedLabelValues.MINION_TASK_SEGMENT_IMPORT, timer,
           30L, TimeUnit.MILLISECONDS);
       assertTimerExportedCorrectly(timer.getTimerName(), ExportedLabels.TABLENAME_TABLETYPE_MINION_TASKTYPE,
@@ -74,15 +74,15 @@ public abstract class MinionPrometheusMetricsTest extends PinotPrometheusMetrics
   private void validateMetersWithLabels(MinionMeter meter) {
     if (meter.getMeterName().startsWith(METER_PREFIX_NO_TASKS)) {
       _minionMetrics.addMeteredTableValue(ExportedLabelValues.TABLENAME, meter, 1L);
-      assertMeterExportedCorrectly(meter.getMeterName(), List.of(ExportedLabelKeys.ID, ExportedLabelValues.TABLENAME),
+      assertMeterExportedCorrectly(meter.getMeterName(), Arrays.asList(ExportedLabelKeys.ID, ExportedLabelValues.TABLENAME),
           EXPORTED_METRIC_PREFIX);
 
       _minionMetrics.addMeteredValue(ExportedLabelValues.MINION_TASK_SEGMENT_IMPORT, meter, 1L);
       assertMeterExportedCorrectly(meter.getMeterName(),
-          List.of(ExportedLabelKeys.ID, ExportedLabelValues.MINION_TASK_SEGMENT_IMPORT), EXPORTED_METRIC_PREFIX);
+          Arrays.asList(ExportedLabelKeys.ID, ExportedLabelValues.MINION_TASK_SEGMENT_IMPORT), EXPORTED_METRIC_PREFIX);
     } else if (meter == MinionMeter.SEGMENT_UPLOAD_FAIL_COUNT || meter == MinionMeter.SEGMENT_DOWNLOAD_FAIL_COUNT) {
       _minionMetrics.addMeteredTableValue(TABLE_NAME_WITH_TYPE, meter, 1L);
-      assertMeterExportedCorrectly(meter.getMeterName(), List.of(ExportedLabelKeys.ID, TABLE_NAME_WITH_TYPE),
+      assertMeterExportedCorrectly(meter.getMeterName(), Arrays.asList(ExportedLabelKeys.ID, TABLE_NAME_WITH_TYPE),
           EXPORTED_METRIC_PREFIX);
     } else {
       //all remaining meters are also being used as global meters, check their usage

@@ -63,14 +63,14 @@ public class MapFieldTypeTest extends CustomDataQueryClusterIntegrationTest {
   @Override
   public Schema createSchema() {
     ComplexFieldSpec stringMapFieldSpec = new ComplexFieldSpec(STRING_MAP_FIELD_NAME, FieldSpec.DataType.MAP, true,
-        Map.of(
+        Collections.singletonMap(
             ComplexFieldSpec.KEY_FIELD,
             new DimensionFieldSpec(ComplexFieldSpec.KEY_FIELD, FieldSpec.DataType.STRING, true),
             ComplexFieldSpec.VALUE_FIELD,
             new DimensionFieldSpec(ComplexFieldSpec.VALUE_FIELD, FieldSpec.DataType.STRING, true)
         ));
     ComplexFieldSpec intMapFieldSpec = new ComplexFieldSpec(INT_MAP_FIELD_NAME, FieldSpec.DataType.MAP, true,
-        Map.of(
+        Collections.singletonMap(
             ComplexFieldSpec.KEY_FIELD,
             new DimensionFieldSpec(ComplexFieldSpec.KEY_FIELD, FieldSpec.DataType.STRING, true),
             ComplexFieldSpec.VALUE_FIELD,

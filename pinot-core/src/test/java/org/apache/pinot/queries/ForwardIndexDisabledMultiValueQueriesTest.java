@@ -108,15 +108,15 @@ public class ForwardIndexDisabledMultiValueQueriesTest extends BaseQueriesTest {
         .addDateTime("daysSinceEpoch", DataType.INT, "EPOCH|DAYS", "1:DAYS")
         .build();
 
-    List<FieldConfig> fieldConfigs = List.of(
-        new FieldConfig("column6", FieldConfig.EncodingType.DICTIONARY, List.of(), null,
-            Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")),
-        new FieldConfig("column7", FieldConfig.EncodingType.DICTIONARY, List.of(), null,
-            Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+    List<FieldConfig> fieldConfigs = Arrays.asList(
+        new FieldConfig("column6", FieldConfig.EncodingType.DICTIONARY, Arrays.asList(), null,
+            Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")),
+        new FieldConfig("column7", FieldConfig.EncodingType.DICTIONARY, Arrays.asList(), null,
+            Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
     TableConfig tableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME)
         .setTimeColumnName("daysSinceEpoch")
-        .setNoDictionaryColumns(List.of("column5"))
-        .setInvertedIndexColumns(List.of("column3", "column6", "column7", "column8", "column9"))
+        .setNoDictionaryColumns(Arrays.asList("column5"))
+        .setInvertedIndexColumns(Arrays.asList("column3", "column6", "column7", "column8", "column9"))
         .setCreateInvertedIndexDuringSegmentGeneration(true)
         .setFieldConfigList(fieldConfigs)
         .build();
@@ -151,7 +151,7 @@ public class ForwardIndexDisabledMultiValueQueriesTest extends BaseQueriesTest {
     }
 
     _indexSegment = segment;
-    _indexSegments = List.of(segment, segment);
+    _indexSegments = Arrays.asList(segment, segment);
   }
 
   @AfterClass

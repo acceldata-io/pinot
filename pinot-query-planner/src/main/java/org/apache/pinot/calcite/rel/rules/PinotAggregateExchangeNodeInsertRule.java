@@ -155,8 +155,8 @@ public class PinotAggregateExchangeNodeInsertRule {
       }
 
       PinotLogicalAggregate newAggRel = createPlan(call, aggRel, true, hintOptions, newCollations, limit);
-      RelNode newProjectRel = projectRel.copy(projectRel.getTraitSet(), List.of(newAggRel));
-      call.transformTo(sortRel.copy(sortRel.getTraitSet(), List.of(newProjectRel)));
+      RelNode newProjectRel = projectRel.copy(projectRel.getTraitSet(), Arrays.asList(newAggRel));
+      call.transformTo(sortRel.copy(sortRel.getTraitSet(), Arrays.asList(newProjectRel)));
     }
   }
 
@@ -194,7 +194,7 @@ public class PinotAggregateExchangeNodeInsertRule {
       }
 
       PinotLogicalAggregate newAggRel = createPlan(call, aggRel, true, hintOptions, collations, limit);
-      call.transformTo(sortRel.copy(sortRel.getTraitSet(), List.of(newAggRel)));
+      call.transformTo(sortRel.copy(sortRel.getTraitSet(), Arrays.asList(newAggRel)));
     }
   }
 
@@ -213,7 +213,7 @@ public class PinotAggregateExchangeNodeInsertRule {
       Map<String, String> hintOptions =
           PinotHintStrategyTable.getHintOptions(aggRel.getHints(), PinotHintOptions.AGGREGATE_HINT_OPTIONS);
       call.transformTo(
-          createPlan(call, aggRel, !aggRel.getGroupSet().isEmpty(), hintOptions != null ? hintOptions : Map.of(), null,
+          createPlan(call, aggRel, !aggRel.getGroupSet().isEmpty(), hintOptions != null ? hintOptions : new HashMap<>(), null,
               0));
     }
   }
@@ -363,7 +363,7 @@ public class PinotAggregateExchangeNodeInsertRule {
       int numArguments = argList.size();
       List<RexNode> rexList;
       if (numArguments <= 1) {
-        rexList = ImmutableList.of(inputRef);
+        rexList = ImmutableArrays.asList(inputRef);
       } else {
         rexList = new ArrayList<>(numArguments);
         rexList.add(inputRef);
@@ -395,9 +395,9 @@ public class PinotAggregateExchangeNodeInsertRule {
       int numArguments = argList.size();
       List<RexNode> rexList;
       if (numArguments == 0) {
-        rexList = ImmutableList.of();
+        rexList = ImmutableArrays.asList();
       } else if (numArguments == 1) {
-        rexList = ImmutableList.of(RexInputRef.of(argList.get(0), input.getRowType()));
+        rexList = ImmutableArrays.asList(RexInputRef.of(argList.get(0), input.getRowType()));
       } else {
         rexList = new ArrayList<>(numArguments);
         rexList.add(RexInputRef.of(argList.get(0), input.getRowType()));
@@ -452,7 +452,7 @@ public class PinotAggregateExchangeNodeInsertRule {
     SqlAggFunction sqlAggFunction =
         new PinotSqlAggFunction(functionName, kind, returnTypeInference, operandTypeChecker, functionCategory);
     return AggregateCall.create(sqlAggFunction, false, orgAggCall.isApproximate(), orgAggCall.ignoreNulls(), rexList,
-        ImmutableList.of(), aggType.isInputIntermediateFormat() ? -1 : orgAggCall.filterArg, orgAggCall.distinctKeys,
+        ImmutableArrays.asList(), aggType.isInputIntermediateFormat() ? -1 : orgAggCall.filterArg, orgAggCall.distinctKeys,
         orgAggCall.collation, numGroups, input, returnType, null);
   }
 

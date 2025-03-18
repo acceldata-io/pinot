@@ -32,16 +32,16 @@ public class PercentileTDigestAggregationFunctionTest {
     PercentileTDigestAggregationFunction function = new PercentileTDigestAggregationFunction(
         ExpressionContext.forIdentifier("col"), 95, false);
 
-    Assert.assertTrue(function.canUseStarTree(Map.of()));
-    Assert.assertTrue(function.canUseStarTree(Map.of(Constants.PERCENTILETDIGEST_COMPRESSION_FACTOR_KEY, "100")));
-    Assert.assertTrue(function.canUseStarTree(Map.of(Constants.PERCENTILETDIGEST_COMPRESSION_FACTOR_KEY, 100)));
-    Assert.assertFalse(function.canUseStarTree(Map.of(Constants.PERCENTILETDIGEST_COMPRESSION_FACTOR_KEY, "200")));
+    Assert.assertTrue(function.canUseStarTree(new HashMap<>()));
+    Assert.assertTrue(function.canUseStarTree(Collections.singletonMap(Constants.PERCENTILETDIGEST_COMPRESSION_FACTOR_KEY, "100")));
+    Assert.assertTrue(function.canUseStarTree(Collections.singletonMap(Constants.PERCENTILETDIGEST_COMPRESSION_FACTOR_KEY, 100)));
+    Assert.assertFalse(function.canUseStarTree(Collections.singletonMap(Constants.PERCENTILETDIGEST_COMPRESSION_FACTOR_KEY, "200")));
 
     function = new PercentileTDigestAggregationFunction(ExpressionContext.forIdentifier("col"), 99, 100, true);
-    Assert.assertTrue(function.canUseStarTree(Map.of()));
-    Assert.assertTrue(function.canUseStarTree(Map.of(Constants.PERCENTILETDIGEST_COMPRESSION_FACTOR_KEY, "100")));
-    Assert.assertTrue(function.canUseStarTree(Map.of(Constants.PERCENTILETDIGEST_COMPRESSION_FACTOR_KEY, 100)));
-    Assert.assertFalse(function.canUseStarTree(Map.of(Constants.PERCENTILETDIGEST_COMPRESSION_FACTOR_KEY, 200)));
+    Assert.assertTrue(function.canUseStarTree(new HashMap<>()));
+    Assert.assertTrue(function.canUseStarTree(Collections.singletonMap(Constants.PERCENTILETDIGEST_COMPRESSION_FACTOR_KEY, "100")));
+    Assert.assertTrue(function.canUseStarTree(Collections.singletonMap(Constants.PERCENTILETDIGEST_COMPRESSION_FACTOR_KEY, 100)));
+    Assert.assertFalse(function.canUseStarTree(Collections.singletonMap(Constants.PERCENTILETDIGEST_COMPRESSION_FACTOR_KEY, 200)));
   }
 
   @Test
@@ -49,9 +49,9 @@ public class PercentileTDigestAggregationFunctionTest {
     PercentileTDigestAggregationFunction function = new PercentileTDigestAggregationFunction(
         ExpressionContext.forIdentifier("col"), 95, 200, false);
 
-    Assert.assertFalse(function.canUseStarTree(Map.of()));
-    Assert.assertFalse(function.canUseStarTree(Map.of(Constants.PERCENTILETDIGEST_COMPRESSION_FACTOR_KEY, "100")));
-    Assert.assertTrue(function.canUseStarTree(Map.of(Constants.PERCENTILETDIGEST_COMPRESSION_FACTOR_KEY, "200")));
-    Assert.assertTrue(function.canUseStarTree(Map.of(Constants.PERCENTILETDIGEST_COMPRESSION_FACTOR_KEY, 200)));
+    Assert.assertFalse(function.canUseStarTree(new HashMap<>()));
+    Assert.assertFalse(function.canUseStarTree(Collections.singletonMap(Constants.PERCENTILETDIGEST_COMPRESSION_FACTOR_KEY, "100")));
+    Assert.assertTrue(function.canUseStarTree(Collections.singletonMap(Constants.PERCENTILETDIGEST_COMPRESSION_FACTOR_KEY, "200")));
+    Assert.assertTrue(function.canUseStarTree(Collections.singletonMap(Constants.PERCENTILETDIGEST_COMPRESSION_FACTOR_KEY, 200)));
   }
 }

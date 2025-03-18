@@ -94,7 +94,7 @@ public class MapUtils {
     Preconditions.checkState(size >= 0, "Size of the map cannot be negative");
 
     if (size == 0) {
-      return Map.of(); // Return empty map if size is zero
+      return new HashMap<>(); // Return empty map if size is zero
     }
 
     // Check that remaining bytes are sufficient to read key and value lengths and data

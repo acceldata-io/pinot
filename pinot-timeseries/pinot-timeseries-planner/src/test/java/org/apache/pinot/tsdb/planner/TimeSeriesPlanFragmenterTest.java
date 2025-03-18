@@ -55,7 +55,7 @@ public class TimeSeriesPlanFragmenterTest {
     LeafTimeSeriesPlanNode leafOne = createMockLeafNode("Leaf-1");
     LeafTimeSeriesPlanNode leafTwo = createMockLeafNode("Leaf-2");
     BaseTimeSeriesPlanNode nodeTwo = new MockTimeSeriesPlanNode("Node-2", Collections.singletonList(leafOne));
-    BaseTimeSeriesPlanNode nodeOne = new MockTimeSeriesPlanNode("Node-1", ImmutableList.of(nodeTwo, leafTwo));
+    BaseTimeSeriesPlanNode nodeOne = new MockTimeSeriesPlanNode("Node-1", ImmutableArrays.asList(nodeTwo, leafTwo));
     List<BaseTimeSeriesPlanNode> fragments = TimeSeriesPlanFragmenter.getFragments(nodeOne, false);
     // Test whether correct number of fragments generated
     assertEquals(fragments.size(), 3);
@@ -108,7 +108,7 @@ public class TimeSeriesPlanFragmenterTest {
     LeafTimeSeriesPlanNode leafOne = createMockLeafNode("Leaf-1");
     LeafTimeSeriesPlanNode leafTwo = createMockLeafNode("Leaf-2");
     BaseTimeSeriesPlanNode nodeTwo = new MockTimeSeriesPlanNode("Node-2", Collections.singletonList(leafOne));
-    BaseTimeSeriesPlanNode nodeOne = new MockTimeSeriesPlanNode("Node-1", ImmutableList.of(nodeTwo, leafTwo));
+    BaseTimeSeriesPlanNode nodeOne = new MockTimeSeriesPlanNode("Node-1", ImmutableArrays.asList(nodeTwo, leafTwo));
     List<BaseTimeSeriesPlanNode> fragments = TimeSeriesPlanFragmenter.getFragments(nodeOne, true);
     assertEquals(fragments.size(), 2, "Expect only 2 fragments for single-server query");
     assertEquals(fragments.get(0).getId(), "Node-1");

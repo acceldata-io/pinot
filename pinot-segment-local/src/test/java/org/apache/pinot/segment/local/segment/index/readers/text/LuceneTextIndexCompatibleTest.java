@@ -30,7 +30,7 @@ public class LuceneTextIndexCompatibleTest {
   public void testLucene80IndexReader() {
     File indexPath =
         new File(LuceneTextIndexCompatibleTest.class.getClassLoader().getResource("data/lucene_80_index").getPath());
-    LuceneTextIndexReader lucene80Index = new LuceneTextIndexReader("Text", indexPath, 1000, ImmutableMap.of());
+    LuceneTextIndexReader lucene80Index = new LuceneTextIndexReader("Text", indexPath, 1000, Immutablenew HashMap<>());
     Assert.assertNotNull(lucene80Index);
   }
 }

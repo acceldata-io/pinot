@@ -90,7 +90,7 @@ public class PinotTableRestletResourceTest extends ControllerTest {
 
       @Override
       public List<PinotTaskConfig> generateTasks(List<TableConfig> tableConfigs) {
-        return List.of(new PinotTaskConfig(MinionConstants.SegmentGenerationAndPushTask.TASK_TYPE, new HashMap<>()));
+        return Arrays.asList(new PinotTaskConfig(MinionConstants.SegmentGenerationAndPushTask.TASK_TYPE, new HashMap<>()));
       }
     });
     taskManager.registerTaskGenerator(new BaseTaskGenerator() {
@@ -101,7 +101,7 @@ public class PinotTableRestletResourceTest extends ControllerTest {
 
       @Override
       public List<PinotTaskConfig> generateTasks(List<TableConfig> tableConfigs) {
-        return List.of(new PinotTaskConfig(MinionConstants.MergeRollupTask.TASK_TYPE, new HashMap<>()));
+        return Arrays.asList(new PinotTaskConfig(MinionConstants.MergeRollupTask.TASK_TYPE, new HashMap<>()));
       }
     });
     taskManager.registerTaskGenerator(new BaseTaskGenerator() {
@@ -112,7 +112,7 @@ public class PinotTableRestletResourceTest extends ControllerTest {
 
       @Override
       public List<PinotTaskConfig> generateTasks(List<TableConfig> tableConfigs) {
-        return List.of(new PinotTaskConfig(MinionConstants.RealtimeToOfflineSegmentsTask.TASK_TYPE, new HashMap<>()));
+        return Arrays.asList(new PinotTaskConfig(MinionConstants.RealtimeToOfflineSegmentsTask.TASK_TYPE, new HashMap<>()));
       }
     });
   }
@@ -226,8 +226,8 @@ public class PinotTableRestletResourceTest extends ControllerTest {
     DEFAULT_INSTANCE.addDummySchema(rawTableName);
     // Failed to create a table
     TableConfig tableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(rawTableName).setTaskConfig(
-        new TableTaskConfig(ImmutableMap.of(MinionConstants.SegmentGenerationAndPushTask.TASK_TYPE,
-            ImmutableMap.of(PinotTaskManager.SCHEDULE_KEY, "* * * * * * *")))).build();
+        new TableTaskConfig(ImmutableCollections.singletonMap(MinionConstants.SegmentGenerationAndPushTask.TASK_TYPE,
+            ImmutableCollections.singletonMap(PinotTaskManager.SCHEDULE_KEY, "* * * * * * *")))).build();
     try {
       sendPostRequest(_createTableUrl, tableConfig.toJsonString());
       fail("Creation of an OFFLINE table with an invalid cron expression does not fail");
@@ -238,8 +238,8 @@ public class PinotTableRestletResourceTest extends ControllerTest {
 
     // Succeed to create a table
     tableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(rawTableName).setTaskConfig(
-        new TableTaskConfig(ImmutableMap.of(MinionConstants.SegmentGenerationAndPushTask.TASK_TYPE,
-            ImmutableMap.of(PinotTaskManager.SCHEDULE_KEY, "0 */10 * ? * * *")))).build();
+        new TableTaskConfig(ImmutableCollections.singletonMap(MinionConstants.SegmentGenerationAndPushTask.TASK_TYPE,
+            ImmutableCollections.singletonMap(PinotTaskManager.SCHEDULE_KEY, "0 */10 * ? * * *")))).build();
     try {
       String response = sendPostRequest(_createTableUrl, tableConfig.toJsonString());
       assertEquals(response,
@@ -251,8 +251,8 @@ public class PinotTableRestletResourceTest extends ControllerTest {
 
     // Failed to update the table
     tableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(rawTableName).setTaskConfig(
-        new TableTaskConfig(ImmutableMap.of(MinionConstants.SegmentGenerationAndPushTask.TASK_TYPE,
-            ImmutableMap.of(PinotTaskManager.SCHEDULE_KEY, "5 5 5 5 5 5 5")))).build();
+        new TableTaskConfig(ImmutableCollections.singletonMap(MinionConstants.SegmentGenerationAndPushTask.TASK_TYPE,
+            ImmutableCollections.singletonMap(PinotTaskManager.SCHEDULE_KEY, "5 5 5 5 5 5 5")))).build();
     try {
       sendPutRequest(DEFAULT_INSTANCE.getControllerRequestURLBuilder().forUpdateTableConfig(rawTableName),
           tableConfig.toJsonString());

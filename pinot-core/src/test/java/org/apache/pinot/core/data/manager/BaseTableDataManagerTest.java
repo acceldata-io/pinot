@@ -89,10 +89,10 @@ public class BaseTableDataManagerTest {
   private static final TableConfig DEFAULT_TABLE_CONFIG =
       new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME).build();
   private static final TableConfig TIER_TABLE_CONFIG =
-      new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME).setTierConfigList(List.of(
+      new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME).setTierConfigList(Arrays.asList(
           new TierConfig(TIER_NAME, TierFactory.TIME_SEGMENT_SELECTOR_TYPE, "3d", null,
               TierFactory.PINOT_SERVER_STORAGE_TYPE, "tag_OFFLINE", null,
-              Map.of("dataDir", new File(TEMP_DIR, TIER_NAME).getAbsolutePath())))).build();
+              Collections.singletonMap("dataDir", new File(TEMP_DIR, TIER_NAME).getAbsolutePath())))).build();
   private static final Schema SCHEMA =
       new Schema.SchemaBuilder().setSchemaName(RAW_TABLE_NAME).addSingleValueDimension(STRING_COLUMN, DataType.STRING)
           .addMetric(LONG_COLUMN, DataType.LONG).build();
@@ -276,7 +276,7 @@ public class BaseTableDataManagerTest {
 
     // Require to add indices.
     TableConfig tableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME)
-        .setInvertedIndexColumns(List.of(STRING_COLUMN, LONG_COLUMN)).build();
+        .setInvertedIndexColumns(Arrays.asList(STRING_COLUMN, LONG_COLUMN)).build();
     IndexLoadingConfig indexLoadingConfig = new IndexLoadingConfig(tableConfig, SCHEMA);
 
     BaseTableDataManager tableDataManager = createTableManager();
@@ -548,7 +548,7 @@ public class BaseTableDataManagerTest {
 
     // Require to add indices.
     TableConfig tableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME)
-        .setInvertedIndexColumns(List.of(STRING_COLUMN, LONG_COLUMN)).build();
+        .setInvertedIndexColumns(Arrays.asList(STRING_COLUMN, LONG_COLUMN)).build();
     IndexLoadingConfig indexLoadingConfig = new IndexLoadingConfig(tableConfig, SCHEMA);
     indexLoadingConfig.setSegmentVersion(SegmentVersion.v3);
 

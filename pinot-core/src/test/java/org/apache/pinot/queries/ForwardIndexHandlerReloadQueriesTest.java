@@ -105,14 +105,14 @@ public class ForwardIndexHandlerReloadQueriesTest extends BaseQueriesTest {
       throws Exception {
     FileUtils.deleteQuietly(INDEX_DIR);
 
-    List<String> noDictionaryColumns = List.of("column1", "column2", "column3", "column5", "column7", "column10");
-    List<String> invertedIndexColumns = List.of("column8", "column9");
+    List<String> noDictionaryColumns = Arrays.asList("column1", "column2", "column3", "column5", "column7", "column10");
+    List<String> invertedIndexColumns = Arrays.asList("column8", "column9");
     List<FieldConfig> fieldConfigs = new ArrayList<>(noDictionaryColumns.size());
     for (String column : noDictionaryColumns) {
       fieldConfigs.add(
-          new FieldConfig(column, FieldConfig.EncodingType.RAW, List.of(), FieldConfig.CompressionCodec.SNAPPY, null));
+          new FieldConfig(column, FieldConfig.EncodingType.RAW, Arrays.asList(), FieldConfig.CompressionCodec.SNAPPY, null));
     }
-    TableConfig tableConfig = createTableConfig(noDictionaryColumns, invertedIndexColumns, List.of(), fieldConfigs);
+    TableConfig tableConfig = createTableConfig(noDictionaryColumns, invertedIndexColumns, Arrays.asList(), fieldConfigs);
 
     URL resource = getClass().getClassLoader().getResource(AVRO_DATA);
     assertNotNull(resource);
@@ -147,7 +147,7 @@ public class ForwardIndexHandlerReloadQueriesTest extends BaseQueriesTest {
     }
 
     _indexSegment = segment;
-    _indexSegments = List.of(segment, segment);
+    _indexSegments = Arrays.asList(segment, segment);
   }
 
   private TableConfig createTableConfig(List<String> noDictionaryColumns, List<String> invertedIndexColumns,
@@ -646,16 +646,16 @@ public class ForwardIndexHandlerReloadQueriesTest extends BaseQueriesTest {
    */
   private void changePropertiesAndReloadSegment()
       throws Exception {
-    List<String> noDictionaryColumns = List.of("column1", "column5", "column6", "column9");
-    List<String> invertedIndexColumns = List.of("column2", "column7", "column8");
-    List<String> rangeIndexColumns = List.of("column9", "column10");
+    List<String> noDictionaryColumns = Arrays.asList("column1", "column5", "column6", "column9");
+    List<String> invertedIndexColumns = Arrays.asList("column2", "column7", "column8");
+    List<String> rangeIndexColumns = Arrays.asList("column9", "column10");
     List<FieldConfig> fieldConfigs = new ArrayList<>(noDictionaryColumns.size());
     for (String column : noDictionaryColumns) {
       FieldConfig.CompressionCodec compressionCodec = FieldConfig.CompressionCodec.SNAPPY;
       if (column.equals("column1")) {
         compressionCodec = FieldConfig.CompressionCodec.ZSTANDARD;
       }
-      fieldConfigs.add(new FieldConfig(column, FieldConfig.EncodingType.RAW, List.of(), compressionCodec, null));
+      fieldConfigs.add(new FieldConfig(column, FieldConfig.EncodingType.RAW, Arrays.asList(), compressionCodec, null));
     }
     TableConfig tableConfig =
         createTableConfig(noDictionaryColumns, invertedIndexColumns, rangeIndexColumns, fieldConfigs);
@@ -666,7 +666,7 @@ public class ForwardIndexHandlerReloadQueriesTest extends BaseQueriesTest {
     ImmutableSegment segment = reloadSegment(indexDir, indexLoadingConfig, SCHEMA);
     _indexSegment.destroy();
     _indexSegment = segment;
-    _indexSegments = List.of(segment, segment);
+    _indexSegments = Arrays.asList(segment, segment);
 
     Map<String, ColumnMetadata> columnMetadataMap = segment.getSegmentMetadata().getColumnMetadataMap();
     for (Map.Entry<String, ColumnMetadata> entry : columnMetadataMap.entrySet()) {

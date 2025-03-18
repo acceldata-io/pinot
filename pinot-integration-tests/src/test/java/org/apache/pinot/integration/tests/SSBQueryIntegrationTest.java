@@ -45,7 +45,7 @@ import org.yaml.snakeyaml.Yaml;
 
 public class SSBQueryIntegrationTest extends BaseClusterIntegrationTest {
   private static final Logger LOGGER = LoggerFactory.getLogger(SSBQueryIntegrationTest.class);
-  private static final Map<String, String> SSB_QUICKSTART_TABLE_RESOURCES = ImmutableMap.of(
+  private static final Map<String, String> SSB_QUICKSTART_TABLE_RESOURCES = ImmutableCollections.singletonMap(
       "customer", "examples/batch/ssb/customer",
       "dates", "examples/batch/ssb/dates",
       "lineorder", "examples/batch/ssb/lineorder",

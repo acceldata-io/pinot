@@ -67,7 +67,7 @@ public class SingleStageResourceTrackingQuickStart extends Quickstart {
   }
 
   protected List<String> getQueries() {
-    return List.of(SampleQueries.COUNT_BASEBALL_STATS,
+    return Arrays.asList(SampleQueries.COUNT_BASEBALL_STATS,
         SampleQueries.BASEBALL_SUM_RUNS_Q1,
         SampleQueries.BASEBALL_SUM_RUNS_Q2,
         SampleQueries.BASEBALL_SUM_RUNS_Q3,

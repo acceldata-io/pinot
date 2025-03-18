@@ -81,11 +81,11 @@ public class SegmentGenerationAndPushTaskExecutorTest {
     assertEquals("file:" + spec.getInputFilePath(), resourcesLoc + "input/dummyTable.json");
     assertEquals(spec.getRecordReaderSpec().getClassName(), "AReaderClass");
     assertEquals(spec.getRecordReaderSpec().getConfigClassName(), "AReaderConfigClass");
-    assertEqualsDeep(spec.getRecordReaderSpec().getConfigs(), Map.of("prop1", "value1", "prop.2", "value2"));
+    assertEqualsDeep(spec.getRecordReaderSpec().getConfigs(), Collections.singletonMap("prop1", "value1", "prop.2", "value2"));
     assertTrue(spec.isFailOnEmptySegment());
     assertEquals(spec.getSegmentNameGeneratorSpec().getType(), "inputtext");
     assertEqualsDeep(spec.getSegmentNameGeneratorSpec().getConfigs(),
-        Map.of("prop.seg.1", "valseg1", "propseg2", "valseg2", SegmentGenerationTaskRunner.APPEND_UUID_TO_SEGMENT_NAME,
+        Collections.singletonMap("prop.seg.1", "valseg1", "propseg2", "valseg2", SegmentGenerationTaskRunner.APPEND_UUID_TO_SEGMENT_NAME,
             "true"));
   }
 }

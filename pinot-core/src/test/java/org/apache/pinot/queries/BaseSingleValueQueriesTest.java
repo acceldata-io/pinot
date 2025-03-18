@@ -87,7 +87,7 @@ public abstract class BaseSingleValueQueriesTest extends BaseQueriesTest {
   protected static final TableConfig TABLE_CONFIG = new TableConfigBuilder(TableType.OFFLINE)
       .setTableName(RAW_TABLE_NAME)
       .setTimeColumnName("daysSinceEpoch")
-      .setInvertedIndexColumns(List.of("column6", "column7", "column11", "column17", "column18"))
+      .setInvertedIndexColumns(Arrays.asList("column6", "column7", "column11", "column17", "column18"))
       .build();
   static {
     // The segment generation code in SegmentColumnarIndexCreator will throw exception if start and end time in time

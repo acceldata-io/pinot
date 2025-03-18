@@ -136,7 +136,7 @@ public class RawIndexBenchmark {
       schema.addField(dimensionFieldSpec);
     }
     TableConfig tableConfig =
-        new TableConfigBuilder(TableType.OFFLINE).setTableName("test").setNoDictionaryColumns(List.of(_rawIndexColumn))
+        new TableConfigBuilder(TableType.OFFLINE).setTableName("test").setNoDictionaryColumns(Arrays.asList(_rawIndexColumn))
             .build();
     SegmentGeneratorConfig config = new SegmentGeneratorConfig(tableConfig, schema);
 

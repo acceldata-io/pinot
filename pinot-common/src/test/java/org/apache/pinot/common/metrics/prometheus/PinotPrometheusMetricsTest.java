@@ -75,16 +75,16 @@ public abstract class PinotPrometheusMetricsTest {
 
   //each meter defined in code is exported with these measurements
   private static final List<String> METER_TYPES =
-      List.of("Count", "FiveMinuteRate", "MeanRate", "OneMinuteRate", "FifteenMinuteRate");
+      Arrays.asList("Count", "FiveMinuteRate", "MeanRate", "OneMinuteRate", "FifteenMinuteRate");
 
   //each timer defined in code is exported with these measurements
   private static final List<String> TIMER_TYPES =
-      List.of("Count", "FiveMinuteRate", "Max", "999thPercentile", "95thPercentile", "75thPercentile", "98thPercentile",
+      Arrays.asList("Count", "FiveMinuteRate", "Max", "999thPercentile", "95thPercentile", "75thPercentile", "98thPercentile",
           "OneMinuteRate", "50thPercentile", "99thPercentile", "FifteenMinuteRate", "Mean", "StdDev", "MeanRate",
           "Min");
 
   //each gauge defined in code is exported with these measurements
-  private static final List<String> GAUGE_TYPES = List.of("Value");
+  private static final List<String> GAUGE_TYPES = Arrays.asList("Value");
 
   private HTTPServer _httpServer;
 
@@ -302,31 +302,31 @@ public abstract class PinotPrometheusMetricsTest {
 
   public static class ExportedLabels {
 
-    public static final List<String> TABLENAME = List.of(TABLE, ExportedLabelValues.TABLENAME);
+    public static final List<String> TABLENAME = Arrays.asList(TABLE, ExportedLabelValues.TABLENAME);
     public static final List<String> TABLENAME_TABLETYPE =
-        List.of(TABLE, ExportedLabelValues.TABLENAME, TABLETYPE, TABLETYPE_REALTIME);
+        Arrays.asList(TABLE, ExportedLabelValues.TABLENAME, TABLETYPE, TABLETYPE_REALTIME);
     public static final List<String> PARTITION_TABLENAME_TABLETYPE_KAFKATOPIC =
-        List.of(PARTITION, PARTITION_GROUP_ID, TABLE, ExportedLabelValues.TABLENAME, TABLETYPE,
+        Arrays.asList(PARTITION, PARTITION_GROUP_ID, TABLE, ExportedLabelValues.TABLENAME, TABLETYPE,
             TableType.REALTIME.toString(), TOPIC, KAFKA_TOPIC);
     public static final List<String> PARTITION_TABLENAME_TABLETYPE =
-        List.of(PARTITION, "3", TABLE, ExportedLabelValues.TABLENAME, TABLETYPE, TableType.REALTIME.toString());
+        Arrays.asList(PARTITION, "3", TABLE, ExportedLabelValues.TABLENAME, TABLETYPE, TableType.REALTIME.toString());
 
     public static final List<String> TABLENAME_TABLETYPE_CONTROLLER_TASKTYPE =
-        List.of(TABLE, ExportedLabelValues.TABLENAME, TABLETYPE, TABLETYPE_REALTIME, TASKTYPE,
+        Arrays.asList(TABLE, ExportedLabelValues.TABLENAME, TABLETYPE, TABLETYPE_REALTIME, TASKTYPE,
             CONTROLLER_PERIODIC_TASK_CHC);
 
     public static final List<String> TABLENAMEWITHTYPE_CONTROLLER_TASKTYPE =
-        List.of(TABLE, TABLENAME_WITH_TYPE_REALTIME, TASKTYPE, CONTROLLER_PERIODIC_TASK_CHC);
+        Arrays.asList(TABLE, TABLENAME_WITH_TYPE_REALTIME, TASKTYPE, CONTROLLER_PERIODIC_TASK_CHC);
 
     public static final List<String> JOBSTATUS_CONTROLLER_TASKTYPE =
-        List.of(STATUS, IN_PROGRESS, TASKTYPE, CONTROLLER_PERIODIC_TASK_CHC);
+        Arrays.asList(STATUS, IN_PROGRESS, TASKTYPE, CONTROLLER_PERIODIC_TASK_CHC);
 
     public static final List<String> CONTROLLER_TASKTYPE_TABLENAME_TABLETYPE =
-        List.of(PERIODIC_TASK, CONTROLLER_PERIODIC_TASK_CHC, TABLE, ExportedLabelValues.TABLENAME, TABLETYPE,
+        Arrays.asList(PERIODIC_TASK, CONTROLLER_PERIODIC_TASK_CHC, TABLE, ExportedLabelValues.TABLENAME, TABLETYPE,
             TABLETYPE_REALTIME);
 
     public static final List<String> TABLENAME_TABLETYPE_MINION_TASKTYPE =
-        List.of(ExportedLabelKeys.TABLE, ExportedLabelValues.TABLENAME, ExportedLabelKeys.TABLETYPE,
+        Arrays.asList(ExportedLabelKeys.TABLE, ExportedLabelValues.TABLENAME, ExportedLabelKeys.TABLETYPE,
             ExportedLabelValues.TABLETYPE_REALTIME, ExportedLabelKeys.TASKTYPE,
             ExportedLabelValues.MINION_TASK_SEGMENT_IMPORT);
   }

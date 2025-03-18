@@ -81,8 +81,8 @@ public class FSTBasedRegexpLikeQueriesTest extends BaseQueriesTest {
       .addSingleValueDimension(NO_INDEX_STRING_COL_NAME, FieldSpec.DataType.STRING)
       .addMetric(INT_COL_NAME, FieldSpec.DataType.INT).build();
   private static final List<FieldConfig> FIELD_CONFIGS =
-      List.of(new FieldConfig(DOMAIN_NAMES_COL, EncodingType.DICTIONARY, List.of(IndexType.FST), null, null),
-          new FieldConfig(URL_COL, EncodingType.DICTIONARY, List.of(IndexType.FST), null, null));
+      Arrays.asList(new FieldConfig(DOMAIN_NAMES_COL, EncodingType.DICTIONARY, Arrays.asList(IndexType.FST), null, null),
+          new FieldConfig(URL_COL, EncodingType.DICTIONARY, Arrays.asList(IndexType.FST), null, null));
 
   private TableConfig _tableConfig;
   private IndexSegment _indexSegment;

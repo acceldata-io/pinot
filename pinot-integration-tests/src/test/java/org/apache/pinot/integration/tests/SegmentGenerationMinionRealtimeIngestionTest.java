@@ -135,7 +135,7 @@ public class SegmentGenerationMinionRealtimeIngestionTest extends BaseClusterInt
 
     TableTaskConfig tableTaskConfig =
         new TableTaskConfig(Collections.singletonMap("SegmentGenerationAndPushTask", taskConfigs));
-    BatchIngestionConfig batchIngestionConfig = new BatchIngestionConfig(List.of(taskConfigs), "APPEND", "DAILY");
+    BatchIngestionConfig batchIngestionConfig = new BatchIngestionConfig(Arrays.asList(taskConfigs), "APPEND", "DAILY");
     IngestionConfig ingestionConfig = new IngestionConfig();
     ingestionConfig.setBatchIngestionConfig(batchIngestionConfig);
     _realtimeTableConfig.setIngestionConfig(ingestionConfig);

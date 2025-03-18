@@ -34,18 +34,18 @@ public abstract class ServerPrometheusMetricsTest extends PinotPrometheusMetrics
   private static final String EXPORTED_METRIC_PREFIX = "pinot_server_";
 
   private static final List<ServerMeter> METERS_ACCEPTING_CLIENT_ID =
-      List.of(ServerMeter.REALTIME_ROWS_CONSUMED, ServerMeter.REALTIME_ROWS_SANITIZED,
+      Arrays.asList(ServerMeter.REALTIME_ROWS_CONSUMED, ServerMeter.REALTIME_ROWS_SANITIZED,
           ServerMeter.REALTIME_ROWS_FETCHED, ServerMeter.REALTIME_ROWS_FILTERED,
           ServerMeter.INVALID_REALTIME_ROWS_DROPPED, ServerMeter.INCOMPLETE_REALTIME_ROWS_CONSUMED,
           ServerMeter.STREAM_CONSUMER_CREATE_EXCEPTIONS, ServerMeter.ROWS_WITH_ERRORS);
 
   private static final List<ServerMeter> METERS_ACCEPTING_RAW_TABLE_NAMES =
-      List.of(ServerMeter.SEGMENT_UPLOAD_FAILURE, ServerMeter.SEGMENT_UPLOAD_SUCCESS,
+      Arrays.asList(ServerMeter.SEGMENT_UPLOAD_FAILURE, ServerMeter.SEGMENT_UPLOAD_SUCCESS,
           ServerMeter.SEGMENT_UPLOAD_TIMEOUT);
 
   //gauges that accept clientId
   private static final List<ServerGauge> GAUGES_ACCEPTING_CLIENT_ID =
-      List.of(ServerGauge.LLC_PARTITION_CONSUMING, ServerGauge.HIGHEST_STREAM_OFFSET_CONSUMED,
+      Arrays.asList(ServerGauge.LLC_PARTITION_CONSUMING, ServerGauge.HIGHEST_STREAM_OFFSET_CONSUMED,
           ServerGauge.LAST_REALTIME_SEGMENT_CREATION_DURATION_SECONDS,
           ServerGauge.LAST_REALTIME_SEGMENT_CREATION_WAIT_TIME_SECONDS,
           ServerGauge.LAST_REALTIME_SEGMENT_INITIAL_CONSUMPTION_DURATION_SECONDS,
@@ -53,14 +53,14 @@ public abstract class ServerPrometheusMetricsTest extends PinotPrometheusMetrics
           ServerGauge.LAST_REALTIME_SEGMENT_COMPLETION_DURATION_SECONDS);
 
   private static final List<ServerGauge> GAUGES_ACCEPTING_PARTITION =
-      List.of(ServerGauge.UPSERT_VALID_DOC_ID_SNAPSHOT_COUNT, ServerGauge.UPSERT_PRIMARY_KEYS_IN_SNAPSHOT_COUNT,
+      Arrays.asList(ServerGauge.UPSERT_VALID_DOC_ID_SNAPSHOT_COUNT, ServerGauge.UPSERT_PRIMARY_KEYS_IN_SNAPSHOT_COUNT,
           ServerGauge.REALTIME_INGESTION_OFFSET_LAG, ServerGauge.REALTIME_INGESTION_DELAY_MS,
           ServerGauge.UPSERT_PRIMARY_KEYS_COUNT, ServerGauge.END_TO_END_REALTIME_INGESTION_DELAY_MS,
           ServerGauge.DEDUP_PRIMARY_KEYS_COUNT, ServerGauge.REALTIME_INGESTION_UPSTREAM_OFFSET,
           ServerGauge.REALTIME_INGESTION_CONSUMING_OFFSET);
 
   private static final List<ServerGauge> GAUGES_ACCEPTING_RAW_TABLE_NAME =
-      List.of(ServerGauge.REALTIME_OFFHEAP_MEMORY_USED, ServerGauge.REALTIME_SEGMENT_NUM_PARTITIONS,
+      Arrays.asList(ServerGauge.REALTIME_OFFHEAP_MEMORY_USED, ServerGauge.REALTIME_SEGMENT_NUM_PARTITIONS,
           ServerGauge.LUCENE_INDEXING_DELAY_MS, ServerGauge.LUCENE_INDEXING_DELAY_DOCS);
 
   private ServerMetrics _serverMetrics;

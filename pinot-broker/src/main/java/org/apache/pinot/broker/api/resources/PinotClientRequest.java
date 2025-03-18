@@ -456,7 +456,7 @@ public class PinotClientRequest {
       return new BrokerResponseNative(QueryException.getException(QueryException.SQL_PARSING_ERROR, e));
     }
     if (forceUseMultiStage) {
-      sqlNodeAndOptions.setExtraOptions(ImmutableMap.of(Request.QueryOptionKey.USE_MULTISTAGE_ENGINE, "true"));
+      sqlNodeAndOptions.setExtraOptions(ImmutableCollections.singletonMap(Request.QueryOptionKey.USE_MULTISTAGE_ENGINE, "true"));
     }
     if (getCursor) {
       if (numRows == 0) {
@@ -464,7 +464,7 @@ public class PinotClientRequest {
             CommonConstants.CursorConfigs.DEFAULT_CURSOR_FETCH_ROWS);
       }
       sqlNodeAndOptions.setExtraOptions(
-          ImmutableMap.of(Request.QueryOptionKey.GET_CURSOR, "true", Request.QueryOptionKey.CURSOR_NUM_ROWS,
+          ImmutableCollections.singletonMap(Request.QueryOptionKey.GET_CURSOR, "true", Request.QueryOptionKey.CURSOR_NUM_ROWS,
               Integer.toString(numRows)));
       _brokerMetrics.addMeteredGlobalValue(BrokerMeter.CURSOR_QUERIES_GLOBAL, 1);
     }

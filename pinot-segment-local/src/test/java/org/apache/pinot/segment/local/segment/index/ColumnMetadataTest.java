@@ -230,13 +230,13 @@ public class ColumnMetadataTest {
 
   @Test
   public void testComplexFieldSpec() {
-    ComplexFieldSpec intMapFieldSpec = new ComplexFieldSpec("intMap", DataType.MAP, true, Map.of(
+    ComplexFieldSpec intMapFieldSpec = new ComplexFieldSpec("intMap", DataType.MAP, true, Collections.singletonMap(
         "key", new DimensionFieldSpec("key", DataType.STRING, true),
         "value", new DimensionFieldSpec("value", DataType.INT, true)
     ));
     ColumnIndexCreationInfo columnIndexCreationInfo =
         new ColumnIndexCreationInfo(new DefaultColumnStatistics(null, null, null, false, 1, 1), false, false, false,
-            Map.of());
+            new HashMap<>());
     PropertiesConfiguration config = new PropertiesConfiguration();
     config.setProperty(SEGMENT_PADDING_CHARACTER, String.valueOf(V1Constants.Str.DEFAULT_STRING_PAD_CHAR));
     SegmentColumnarIndexCreator.addColumnMetadataInfo(config, "intMap", columnIndexCreationInfo, 1, intMapFieldSpec,

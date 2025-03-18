@@ -417,7 +417,7 @@ public class UpsertCompactMergeTaskGenerator extends BaseTaskGenerator {
       if (segment.getCustomMap() != null && !segment.getCustomMap().isEmpty() && !StringUtils.isBlank(
           segment.getCustomMap().get(MinionConstants.UpsertCompactMergeTask.TASK_TYPE
               + MinionConstants.UpsertCompactMergeTask.MERGED_SEGMENTS_ZK_SUFFIX))) {
-        alreadyMergedSegments.addAll(List.of(StringUtils.split(segment.getCustomMap().get(
+        alreadyMergedSegments.addAll(Arrays.asList(StringUtils.split(segment.getCustomMap().get(
             MinionConstants.UpsertCompactMergeTask.TASK_TYPE
                 + MinionConstants.UpsertCompactMergeTask.MERGED_SEGMENTS_ZK_SUFFIX), ",")));
       }

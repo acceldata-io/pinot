@@ -391,7 +391,7 @@ public abstract class ClusterTest extends ControllerTest {
    */
   protected void uploadSegments(String tableName, TableType tableType, File tarDir)
       throws Exception {
-    uploadSegments(tableName, tableType, List.of(tarDir));
+    uploadSegments(tableName, tableType, Arrays.asList(tarDir));
   }
 
   /**
@@ -447,7 +447,7 @@ public abstract class ClusterTest extends ControllerTest {
   private int uploadSegmentWithOnlyMetadata(String tableName, TableType tableType, URI uploadSegmentHttpURI,
       FileUploadDownloadClient fileUploadDownloadClient, File segmentTarFile)
       throws IOException, HttpErrorStatusException {
-    List<Header> headers = List.of(new BasicHeader(FileUploadDownloadClient.CustomHeaders.DOWNLOAD_URI,
+    List<Header> headers = Arrays.asList(new BasicHeader(FileUploadDownloadClient.CustomHeaders.DOWNLOAD_URI,
             String.format("file://%s/%s", segmentTarFile.getParentFile().getAbsolutePath(),
                 URIUtils.encode(segmentTarFile.getName()))),
         new BasicHeader(FileUploadDownloadClient.CustomHeaders.UPLOAD_TYPE,
@@ -529,7 +529,7 @@ public abstract class ClusterTest extends ControllerTest {
   }
 
   protected Map<String, String> getExtraQueryProperties() {
-    return Map.of();
+    return new HashMap<>();
   }
 
   /**
@@ -554,7 +554,7 @@ public abstract class ClusterTest extends ControllerTest {
   protected JsonNode postQueryWithOptions(String query, String queryOptions)
       throws Exception {
     return postQuery(query, getBrokerQueryApiUrl(getBrokerBaseApiUrl(), useMultiStageQueryEngine()), null,
-        Map.of("queryOptions", queryOptions));
+        Collections.singletonMap("queryOptions", queryOptions));
   }
 
   /**
@@ -567,9 +567,9 @@ public abstract class ClusterTest extends ControllerTest {
 
   private Map<String, String> getExtraQueryPropertiesForController() {
     if (!useMultiStageQueryEngine()) {
-      return Map.of();
+      return new HashMap<>();
     }
-    return Map.of("queryOptions", "useMultistageEngine=true");
+    return Collections.singletonMap("queryOptions", "useMultistageEngine=true");
   }
 
   /**

@@ -91,7 +91,7 @@ public class BenchmarkModeAggregation extends AbstractAggregationFunctionBenchma
     RoaringBitmap nullBitmap = SyntheticNullBitmapFactories.Periodic.randomInPeriod(_numDocs, _nullPeriod);
 
     BlockValSet block = SyntheticBlockValSets.Long.create(_numDocs, nullBitmap, longSupplier);
-    return Map.of(EXPR, block);
+    return Collections.singletonMap(EXPR, block);
   }
 
   @Override

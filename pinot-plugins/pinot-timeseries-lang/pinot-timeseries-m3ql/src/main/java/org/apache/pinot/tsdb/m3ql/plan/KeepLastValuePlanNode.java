@@ -51,6 +51,6 @@ public class KeepLastValuePlanNode extends BaseTimeSeriesPlanNode {
   @Override
   public BaseTimeSeriesOperator run() {
     BaseTimeSeriesOperator childOperator = _inputs.get(0).run();
-    return new KeepLastValueOperator(List.of(childOperator));
+    return new KeepLastValueOperator(Arrays.asList(childOperator));
   }
 }

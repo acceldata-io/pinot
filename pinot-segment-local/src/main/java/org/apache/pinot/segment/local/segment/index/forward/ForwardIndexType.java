@@ -67,7 +67,7 @@ public class ForwardIndexType extends AbstractIndexType<ForwardIndexConfig, Forw
   private static final int NODICT_VARIABLE_WIDTH_ESTIMATED_AVERAGE_VALUE_LENGTH_DEFAULT = 100;
   private static final int NODICT_VARIABLE_WIDTH_ESTIMATED_NUMBER_OF_VALUES_DEFAULT = 100_000;
   //@formatter:off
-  private static final List<String> EXTENSIONS = List.of(
+  private static final List<String> EXTENSIONS = Arrays.asList(
       V1Constants.Indexes.RAW_SV_FORWARD_INDEX_FILE_EXTENSION,
       V1Constants.Indexes.SORTED_SV_FORWARD_INDEX_FILE_EXTENSION,
       V1Constants.Indexes.UNSORTED_SV_FORWARD_INDEX_FILE_EXTENSION,

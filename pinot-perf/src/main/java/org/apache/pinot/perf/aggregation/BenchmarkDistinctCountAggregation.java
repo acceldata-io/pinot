@@ -84,7 +84,7 @@ public class BenchmarkDistinctCountAggregation extends AbstractAggregationFuncti
     RoaringBitmap nullBitmap = SyntheticNullBitmapFactories.Periodic.randomInPeriod(numDocs, _nullPeriod);
     BlockValSet block = SyntheticBlockValSets.Long.create(numDocs, _nullHandlingEnabled ? nullBitmap : null,
         valueRandom::nextLong);
-    return Map.of(EXPR, block);
+    return Collections.singletonMap(EXPR, block);
   }
 
   @Override

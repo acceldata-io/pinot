@@ -99,7 +99,7 @@ public class TableConfigTest {
         .setDedupConfig(new DedupConfig(true, HashFunction.MD5))
         .setIngestionConfig(ingestionConfig)
         .setQueryConfig(new QueryConfig(2000L, true, false, Collections.emptyMap(), 100_000L, 100_000L))
-        .setTierConfigList(List.of(new TierConfig("name", "type", null, null, "storageType", null, null, null)))
+        .setTierConfigList(Arrays.asList(new TierConfig("name", "type", null, null, "storageType", null, null, null)))
         .build();
 
     TableConfig copy = new TableConfig(config);

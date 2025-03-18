@@ -93,17 +93,17 @@ public class SegmentPreloadUtilsTest {
     when(helixManager.getHelixPropertyStore()).thenReturn(propertyStore);
 
     // Setup segment assignment. Only ONLINE segments are preloaded.
-    segmentAssignment.put("consuming_seg01", ImmutableMap.of(instanceId, "CONSUMING"));
-    segmentAssignment.put("consuming_seg02", ImmutableMap.of(instanceId, "CONSUMING"));
-    segmentAssignment.put("offline_seg01", ImmutableMap.of(instanceId, "OFFLINE"));
-    segmentAssignment.put("offline_seg02", ImmutableMap.of(instanceId, "OFFLINE"));
+    segmentAssignment.put("consuming_seg01", ImmutableCollections.singletonMap(instanceId, "CONSUMING"));
+    segmentAssignment.put("consuming_seg02", ImmutableCollections.singletonMap(instanceId, "CONSUMING"));
+    segmentAssignment.put("offline_seg01", ImmutableCollections.singletonMap(instanceId, "OFFLINE"));
+    segmentAssignment.put("offline_seg02", ImmutableCollections.singletonMap(instanceId, "OFFLINE"));
     String seg01Name = "testTable__0__1__" + System.currentTimeMillis();
-    segmentAssignment.put(seg01Name, ImmutableMap.of(instanceId, "ONLINE"));
+    segmentAssignment.put(seg01Name, ImmutableCollections.singletonMap(instanceId, "ONLINE"));
     String seg02Name = "testTable__0__2__" + System.currentTimeMillis();
-    segmentAssignment.put(seg02Name, ImmutableMap.of(instanceId, "ONLINE"));
+    segmentAssignment.put(seg02Name, ImmutableCollections.singletonMap(instanceId, "ONLINE"));
     // This segment is skipped as it's not from partition 0.
     String seg03Name = "testTable__1__3__" + System.currentTimeMillis();
-    segmentAssignment.put(seg03Name, ImmutableMap.of(instanceId, "ONLINE"));
+    segmentAssignment.put(seg03Name, ImmutableCollections.singletonMap(instanceId, "ONLINE"));
 
     SegmentZKMetadata zkMetadata = new SegmentZKMetadata(seg01Name);
     zkMetadata.setStatus(CommonConstants.Segment.Realtime.Status.DONE);

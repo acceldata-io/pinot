@@ -98,12 +98,12 @@ public class PinotWindowExchangeNodeInsertRuleTest {
     Mockito.when(upperBoundInputRef.getType()).thenReturn(intType);
 
     List<Window.Group> groups = Collections.singletonList(
-        new Window.Group(ImmutableBitSet.of(List.of(1)), true, RexWindowBounds.preceding(lowerBoundInputRef),
-            RexWindowBounds.following(upperBoundInputRef), RelCollations.of(2), List.of(
-            new Window.RexWinAggCall(new SqlSumAggFunction(intType), intType, List.of(windowFunctionInputRef), 0, false,
+        new Window.Group(ImmutableBitSet.of(Arrays.asList(1)), true, RexWindowBounds.preceding(lowerBoundInputRef),
+            RexWindowBounds.following(upperBoundInputRef), RelCollations.of(2), Arrays.asList(
+            new Window.RexWinAggCall(new SqlSumAggFunction(intType), intType, Arrays.asList(windowFunctionInputRef), 0, false,
                 false))));
 
-    List<RexLiteral> literals = List.of(REX_BUILDER.makeLiteral(5, intType), REX_BUILDER.makeLiteral(10, intType));
+    List<RexLiteral> literals = Arrays.asList(REX_BUILDER.makeLiteral(5, intType), REX_BUILDER.makeLiteral(10, intType));
     LogicalWindow originalWindow = LogicalWindow.create(RelTraitSet.createEmpty(), _input, literals, intType, groups);
 
     LogicalProject inputProject = Mockito.mock(LogicalProject.class);
@@ -111,7 +111,7 @@ public class PinotWindowExchangeNodeInsertRuleTest {
     Mockito.when(projectDataType.getFieldCount()).thenReturn(3);
     Mockito.when(inputProject.getRowType()).thenReturn(projectDataType);
     Mockito.when(inputProject.getProjects())
-        .thenReturn(List.of(windowFunctionInputRef, partitionColInputRef, orderColInputRef));
+        .thenReturn(Arrays.asList(windowFunctionInputRef, partitionColInputRef, orderColInputRef));
     Mockito.when(_input.getCurrentRel()).thenReturn(inputProject);
     Mockito.when(_call.rel(0)).thenReturn(originalWindow);
     PinotWindowExchangeNodeInsertRule.INSTANCE.onMatch(_call);

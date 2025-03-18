@@ -109,7 +109,7 @@ public class PhysicalTimeSeriesServerPlanVisitor {
         .setFilter(filterContext)
         .setGroupByExpressions(groupByExpressions)
         .setSelectExpressions(Collections.emptyList())
-        .setQueryOptions(ImmutableMap.of(QueryOptionKey.TIMEOUT_MS, Long.toString(context.getRemainingTimeMs())))
+        .setQueryOptions(ImmutableCollections.singletonMap(QueryOptionKey.TIMEOUT_MS, Long.toString(context.getRemainingTimeMs())))
         .setAliasList(Collections.emptyList())
         .setTimeSeriesContext(timeSeriesContext)
         .setLimit(Integer.MAX_VALUE)

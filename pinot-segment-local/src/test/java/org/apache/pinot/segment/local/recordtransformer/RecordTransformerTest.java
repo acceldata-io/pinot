@@ -524,7 +524,7 @@ public class RecordTransformerTest {
         new TableConfigBuilder(TableType.OFFLINE).setTableName("testTable").setIngestionConfig(ingestionConfig)
             .setTimeColumnName("timeCol").build();
     ingestionConfig.setFilterConfig(new FilterConfig("svInt = 123 AND svDouble <= 200"));
-    ingestionConfig.setTransformConfigs(List.of(new TransformConfig("expressionTestColumn", "plus(x,10)")));
+    ingestionConfig.setTransformConfigs(Arrays.asList(new TransformConfig("expressionTestColumn", "plus(x,10)")));
     ingestionConfig.setSchemaConformingTransformerConfig(
         new SchemaConformingTransformerConfig(null, "indexableExtras", false, null, null, null, null, null,
             null, null, null, null, null, null, null, null, null, null, null, null, null, null));
@@ -537,7 +537,7 @@ public class RecordTransformerTest {
 
     // Create a list of transformers in the original order to compare.
     List<RecordTransformer> expectedListOfTransformers =
-        List.of(new ExpressionTransformer(tableConfig, schema), new FilterTransformer(tableConfig),
+        Arrays.asList(new ExpressionTransformer(tableConfig, schema), new FilterTransformer(tableConfig),
             new SchemaConformingTransformer(tableConfig, schema), new DataTypeTransformer(tableConfig, schema),
             new TimeValidationTransformer(tableConfig, schema), new SpecialValueTransformer(schema),
             new NullValueTransformer(tableConfig, schema), new SanitizationTransformer(schema));

@@ -110,7 +110,7 @@ public class UpsertCompactMergeTaskExecutor extends BaseMultipleSegmentsConversi
 
     // validate if crc of deepstore copies is same as that in ZK of segments
     List<String> originalSegmentCrcFromTaskGenerator =
-        List.of(configs.get(MinionConstants.ORIGINAL_SEGMENT_CRC_KEY).split(","));
+        Arrays.asList(configs.get(MinionConstants.ORIGINAL_SEGMENT_CRC_KEY).split(","));
     validateCRCForInputSegments(segmentMetadataList, originalSegmentCrcFromTaskGenerator);
 
     // Fetch validDocID snapshot from server and get record-reader for compacted reader.

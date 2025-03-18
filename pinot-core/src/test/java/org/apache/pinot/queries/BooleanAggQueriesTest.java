@@ -160,7 +160,7 @@ public class BooleanAggQueriesTest extends BaseQueriesTest {
     PinotQuery pinotQuery = CalciteSqlParser.compileToPinotQuery(query);
 
     pinotQuery.setQueryOptions(
-        ImmutableMap.of(
+        ImmutableCollections.singletonMap(
             CommonConstants.Broker.Request.QueryOptionKey.ENABLE_NULL_HANDLING,
             String.valueOf(enableNullHandling)));
 

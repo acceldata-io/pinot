@@ -67,7 +67,7 @@ public class JsonDataTypeQueriesTest extends BaseQueriesTest {
       .build();
   //@formatter:on
   private static final TableConfig TABLE_CONFIG =
-      new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME).setJsonIndexColumns(List.of(JSON_COLUMN))
+      new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME).setJsonIndexColumns(Arrays.asList(JSON_COLUMN))
           .build();
 
   private IndexSegment _indexSegment;
@@ -151,7 +151,7 @@ public class JsonDataTypeQueriesTest extends BaseQueriesTest {
     IndexLoadingConfig indexLoadingConfig = new IndexLoadingConfig(TABLE_CONFIG, SCHEMA);
     ImmutableSegment segment = ImmutableSegmentLoader.load(new File(INDEX_DIR, SEGMENT_NAME), indexLoadingConfig);
     _indexSegment = segment;
-    _indexSegments = List.of(segment, segment);
+    _indexSegments = Arrays.asList(segment, segment);
   }
 
   /** Verify result column type of a simple select query against JSON column */

@@ -114,7 +114,7 @@ public class SegmentColumnarIndexCreatorTest {
 
       GenericRow row = new GenericRow();
       row.putValue(timeColumn, testDateTime);
-      List<GenericRow> rows = ImmutableList.of(row);
+      List<GenericRow> rows = ImmutableArrays.asList(row);
 
       SegmentIndexCreationDriverImpl driver = new SegmentIndexCreationDriverImpl();
       driver.init(config, new GenericRowRecordReader(rows));

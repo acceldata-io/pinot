@@ -85,7 +85,7 @@ public class FilterOperator extends MultiStageOperator {
 
   @Override
   public List<MultiStageOperator> getChildOperators() {
-    return List.of(_input);
+    return Arrays.asList(_input);
   }
 
   @Override

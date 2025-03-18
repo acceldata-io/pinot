@@ -107,7 +107,7 @@ public class TimeSeriesQueryEnvironment {
     Preconditions.checkState(!serverInstances.isEmpty(), "No servers selected for the query");
     if (serverInstances.size() == 1) {
       // For single-server case, the broker fragment consists only of the TimeSeriesExchangeNode.
-      return ImmutableMap.of(planNodes.get(0).getId(), 1);
+      return ImmutableCollections.singletonMap(planNodes.get(0).getId(), 1);
     }
     // For the multi-server case, the leafIdToSegmentsByInstanceId map already has the information we need, but we
     // just need to restructure it so that we can get number of servers by planId.

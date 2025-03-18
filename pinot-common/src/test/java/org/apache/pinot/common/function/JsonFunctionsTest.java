@@ -241,16 +241,16 @@ public class JsonFunctionsTest {
     // Object[] doesn't work with default JsonPath, where "$.commits[*].sha" would return empty,
     // and "$.commits[1].sha" led to exception `Filter: [1]['sha'] can only be applied to arrays`.
     // Those failure could be reproduced by using the default JacksonJsonProvider for JsonPath.
-    Map<String, Object> rawData = ImmutableMap.of("commits",
-        ImmutableList.of(ImmutableMap.of("sha", 123, "name", "k"), ImmutableMap.of("sha", 456, "name", "j")));
+    Map<String, Object> rawData = ImmutableCollections.singletonMap("commits",
+        ImmutableArrays.asList(ImmutableCollections.singletonMap("sha", 123, "name", "k"), ImmutableCollections.singletonMap("sha", 456, "name", "j")));
     assertTrue(JsonFunctions.jsonPathExists(rawData, "$.commits[*].sha"));
     assertEquals(JsonFunctions.jsonPathArray(rawData, "$.commits[*].sha"), new Integer[]{123, 456});
     assertTrue(JsonFunctions.jsonPathExists(rawData, "$.commits[1].sha"));
     assertEquals(JsonFunctions.jsonPathArray(rawData, "$.commits[1].sha"), new Integer[]{456});
 
     // ArrayAwareJacksonJsonProvider should fix this issue.
-    rawData = ImmutableMap.of("commits",
-        new Object[]{ImmutableMap.of("sha", 123, "name", "k"), ImmutableMap.of("sha", 456, "name", "j")});
+    rawData = ImmutableCollections.singletonMap("commits",
+        new Object[]{ImmutableCollections.singletonMap("sha", 123, "name", "k"), ImmutableCollections.singletonMap("sha", 456, "name", "j")});
     assertEquals(JsonFunctions.jsonPathArray(rawData, "$.commits[*].sha"), new Integer[]{123, 456});
     assertEquals(JsonFunctions.jsonPathArray(rawData, "$.commits[1].sha"), new Integer[]{456});
   }
@@ -269,7 +269,7 @@ public class JsonFunctionsTest {
     // ArrayAwareJacksonJsonProvider can work with Array directly, thus no need to serialize
     // Object[] any more.
     Object[] rawDataInAry =
-        new Object[]{ImmutableMap.of("sha", 123, "name", "kk"), ImmutableMap.of("sha", 456, "name", "jj")};
+        new Object[]{ImmutableCollections.singletonMap("sha", 123, "name", "kk"), ImmutableCollections.singletonMap("sha", 456, "name", "jj")};
     assertEquals(JsonFunctions.jsonPathArray(rawDataInAry, "$.[*].sha"), new Integer[]{123, 456});
     assertEquals(JsonFunctions.jsonPathArray(rawDataInAry, "$.[1].sha"), new Integer[]{456});
   }
@@ -330,9 +330,9 @@ public class JsonFunctionsTest {
   public void testJsonFunctionOnObjectArray()
       throws JsonProcessingException {
     Object[] rawData = new Object[]{
-        ImmutableMap.of("name", "maths", "grade", "A", "score", 90, "homework_grades",
+        ImmutableCollections.singletonMap("name", "maths", "grade", "A", "score", 90, "homework_grades",
             Arrays.asList(80, 85, 90, 95, 100)),
-        ImmutableMap.of("name", "english", "grade", "B", "score", 50, "homework_grades",
+        ImmutableCollections.singletonMap("name", "english", "grade", "B", "score", 50, "homework_grades",
             Arrays.asList(60, 65, 70, 85, 90))
     };
     assertTrue(JsonFunctions.jsonPathExists(rawData, "$.[*].name"));
@@ -349,9 +349,9 @@ public class JsonFunctionsTest {
   @DataProvider
   public static Object[][] jsonPathStringTestCases() {
     return new Object[][]{
-        {ImmutableMap.of("foo", "x", "bar", ImmutableMap.of("foo", "y")), "$.foo", "x"},
-        {ImmutableMap.of("foo", "x", "bar", ImmutableMap.of("foo", "y")), "$.qux", null},
-        {ImmutableMap.of("foo", "x", "bar", ImmutableMap.of("foo", "y")), "$.bar", "{\"foo\":\"y\"}"},
+        {ImmutableCollections.singletonMap("foo", "x", "bar", ImmutableCollections.singletonMap("foo", "y")), "$.foo", "x"},
+        {ImmutableCollections.singletonMap("foo", "x", "bar", ImmutableCollections.singletonMap("foo", "y")), "$.qux", null},
+        {ImmutableCollections.singletonMap("foo", "x", "bar", ImmutableCollections.singletonMap("foo", "y")), "$.bar", "{\"foo\":\"y\"}"},
     };
   }
 
@@ -372,11 +372,11 @@ public class JsonFunctionsTest {
   @DataProvider
   public static Object[][] jsonPathArrayTestCases() {
     return new Object[][]{
-        {ImmutableMap.of("foo", "x", "bar", ImmutableMap.of("foo", "y")), "$.foo", new Object[]{"x"}},
-        {ImmutableMap.of("foo", "x", "bar", ImmutableMap.of("foo", "y")), "$.qux", null},
+        {ImmutableCollections.singletonMap("foo", "x", "bar", ImmutableCollections.singletonMap("foo", "y")), "$.foo", new Object[]{"x"}},
+        {ImmutableCollections.singletonMap("foo", "x", "bar", ImmutableCollections.singletonMap("foo", "y")), "$.qux", null},
         {
-            ImmutableMap.of("foo", "x", "bar", ImmutableMap.of("foo", "y")), "$.bar", new Object[]{
-            ImmutableMap.of("foo", "y")
+            ImmutableCollections.singletonMap("foo", "x", "bar", ImmutableCollections.singletonMap("foo", "y")), "$.bar", new Object[]{
+            ImmutableCollections.singletonMap("foo", "y")
         }
         },
     };

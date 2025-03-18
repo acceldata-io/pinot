@@ -60,7 +60,7 @@ public class MessageCodeGen {
 
     StringBuilder code = new StringBuilder();
     code.append(completeLine("package " + EXTRACTOR_PACKAGE_NAME, 0));
-    code.append(addImports(List.of(
+    code.append(addImports(Arrays.asList(
         "org.apache.pinot.spi.data.readers.GenericRow",
         "java.util.ArrayList",
         "java.util.HashMap",

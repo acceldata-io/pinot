@@ -142,16 +142,16 @@ public class MultiStageAccountingTest implements ITest {
   private static MultiStageOperator getAggregateOperator() {
     MultiStageOperator input = Mockito.mock();
     // Given:
-    List<RexExpression.FunctionCall> aggCalls = List.of(getSum(new RexExpression.InputRef(1)));
-    List<Integer> filterArgs = List.of(-1);
-    List<Integer> groupKeys = List.of(0);
+    List<RexExpression.FunctionCall> aggCalls = Arrays.asList(getSum(new RexExpression.InputRef(1)));
+    List<Integer> filterArgs = Arrays.asList(-1);
+    List<Integer> groupKeys = Arrays.asList(0);
     DataSchema inSchema = new DataSchema(new String[]{"group", "arg"}, new DataSchema.ColumnDataType[]{INT, DOUBLE});
     when(input.nextBlock()).thenReturn(OperatorTestUtil.block(inSchema, new Object[]{2, 1.0}))
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
     DataSchema resultSchema =
         new DataSchema(new String[]{"group", "sum"}, new DataSchema.ColumnDataType[]{INT, DOUBLE});
     return new AggregateOperator(OperatorTestUtil.getTracingContext(), input,
-        new AggregateNode(-1, resultSchema, PlanNode.NodeHint.EMPTY, List.of(), aggCalls, filterArgs, groupKeys,
+        new AggregateNode(-1, resultSchema, PlanNode.NodeHint.EMPTY, Arrays.asList(), aggCalls, filterArgs, groupKeys,
             AggregateNode.AggType.DIRECT, false, null, 0));
   }
 
@@ -177,8 +177,8 @@ public class MultiStageAccountingTest implements ITest {
             DataSchema.ColumnDataType.STRING
         });
     return new HashJoinOperator(OperatorTestUtil.getTracingContext(), leftInput, leftSchema, rightInput,
-        new JoinNode(-1, resultSchema, PlanNode.NodeHint.EMPTY, List.of(), JoinRelType.INNER, List.of(0), List.of(0),
-            List.of(), JoinNode.JoinStrategy.HASH));
+        new JoinNode(-1, resultSchema, PlanNode.NodeHint.EMPTY, Arrays.asList(), JoinRelType.INNER, Arrays.asList(0), Arrays.asList(0),
+            Arrays.asList(), JoinNode.JoinStrategy.HASH));
   }
 
   private static MultiStageOperator getSortOperator() {
@@ -186,12 +186,12 @@ public class MultiStageAccountingTest implements ITest {
     // Given:
     DataSchema schema = new DataSchema(new String[]{"sort"}, new DataSchema.ColumnDataType[]{INT});
     when(input.nextBlock()).thenReturn(
-            new TransferableBlock(List.of(new Object[]{2}, new Object[]{1}), schema, DataBlock.Type.ROW))
+            new TransferableBlock(Arrays.asList(new Object[]{2}, new Object[]{1}), schema, DataBlock.Type.ROW))
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
     List<RelFieldCollation> collations =
-        List.of(new RelFieldCollation(0, RelFieldCollation.Direction.ASCENDING, RelFieldCollation.NullDirection.LAST));
+        Arrays.asList(new RelFieldCollation(0, RelFieldCollation.Direction.ASCENDING, RelFieldCollation.NullDirection.LAST));
     return new SortOperator(OperatorTestUtil.getTracingContext(), input,
-        new SortNode(-1, schema, PlanNode.NodeHint.EMPTY, List.of(), collations, 10, 0));
+        new SortNode(-1, schema, PlanNode.NodeHint.EMPTY, Arrays.asList(), collations, 10, 0));
   }
 
   private static MultiStageOperator getWindowAggregateOperator() {
@@ -203,11 +203,11 @@ public class MultiStageAccountingTest implements ITest {
     DataSchema resultSchema = new DataSchema(new String[]{"group", "arg", "sum"}, new DataSchema.ColumnDataType[]{
         INT, INT, DOUBLE
     });
-    List<Integer> keys = List.of(0);
-    List<RexExpression.FunctionCall> aggCalls = List.of(getSum(new RexExpression.InputRef(1)));
+    List<Integer> keys = Arrays.asList(0);
+    List<RexExpression.FunctionCall> aggCalls = Arrays.asList(getSum(new RexExpression.InputRef(1)));
     return new WindowAggregateOperator(OperatorTestUtil.getTracingContext(), input, inputSchema,
-        new WindowNode(-1, resultSchema, PlanNode.NodeHint.EMPTY, List.of(), keys, List.of(), aggCalls,
-            WindowNode.WindowFrameType.RANGE, Integer.MIN_VALUE, Integer.MAX_VALUE, List.of()));
+        new WindowNode(-1, resultSchema, PlanNode.NodeHint.EMPTY, Arrays.asList(), keys, Arrays.asList(), aggCalls,
+            WindowNode.WindowFrameType.RANGE, Integer.MIN_VALUE, Integer.MAX_VALUE, Arrays.asList()));
   }
 
   private static MultiStageOperator getIntersectOperator() {
@@ -224,12 +224,12 @@ public class MultiStageAccountingTest implements ITest {
         .thenReturn(OperatorTestUtil.block(schema, new Object[]{1, "AA"}, new Object[]{2, "BB"}, new Object[]{4, "DD"}))
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
 
-    return new IntersectOperator(OperatorTestUtil.getTracingContext(), ImmutableList.of(leftOperator, rightOperator),
+    return new IntersectOperator(OperatorTestUtil.getTracingContext(), ImmutableArrays.asList(leftOperator, rightOperator),
         schema);
   }
 
   private static RexExpression.FunctionCall getSum(RexExpression arg) {
-    return new RexExpression.FunctionCall(DataSchema.ColumnDataType.INT, SqlKind.SUM.name(), List.of(arg));
+    return new RexExpression.FunctionCall(DataSchema.ColumnDataType.INT, SqlKind.SUM.name(), Arrays.asList(arg));
   }
 
   @Override

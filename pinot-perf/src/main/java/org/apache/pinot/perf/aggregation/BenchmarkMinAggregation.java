@@ -83,7 +83,7 @@ public class BenchmarkMinAggregation extends AbstractAggregationFunctionBenchmar
     RoaringBitmap nullBitmap = SyntheticNullBitmapFactories.Periodic.randomInPeriod(numDocs, _nullPeriod);
     BlockValSet block = SyntheticBlockValSets.Double.create(numDocs, _nullHandlingEnabled ? nullBitmap : null,
         valueRandom::nextInt);
-    return Map.of(EXPR, block);
+    return Collections.singletonMap(EXPR, block);
   }
 
   @Override

@@ -66,7 +66,7 @@ public class GrpcConfig {
   }
 
   public GrpcConfig(int maxInboundMessageSizeBytes, boolean usePlainText) {
-    this(ImmutableMap.of(CONFIG_MAX_INBOUND_MESSAGE_BYTES_SIZE, maxInboundMessageSizeBytes, CONFIG_USE_PLAIN_TEXT,
+    this(ImmutableCollections.singletonMap(CONFIG_MAX_INBOUND_MESSAGE_BYTES_SIZE, maxInboundMessageSizeBytes, CONFIG_USE_PLAIN_TEXT,
         usePlainText));
   }
 

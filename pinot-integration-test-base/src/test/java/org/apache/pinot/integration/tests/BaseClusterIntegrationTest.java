@@ -754,7 +754,7 @@ public abstract class BaseClusterIntegrationTest extends ClusterTest {
   protected JsonNode getColumnIndexSize(String column)
       throws Exception {
     return JsonUtils.stringToJsonNode(
-            sendGetRequest(_controllerRequestURLBuilder.forTableAggregateMetadata(getTableName(), List.of(column))))
+            sendGetRequest(_controllerRequestURLBuilder.forTableAggregateMetadata(getTableName(), Arrays.asList(column))))
         .get("columnIndexSizeMap").get(column);
   }
 }

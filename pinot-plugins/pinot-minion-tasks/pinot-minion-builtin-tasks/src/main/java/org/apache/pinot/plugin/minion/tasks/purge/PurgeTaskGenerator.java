@@ -124,7 +124,7 @@ public class PurgeTaskGenerator extends BaseTaskGenerator {
           TaskGeneratorUtils.getRunningSegments(MinionConstants.PurgeTask.TASK_TYPE, _clusterInfoAccessor);
       for (SegmentZKMetadata segmentZKMetadata : notpurgedSegmentsZKMetadata) {
         String segmentName = segmentZKMetadata.getSegmentName();
-        Map<String, String> configs = new HashMap<>(getBaseTaskConfigs(tableConfig, List.of(segmentName)));
+        Map<String, String> configs = new HashMap<>(getBaseTaskConfigs(tableConfig, Arrays.asList(segmentName)));
         Long tsLastPurge;
         if (segmentZKMetadata.getCustomMap() != null) {
           tsLastPurge = Long.valueOf(segmentZKMetadata.getCustomMap()

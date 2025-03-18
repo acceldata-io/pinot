@@ -51,12 +51,12 @@ public class PinotSegmentRestletResourceTest {
   public void testGetServerToSegments() {
     String tableName = "testTable";
     Map<String, List<String>> fullServerToSegmentsMap = new HashMap<>();
-    fullServerToSegmentsMap.put("svr01", new ArrayList<>(List.of("seg01", "seg02")));
-    fullServerToSegmentsMap.put("svr02", new ArrayList<>(List.of("seg02", "seg03")));
-    fullServerToSegmentsMap.put("svr03", new ArrayList<>(List.of("seg03", "seg01")));
+    fullServerToSegmentsMap.put("svr01", new ArrayList<>(Arrays.asList("seg01", "seg02")));
+    fullServerToSegmentsMap.put("svr02", new ArrayList<>(Arrays.asList("seg02", "seg03")));
+    fullServerToSegmentsMap.put("svr03", new ArrayList<>(Arrays.asList("seg03", "seg01")));
     when(_pinotHelixResourceManager.getServerToSegmentsMap(tableName, null)).thenReturn(fullServerToSegmentsMap);
     when(_pinotHelixResourceManager.getServerToSegmentsMap(tableName, "svr02")).thenReturn(
-        Map.of("svr02", new ArrayList<>(List.of("seg02", "seg03"))));
+        Collections.singletonMap("svr02", new ArrayList<>(Arrays.asList("seg02", "seg03"))));
     when(_pinotHelixResourceManager.getServers(tableName, "seg01")).thenReturn(Set.of("svr01", "svr03"));
 
     // Get all servers and all their segments.
@@ -66,19 +66,19 @@ public class PinotSegmentRestletResourceTest {
 
     // Get all segments on svr02.
     serverToSegmentsMap = _pinotSegmentRestletResource.getServerToSegments(tableName, null, "svr02");
-    assertEquals(serverToSegmentsMap, Map.of("svr02", List.of("seg02", "seg03")));
+    assertEquals(serverToSegmentsMap, Collections.singletonMap("svr02", Arrays.asList("seg02", "seg03")));
 
     // Get all servers with seg01.
     serverToSegmentsMap = _pinotSegmentRestletResource.getServerToSegments(tableName, "seg01", null);
-    assertEquals(serverToSegmentsMap, Map.of("svr01", List.of("seg01"), "svr03", List.of("seg01")));
+    assertEquals(serverToSegmentsMap, Collections.singletonMap("svr01", Arrays.asList("seg01"), "svr03", Arrays.asList("seg01")));
 
     // Simply map the provided server to the provided segments.
     serverToSegmentsMap = _pinotSegmentRestletResource.getServerToSegments(tableName, "seg01", "svr01");
-    assertEquals(serverToSegmentsMap, Map.of("svr01", List.of("seg01")));
+    assertEquals(serverToSegmentsMap, Collections.singletonMap("svr01", Arrays.asList("seg01")));
     serverToSegmentsMap = _pinotSegmentRestletResource.getServerToSegments(tableName, "anySegment", "anyServer");
-    assertEquals(serverToSegmentsMap, Map.of("anyServer", List.of("anySegment")));
+    assertEquals(serverToSegmentsMap, Collections.singletonMap("anyServer", Arrays.asList("anySegment")));
     serverToSegmentsMap = _pinotSegmentRestletResource.getServerToSegments(tableName, "seg01|seg02", "svr02");
-    assertEquals(serverToSegmentsMap, Map.of("svr02", List.of("seg01", "seg02")));
+    assertEquals(serverToSegmentsMap, Collections.singletonMap("svr02", Arrays.asList("seg01", "seg02")));
     try {
       _pinotSegmentRestletResource.getServerToSegments(tableName, "seg01,seg02", null);
     } catch (Exception e) {

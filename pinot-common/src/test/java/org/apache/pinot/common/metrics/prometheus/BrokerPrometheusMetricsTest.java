@@ -37,12 +37,12 @@ public abstract class BrokerPrometheusMetricsTest extends PinotPrometheusMetrics
   private static final String EXPORTED_METRIC_PREFIX_EXCEPTIONS = "exceptions";
 
   private static final List<BrokerMeter> GLOBAL_METERS_WITH_EXCEPTIONS_PREFIX =
-      List.of(BrokerMeter.UNCAUGHT_GET_EXCEPTIONS, BrokerMeter.UNCAUGHT_POST_EXCEPTIONS,
+      Arrays.asList(BrokerMeter.UNCAUGHT_GET_EXCEPTIONS, BrokerMeter.UNCAUGHT_POST_EXCEPTIONS,
           BrokerMeter.QUERY_REJECTED_EXCEPTIONS, BrokerMeter.REQUEST_COMPILATION_EXCEPTIONS,
           BrokerMeter.RESOURCE_MISSING_EXCEPTIONS);
 
   private static final List<BrokerMeter> METERS_ACCEPTING_RAW_TABLENAME =
-      List.of(BrokerMeter.QUERIES, BrokerMeter.NO_SERVER_FOUND_EXCEPTIONS, BrokerMeter.DOCUMENTS_SCANNED,
+      Arrays.asList(BrokerMeter.QUERIES, BrokerMeter.NO_SERVER_FOUND_EXCEPTIONS, BrokerMeter.DOCUMENTS_SCANNED,
           BrokerMeter.ENTRIES_SCANNED_IN_FILTER, BrokerMeter.BROKER_RESPONSES_WITH_UNAVAILABLE_SEGMENTS,
           BrokerMeter.BROKER_RESPONSES_WITH_PARTIAL_SERVERS_RESPONDED,
           BrokerMeter.BROKER_RESPONSES_WITH_PROCESSING_EXCEPTIONS,
@@ -50,7 +50,7 @@ public abstract class BrokerPrometheusMetricsTest extends PinotPrometheusMetrics
           BrokerMeter.ENTRIES_SCANNED_POST_FILTER, BrokerMeter.TOTAL_SERVER_RESPONSE_SIZE,
           BrokerMeter.QUERY_QUOTA_EXCEEDED);
 
-  private static final List<BrokerGauge> GAUGES_ACCEPTING_RAW_TABLE_NAME = List.of(BrokerGauge.REQUEST_SIZE);
+  private static final List<BrokerGauge> GAUGES_ACCEPTING_RAW_TABLE_NAME = Arrays.asList(BrokerGauge.REQUEST_SIZE);
 
   private BrokerMetrics _brokerMetrics;
 

@@ -64,7 +64,7 @@ public class BaseSingleStageBrokerRequestHandlerTest {
     String query = "SELECT database.my_table.column_name_1st, column_name_2nd from database.my_table";
     PinotQuery pinotQuery = CalciteSqlParser.compileToPinotQuery(query);
     Map<String, String> columnNameMap =
-        Map.of("column_name_1st", "column_name_1st", "column_name_2nd", "column_name_2nd");
+        Collections.singletonMap("column_name_1st", "column_name_1st", "column_name_2nd", "column_name_2nd");
     BaseSingleStageBrokerRequestHandler.updateColumnNames("database.my_table", pinotQuery, false, columnNameMap);
     Assert.assertEquals(pinotQuery.getSelectList().size(), 2);
     for (Expression expression : pinotQuery.getSelectList()) {
@@ -168,7 +168,7 @@ public class BaseSingleStageBrokerRequestHandlerTest {
     when(routingManager.getQueryTimeoutMs(tableName)).thenReturn(10000L);
     RoutingTable rt = mock(RoutingTable.class);
     when(rt.getServerInstanceToSegmentsMap()).thenReturn(
-        Map.of(new ServerInstance(new InstanceConfig("server01_9000")), Pair.of(List.of("segment01"), List.of())));
+        Collections.singletonMap(new ServerInstance(new InstanceConfig("server01_9000")), Pair.of(Arrays.asList("segment01"), Arrays.asList())));
     when(routingManager.getRoutingTable(any(), Mockito.anyLong())).thenReturn(rt);
     QueryQuotaManager queryQuotaManager = mock(QueryQuotaManager.class);
     when(queryQuotaManager.acquire(anyString())).thenReturn(true);
@@ -178,7 +178,7 @@ public class BaseSingleStageBrokerRequestHandlerTest {
     long[] testRequestId = {-1};
     BrokerMetrics.register(mock(BrokerMetrics.class));
     PinotConfiguration config =
-        new PinotConfiguration(Map.of(Broker.CONFIG_OF_BROKER_ENABLE_QUERY_CANCELLATION, "true"));
+        new PinotConfiguration(Collections.singletonMap(Broker.CONFIG_OF_BROKER_ENABLE_QUERY_CANCELLATION, "true"));
     BrokerQueryEventListenerFactory.init(config);
     BaseSingleStageBrokerRequestHandler requestHandler =
         new BaseSingleStageBrokerRequestHandler(config, "testBrokerId", routingManager,

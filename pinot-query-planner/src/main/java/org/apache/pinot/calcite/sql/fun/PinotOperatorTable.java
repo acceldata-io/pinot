@@ -103,7 +103,7 @@ public class PinotOperatorTable implements SqlOperatorTable {
    * TODO: Add more operators as needed.
    */
   //@formatter:off
-  private static final List<SqlOperator> STANDARD_OPERATORS = List.of(
+  private static final List<SqlOperator> STANDARD_OPERATORS = Arrays.asList(
       // SET OPERATORS
       SqlStdOperatorTable.UNION,
       SqlStdOperatorTable.UNION_ALL,
@@ -249,30 +249,30 @@ public class PinotOperatorTable implements SqlOperatorTable {
       SqlStdOperatorTable.LISTAGG
   );
 
-  private static final List<Pair<SqlOperator, List<String>>> STANDARD_OPERATORS_WITH_ALIASES = List.of(
-      Pair.of(SqlStdOperatorTable.CASE, List.of("CASE", "CASE_WHEN")),
-      Pair.of(SqlStdOperatorTable.LN, List.of("LN", "LOG")),
-      Pair.of(SqlStdOperatorTable.EQUALS, List.of("EQUALS")),
-      Pair.of(SqlStdOperatorTable.NOT_EQUALS, List.of("NOT_EQUALS")),
-      Pair.of(SqlStdOperatorTable.GREATER_THAN, List.of("GREATER_THAN")),
-      Pair.of(SqlStdOperatorTable.GREATER_THAN_OR_EQUAL, List.of("GREATER_THAN_OR_EQUAL")),
-      Pair.of(SqlStdOperatorTable.LESS_THAN, List.of("LESS_THAN")),
-      Pair.of(SqlStdOperatorTable.LESS_THAN_OR_EQUAL, List.of("LESS_THAN_OR_EQUAL")),
-      Pair.of(PINOT_MINUS, List.of("SUB", "MINUS")),
-      Pair.of(PINOT_PLUS, List.of("ADD", "PLUS")),
-      Pair.of(SqlStdOperatorTable.MULTIPLY, List.of("MULT", "TIMES"))
+  private static final List<Pair<SqlOperator, List<String>>> STANDARD_OPERATORS_WITH_ALIASES = Arrays.asList(
+      Pair.of(SqlStdOperatorTable.CASE, Arrays.asList("CASE", "CASE_WHEN")),
+      Pair.of(SqlStdOperatorTable.LN, Arrays.asList("LN", "LOG")),
+      Pair.of(SqlStdOperatorTable.EQUALS, Arrays.asList("EQUALS")),
+      Pair.of(SqlStdOperatorTable.NOT_EQUALS, Arrays.asList("NOT_EQUALS")),
+      Pair.of(SqlStdOperatorTable.GREATER_THAN, Arrays.asList("GREATER_THAN")),
+      Pair.of(SqlStdOperatorTable.GREATER_THAN_OR_EQUAL, Arrays.asList("GREATER_THAN_OR_EQUAL")),
+      Pair.of(SqlStdOperatorTable.LESS_THAN, Arrays.asList("LESS_THAN")),
+      Pair.of(SqlStdOperatorTable.LESS_THAN_OR_EQUAL, Arrays.asList("LESS_THAN_OR_EQUAL")),
+      Pair.of(PINOT_MINUS, Arrays.asList("SUB", "MINUS")),
+      Pair.of(PINOT_PLUS, Arrays.asList("ADD", "PLUS")),
+      Pair.of(SqlStdOperatorTable.MULTIPLY, Arrays.asList("MULT", "TIMES"))
   );
 
   /**
    * This list includes the customized {@link SqlOperator}s.
    */
-  private static final List<SqlOperator> PINOT_OPERATORS = List.of(
+  private static final List<SqlOperator> PINOT_OPERATORS = Arrays.asList(
       // Placeholder for special predicates
       new PinotSqlFunction("TEXT_MATCH", ReturnTypes.BOOLEAN, OperandTypes.CHARACTER_CHARACTER),
       new PinotSqlFunction("TEXT_CONTAINS", ReturnTypes.BOOLEAN, OperandTypes.CHARACTER_CHARACTER),
       new PinotSqlFunction("JSON_MATCH", ReturnTypes.BOOLEAN, OperandTypes.CHARACTER_CHARACTER),
       new PinotSqlFunction("VECTOR_SIMILARITY", ReturnTypes.BOOLEAN,
-          OperandTypes.family(List.of(SqlTypeFamily.ARRAY, SqlTypeFamily.ARRAY, SqlTypeFamily.INTEGER), i -> i == 2)),
+          OperandTypes.family(Arrays.asList(SqlTypeFamily.ARRAY, SqlTypeFamily.ARRAY, SqlTypeFamily.INTEGER), i -> i == 2)),
 
       // Placeholder for special functions to handle MV
       // NOTE:
@@ -296,13 +296,13 @@ public class PinotOperatorTable implements SqlOperatorTable {
       // The scalar function version returns long instead of Timestamp
       // TODO: Consider unifying the return type to Timestamp
       new PinotSqlFunction("FROM_DATE_TIME", ReturnTypes.TIMESTAMP_NULLABLE, OperandTypes.family(
-          List.of(SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER, SqlTypeFamily.ANY),
+          Arrays.asList(SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER, SqlTypeFamily.ANY),
           i -> i > 1)),
 
       new PinotSqlFunction("NOW", ReturnTypes.TIMESTAMP, OperandTypes.NILADIC)
   );
 
-  private static final List<Pair<SqlOperator, List<String>>> PINOT_OPERATORS_WITH_ALIASES = List.of(
+  private static final List<Pair<SqlOperator, List<String>>> PINOT_OPERATORS_WITH_ALIASES = Arrays.asList(
   );
   //@formatter:on
 

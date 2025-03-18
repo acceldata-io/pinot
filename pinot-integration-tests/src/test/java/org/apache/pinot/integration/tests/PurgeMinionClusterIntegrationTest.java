@@ -82,7 +82,7 @@ public class PurgeMinionClusterIntegrationTest extends BaseClusterIntegrationTes
     startServer();
     startMinion();
 
-    List<String> allTables = List.of(PURGE_FIRST_RUN_TABLE, PURGE_DELTA_PASSED_TABLE, PURGE_DELTA_NOT_PASSED_TABLE,
+    List<String> allTables = Arrays.asList(PURGE_FIRST_RUN_TABLE, PURGE_DELTA_PASSED_TABLE, PURGE_DELTA_NOT_PASSED_TABLE,
         PURGE_OLD_SEGMENTS_WITH_NEW_INDICES_TABLE);
     Schema schema = null;
     TableConfig tableConfig = null;

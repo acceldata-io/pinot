@@ -229,7 +229,7 @@ public class AvroSchemaUtilTest {
 
       record.put("points", pointsList);
 
-      record.put("decimals", List.of(
+      record.put("decimals", Arrays.asList(
           decimalToBytes(new BigDecimal("125.24350000"), 3),
           decimalToBytes(new BigDecimal("125.53172"), 3),
           decimalToBytes(new BigDecimal("125.1"), 3),
@@ -247,7 +247,7 @@ public class AvroSchemaUtilTest {
       colorAttribute.put("attributeValue", "red");
       colorAttribute.put("isVerified", false);
 
-      record.put("attributes", Map.of("size", sizeAttribute, "color", colorAttribute));
+      record.put("attributes", Collections.singletonMap("size", sizeAttribute, "color", colorAttribute));
 
       // add avro record to file
       fileWriter.append(record);

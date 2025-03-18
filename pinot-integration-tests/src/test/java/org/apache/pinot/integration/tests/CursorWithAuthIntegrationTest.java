@@ -149,7 +149,7 @@ public class CursorWithAuthIntegrationTest extends CursorIntegrationTest {
     NameValuePair tableTypeValuePair = new BasicNameValuePair(FileUploadDownloadClient.QueryParameters.TABLE_TYPE,
         tableType.name());
     List<NameValuePair> parameters = Arrays.asList(tableNameValuePair, tableTypeValuePair);
-    List<Header> headers = List.of(new BasicHeader("Authorization", AUTH_TOKEN));
+    List<Header> headers = Arrays.asList(new BasicHeader("Authorization", AUTH_TOKEN));
 
     try (FileUploadDownloadClient fileUploadDownloadClient = new FileUploadDownloadClient()) {
       if (numSegments == 1) {
@@ -189,7 +189,7 @@ public class CursorWithAuthIntegrationTest extends CursorIntegrationTest {
   private int uploadSegmentWithOnlyMetadata(String tableName, TableType tableType, URI uploadSegmentHttpURI,
       FileUploadDownloadClient fileUploadDownloadClient, File segmentTarFile)
       throws IOException, HttpErrorStatusException {
-    List<Header> headers = List.of(new BasicHeader(FileUploadDownloadClient.CustomHeaders.DOWNLOAD_URI,
+    List<Header> headers = Arrays.asList(new BasicHeader(FileUploadDownloadClient.CustomHeaders.DOWNLOAD_URI,
             String.format("file://%s/%s", segmentTarFile.getParentFile().getAbsolutePath(),
                 URIUtils.encode(segmentTarFile.getName()))),
         new BasicHeader(FileUploadDownloadClient.CustomHeaders.UPLOAD_TYPE,

@@ -122,8 +122,8 @@ public class OrFilterOperatorTest {
         Arrays.asList(new TestFilterOperator(docIds1, nullDocIds1, numDocs),
             new TestFilterOperator(docIds2, nullDocIds2, numDocs)), null, numDocs, true);
 
-    Assert.assertEquals(TestUtils.getDocIds(orFilterOperator.getTrues()), ImmutableList.of(0, 1, 2, 3));
-    Assert.assertEquals(TestUtils.getDocIds(orFilterOperator.getFalses()), ImmutableList.of(8, 9));
+    Assert.assertEquals(TestUtils.getDocIds(orFilterOperator.getTrues()), ImmutableArrays.asList(0, 1, 2, 3));
+    Assert.assertEquals(TestUtils.getDocIds(orFilterOperator.getFalses()), ImmutableArrays.asList(8, 9));
   }
 
   @Test
@@ -138,8 +138,8 @@ public class OrFilterOperatorTest {
         Arrays.asList(new TestFilterOperator(docIds1, nullDocIds1, numDocs),
             new TestFilterOperator(docIds2, nullDocIds2, numDocs)), null, numDocs, false);
 
-    Assert.assertEquals(TestUtils.getDocIds(orFilterOperator.getTrues()), ImmutableList.of(0, 1, 2, 3));
-    Assert.assertEquals(TestUtils.getDocIds(orFilterOperator.getFalses()), ImmutableList.of(4, 5, 6, 7, 8, 9));
+    Assert.assertEquals(TestUtils.getDocIds(orFilterOperator.getTrues()), ImmutableArrays.asList(0, 1, 2, 3));
+    Assert.assertEquals(TestUtils.getDocIds(orFilterOperator.getFalses()), ImmutableArrays.asList(4, 5, 6, 7, 8, 9));
   }
 
   @Test

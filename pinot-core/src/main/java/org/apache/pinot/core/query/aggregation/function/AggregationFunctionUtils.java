@@ -342,7 +342,7 @@ public class AggregationFunctionUtils {
           if (mainFilter == null) {
             combinedFilter = filter;
           } else {
-            combinedFilter = FilterContext.forAnd(List.of(mainFilter, filter));
+            combinedFilter = FilterContext.forAnd(Arrays.asList(mainFilter, filter));
           }
 
           FilterPlanNode subFilterPlan = new FilterPlanNode(segmentContext, queryContext, filter);

@@ -72,9 +72,9 @@ public class AggregateOperatorTest {
   @Test
   public void shouldHandleUpstreamErrorBlocks() {
     // Given:
-    List<RexExpression.FunctionCall> aggCalls = List.of(getSum(new RexExpression.InputRef(1)));
-    List<Integer> filterArgs = List.of(-1);
-    List<Integer> groupKeys = List.of(0);
+    List<RexExpression.FunctionCall> aggCalls = Arrays.asList(getSum(new RexExpression.InputRef(1)));
+    List<Integer> filterArgs = Arrays.asList(-1);
+    List<Integer> groupKeys = Arrays.asList(0);
     when(_input.nextBlock()).thenReturn(TransferableBlockUtils.getErrorTransferableBlock(new Exception("foo!")));
     DataSchema resultSchema = new DataSchema(new String[]{"group", "sum"}, new ColumnDataType[]{INT, DOUBLE});
     AggregateOperator operator = getOperator(resultSchema, aggCalls, filterArgs, groupKeys);
@@ -90,9 +90,9 @@ public class AggregateOperatorTest {
   @Test
   public void shouldHandleEndOfStreamBlockWithNoOtherInputs() {
     // Given:
-    List<RexExpression.FunctionCall> aggCalls = List.of(getSum(new RexExpression.InputRef(1)));
-    List<Integer> filterArgs = List.of(-1);
-    List<Integer> groupKeys = List.of(0);
+    List<RexExpression.FunctionCall> aggCalls = Arrays.asList(getSum(new RexExpression.InputRef(1)));
+    List<Integer> filterArgs = Arrays.asList(-1);
+    List<Integer> groupKeys = Arrays.asList(0);
     when(_input.nextBlock()).thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
     DataSchema resultSchema = new DataSchema(new String[]{"group", "sum"}, new ColumnDataType[]{INT, DOUBLE});
     AggregateOperator operator = getOperator(resultSchema, aggCalls, filterArgs, groupKeys);
@@ -108,9 +108,9 @@ public class AggregateOperatorTest {
   @Test
   public void testAggregateSingleInputBlock() {
     // Given:
-    List<RexExpression.FunctionCall> aggCalls = List.of(getSum(new RexExpression.InputRef(1)));
-    List<Integer> filterArgs = List.of(-1);
-    List<Integer> groupKeys = List.of(0);
+    List<RexExpression.FunctionCall> aggCalls = Arrays.asList(getSum(new RexExpression.InputRef(1)));
+    List<Integer> filterArgs = Arrays.asList(-1);
+    List<Integer> groupKeys = Arrays.asList(0);
     DataSchema inSchema = new DataSchema(new String[]{"group", "arg"}, new ColumnDataType[]{INT, DOUBLE});
     when(_input.nextBlock()).thenReturn(OperatorTestUtil.block(inSchema, new Object[]{2, 1.0}))
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
@@ -130,9 +130,9 @@ public class AggregateOperatorTest {
   @Test
   public void testAggregateMultipleInputBlocks() {
     // Given:
-    List<RexExpression.FunctionCall> aggCalls = List.of(getSum(new RexExpression.InputRef(1)));
-    List<Integer> filterArgs = List.of(-1);
-    List<Integer> groupKeys = List.of(0);
+    List<RexExpression.FunctionCall> aggCalls = Arrays.asList(getSum(new RexExpression.InputRef(1)));
+    List<Integer> filterArgs = Arrays.asList(-1);
+    List<Integer> groupKeys = Arrays.asList(0);
     DataSchema inSchema = new DataSchema(new String[]{"group", "arg"}, new ColumnDataType[]{INT, DOUBLE});
     when(_input.nextBlock()).thenReturn(OperatorTestUtil.block(inSchema, new Object[]{2, 1.0}, new Object[]{2, 2.0}))
         .thenReturn(OperatorTestUtil.block(inSchema, new Object[]{2, 3.0}))
@@ -154,9 +154,9 @@ public class AggregateOperatorTest {
   public void testAggregateWithFilter() {
     // Given:
     List<RexExpression.FunctionCall> aggCalls =
-        List.of(getSum(new RexExpression.InputRef(1)), getSum(new RexExpression.InputRef(1)));
-    List<Integer> filterArgs = List.of(-1, 2);
-    List<Integer> groupKeys = List.of(0);
+        Arrays.asList(getSum(new RexExpression.InputRef(1)), getSum(new RexExpression.InputRef(1)));
+    List<Integer> filterArgs = Arrays.asList(-1, 2);
+    List<Integer> groupKeys = Arrays.asList(0);
     DataSchema inSchema =
         new DataSchema(new String[]{"group", "arg", "filterArg"}, new ColumnDataType[]{INT, DOUBLE, BOOLEAN});
     when(_input.nextBlock()).thenReturn(
@@ -182,9 +182,9 @@ public class AggregateOperatorTest {
     _input = OperatorTestUtil.getOperator(OperatorTestUtil.OP_1);
 
     // Create an aggregation call with sum for first column and group by second column.
-    List<RexExpression.FunctionCall> aggCalls = List.of(getSum(new RexExpression.InputRef(0)));
-    List<Integer> filterArgs = List.of(-1);
-    List<Integer> groupKeys = List.of(1);
+    List<RexExpression.FunctionCall> aggCalls = Arrays.asList(getSum(new RexExpression.InputRef(0)));
+    List<Integer> filterArgs = Arrays.asList(-1);
+    List<Integer> groupKeys = Arrays.asList(1);
     DataSchema resultSchema = new DataSchema(new String[]{"group", "sum"}, new ColumnDataType[]{STRING, DOUBLE});
     AggregateOperator operator = getOperator(resultSchema, aggCalls, filterArgs, groupKeys);
 
@@ -204,9 +204,9 @@ public class AggregateOperatorTest {
   public void shouldThrowOnUnknownAggFunction() {
     // Given:
     List<RexExpression.FunctionCall> aggCalls =
-        List.of(new RexExpression.FunctionCall(ColumnDataType.INT, "AVERAGE", List.of()));
-    List<Integer> filterArgs = List.of(-1);
-    List<Integer> groupKeys = List.of(0);
+        Arrays.asList(new RexExpression.FunctionCall(ColumnDataType.INT, "AVERAGE", Arrays.asList()));
+    List<Integer> filterArgs = Arrays.asList(-1);
+    List<Integer> groupKeys = Arrays.asList(0);
     DataSchema resultSchema = new DataSchema(new String[]{"unknown"}, new ColumnDataType[]{DOUBLE});
 
     // When:
@@ -216,9 +216,9 @@ public class AggregateOperatorTest {
   @Test
   public void shouldReturnErrorBlockOnUnexpectedInputType() {
     // Given:
-    List<RexExpression.FunctionCall> aggCalls = List.of(getSum(new RexExpression.InputRef(1)));
-    List<Integer> filterArgs = List.of(-1);
-    List<Integer> groupKeys = List.of(0);
+    List<RexExpression.FunctionCall> aggCalls = Arrays.asList(getSum(new RexExpression.InputRef(1)));
+    List<Integer> filterArgs = Arrays.asList(-1);
+    List<Integer> groupKeys = Arrays.asList(0);
     DataSchema inSchema = new DataSchema(new String[]{"group", "arg"}, new ColumnDataType[]{INT, STRING});
     when(_input.nextBlock())
         // TODO: it is necessary to produce two values here, the operator only throws on second
@@ -240,11 +240,11 @@ public class AggregateOperatorTest {
   @Test
   public void shouldHandleGroupLimitExceed() {
     // Given:
-    List<RexExpression.FunctionCall> aggCalls = List.of(getSum(new RexExpression.InputRef(1)));
-    List<Integer> filterArgs = List.of(-1);
-    List<Integer> groupKeys = List.of(0);
-    PlanNode.NodeHint nodeHint = new PlanNode.NodeHint(Map.of(PinotHintOptions.AGGREGATE_HINT_OPTIONS,
-        Map.of(PinotHintOptions.AggregateOptions.NUM_GROUPS_LIMIT, "1")));
+    List<RexExpression.FunctionCall> aggCalls = Arrays.asList(getSum(new RexExpression.InputRef(1)));
+    List<Integer> filterArgs = Arrays.asList(-1);
+    List<Integer> groupKeys = Arrays.asList(0);
+    PlanNode.NodeHint nodeHint = new PlanNode.NodeHint(Collections.singletonMap(PinotHintOptions.AGGREGATE_HINT_OPTIONS,
+        Collections.singletonMap(PinotHintOptions.AggregateOptions.NUM_GROUPS_LIMIT, "1")));
     DataSchema inSchema = new DataSchema(new String[]{"group", "arg"}, new ColumnDataType[]{INT, DOUBLE});
     when(_input.nextBlock()).thenReturn(OperatorTestUtil.block(inSchema, new Object[]{2, 1.0}, new Object[]{3, 2.0}))
         .thenReturn(OperatorTestUtil.block(inSchema, new Object[]{3, 3.0}))
@@ -266,13 +266,13 @@ public class AggregateOperatorTest {
   }
 
   private static RexExpression.FunctionCall getSum(RexExpression arg) {
-    return new RexExpression.FunctionCall(ColumnDataType.INT, SqlKind.SUM.name(), List.of(arg));
+    return new RexExpression.FunctionCall(ColumnDataType.INT, SqlKind.SUM.name(), Arrays.asList(arg));
   }
 
   private AggregateOperator getOperator(DataSchema resultSchema, List<RexExpression.FunctionCall> aggCalls,
       List<Integer> filterArgs, List<Integer> groupKeys, PlanNode.NodeHint nodeHint) {
     return new AggregateOperator(OperatorTestUtil.getTracingContext(), _input,
-        new AggregateNode(-1, resultSchema, nodeHint, List.of(), aggCalls, filterArgs, groupKeys, AggType.DIRECT,
+        new AggregateNode(-1, resultSchema, nodeHint, Arrays.asList(), aggCalls, filterArgs, groupKeys, AggType.DIRECT,
             false, null, 0));
   }
 

@@ -34,11 +34,11 @@ import static org.testng.Assert.fail;
 
 public class QueryOptionsUtilsTest {
   private static final List<String> POSITIVE_INT_KEYS =
-      List.of(NUM_REPLICA_GROUPS_TO_QUERY, MAX_EXECUTION_THREADS, NUM_GROUPS_LIMIT, MAX_INITIAL_RESULT_HOLDER_CAPACITY,
+      Arrays.asList(NUM_REPLICA_GROUPS_TO_QUERY, MAX_EXECUTION_THREADS, NUM_GROUPS_LIMIT, MAX_INITIAL_RESULT_HOLDER_CAPACITY,
           MAX_STREAMING_PENDING_BLOCKS, MAX_ROWS_IN_JOIN, MAX_ROWS_IN_WINDOW);
-  private static final List<String> NON_NEGATIVE_INT_KEYS = List.of(MULTI_STAGE_LEAF_LIMIT);
+  private static final List<String> NON_NEGATIVE_INT_KEYS = Arrays.asList(MULTI_STAGE_LEAF_LIMIT);
   private static final List<String> UNBOUNDED_INT_KEYS =
-      List.of(MIN_SEGMENT_GROUP_TRIM_SIZE, MIN_SERVER_GROUP_TRIM_SIZE, MIN_BROKER_GROUP_TRIM_SIZE,
+      Arrays.asList(MIN_SEGMENT_GROUP_TRIM_SIZE, MIN_SERVER_GROUP_TRIM_SIZE, MIN_BROKER_GROUP_TRIM_SIZE,
           GROUP_TRIM_THRESHOLD);
   private static final List<String> INT_KEYS = new ArrayList<>() {{
     addAll(POSITIVE_INT_KEYS);
@@ -46,12 +46,12 @@ public class QueryOptionsUtilsTest {
     addAll(UNBOUNDED_INT_KEYS);
   }};
   private static final List<String> POSITIVE_LONG_KEYS =
-      List.of(TIMEOUT_MS, MAX_SERVER_RESPONSE_SIZE_BYTES, MAX_QUERY_RESPONSE_SIZE_BYTES);
+      Arrays.asList(TIMEOUT_MS, MAX_SERVER_RESPONSE_SIZE_BYTES, MAX_QUERY_RESPONSE_SIZE_BYTES);
 
   @Test
   public void shouldConvertCaseInsensitiveMapToUseCorrectValues() {
     // Given:
-    Map<String, String> configs = Map.of("ENABLENullHandling", "true", "useMULTISTAGEEngine", "false");
+    Map<String, String> configs = Collections.singletonMap("ENABLENullHandling", "true", "useMULTISTAGEEngine", "false");
 
     // When:
     Map<String, String> resolved = QueryOptionsUtils.resolveCaseInsensitiveOptions(configs);
@@ -64,7 +64,7 @@ public class QueryOptionsUtilsTest {
   @Test
   public void testSkipIndexesParsing() {
     String skipIndexesStr = "col1=inverted,range&col2=sorted";
-    Map<String, String> queryOptions = Map.of(SKIP_INDEXES, skipIndexesStr);
+    Map<String, String> queryOptions = Collections.singletonMap(SKIP_INDEXES, skipIndexesStr);
     Map<String, Set<FieldConfig.IndexType>> skipIndexes = QueryOptionsUtils.getSkipIndexes(queryOptions);
     assertEquals(skipIndexes.get("col1"), Set.of(FieldConfig.IndexType.RANGE, FieldConfig.IndexType.INVERTED));
     assertEquals(skipIndexes.get("col2"), Set.of(FieldConfig.IndexType.SORTED));
@@ -73,7 +73,7 @@ public class QueryOptionsUtilsTest {
   @Test(expectedExceptions = RuntimeException.class)
   public void testSkipIndexesParsingInvalid() {
     String skipIndexesStr = "col1=inverted,range&col2";
-    Map<String, String> queryOptions = Map.of(SKIP_INDEXES, skipIndexesStr);
+    Map<String, String> queryOptions = Collections.singletonMap(SKIP_INDEXES, skipIndexesStr);
     QueryOptionsUtils.getSkipIndexes(queryOptions);
   }
 
@@ -101,7 +101,7 @@ public class QueryOptionsUtilsTest {
     for (String key : POSITIVE_INT_KEYS) {
       for (String value : new String[]{"-10000000000", "-2147483648", "-1", "0", "2147483648", "10000000000"}) {
         try {
-          getValue(Map.of(key, value), key);
+          getValue(Collections.singletonMap(key, value), key);
           fail(key);
         } catch (IllegalArgumentException ise) {
           assertEquals(ise.getMessage(), key + " must be a number between 1 and 2^31-1, got: " + value);
@@ -112,7 +112,7 @@ public class QueryOptionsUtilsTest {
     for (String key : NON_NEGATIVE_INT_KEYS) {
       for (String value : new String[]{"-10000000000", "-2147483648", "-1", "2147483648", "10000000000"}) {
         try {
-          getValue(Map.of(key, value), key);
+          getValue(Collections.singletonMap(key, value), key);
           fail();
         } catch (IllegalArgumentException ise) {
           assertEquals(ise.getMessage(), key + " must be a number between 0 and 2^31-1, got: " + value);
@@ -123,7 +123,7 @@ public class QueryOptionsUtilsTest {
     for (String key : UNBOUNDED_INT_KEYS) {
       for (String value : new String[]{"-10000000000", "2147483648", "10000000000"}) {
         try {
-          getValue(Map.of(key, value), key);
+          getValue(Collections.singletonMap(key, value), key);
           fail();
         } catch (IllegalArgumentException ise) {
           assertEquals(ise.getMessage(), key + " must be an integer, got: " + value);
@@ -136,7 +136,7 @@ public class QueryOptionsUtilsTest {
           "-100000000000000000000", "-9223372036854775809", "-1", "0", "9223372036854775808", "100000000000000000000"
       }) {
         try {
-          getValue(Map.of(key, value), key);
+          getValue(Collections.singletonMap(key, value), key);
           fail();
         } catch (IllegalArgumentException ise) {
           assertEquals(ise.getMessage(), key + " must be a number between 1 and 2^63-1, got: " + value);

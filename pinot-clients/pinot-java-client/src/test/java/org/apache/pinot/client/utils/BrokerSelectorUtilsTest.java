@@ -43,74 +43,74 @@ public class BrokerSelectorUtilsTest {
 
   @Test
   public void getTablesCommonBrokersSetEmptyTables() {
-    Set<String> tableSet = BrokerSelectorUtils.getTablesCommonBrokersSet(List.of(), _brokerData);
+    Set<String> tableSet = BrokerSelectorUtils.getTablesCommonBrokersSet(Arrays.asList(), _brokerData);
     Assert.assertEquals(tableSet, Set.of());
   }
 
   @Test
   public void getTablesCommonBrokersListEmptyTables() {
-    List<String> tableList = BrokerSelectorUtils.getTablesCommonBrokers(List.of(), _brokerData);
+    List<String> tableList = BrokerSelectorUtils.getTablesCommonBrokers(Arrays.asList(), _brokerData);
     Assert.assertNull(tableList);
   }
 
   @Test
   public void getTablesCommonBrokersSetNotExistentTable() {
-    Set<String> tableSet = BrokerSelectorUtils.getTablesCommonBrokersSet(List.of("notExistent"), _brokerData);
+    Set<String> tableSet = BrokerSelectorUtils.getTablesCommonBrokersSet(Arrays.asList("notExistent"), _brokerData);
     Assert.assertEquals(tableSet, Set.of());
   }
 
   @Test
   public void getTablesCommonBrokersListNotExistentTable() {
-    List<String> tableList = BrokerSelectorUtils.getTablesCommonBrokers(List.of("notExistent"), _brokerData);
+    List<String> tableList = BrokerSelectorUtils.getTablesCommonBrokers(Arrays.asList("notExistent"), _brokerData);
     Assert.assertNull(tableList);
   }
 
   @Test
   public void getTablesCommonBrokersSetOneTable() {
-    _brokerData.put("table1", List.of("broker1"));
-    Set<String> tableSet = BrokerSelectorUtils.getTablesCommonBrokersSet(List.of("table1"), _brokerData);
+    _brokerData.put("table1", Arrays.asList("broker1"));
+    Set<String> tableSet = BrokerSelectorUtils.getTablesCommonBrokersSet(Arrays.asList("table1"), _brokerData);
     Assert.assertEquals(tableSet, Set.of("broker1"));
   }
 
   @Test
   public void getTablesCommonBrokersListOneTable() {
-    _brokerData.put("table1", List.of("broker1"));
-    List<String> tableList = BrokerSelectorUtils.getTablesCommonBrokers(List.of("table1"), _brokerData);
+    _brokerData.put("table1", Arrays.asList("broker1"));
+    List<String> tableList = BrokerSelectorUtils.getTablesCommonBrokers(Arrays.asList("table1"), _brokerData);
     Assert.assertNotNull(tableList);
-    Assert.assertEquals(tableList, List.of("broker1"));
+    Assert.assertEquals(tableList, Arrays.asList("broker1"));
   }
 
   @Test
   public void getTablesCommonBrokersSetTwoTables() {
-    _brokerData.put("table1", List.of("broker1"));
-    _brokerData.put("table2", List.of("broker1"));
-    Set<String> tableSet = BrokerSelectorUtils.getTablesCommonBrokersSet(List.of("table1", "table2"), _brokerData);
+    _brokerData.put("table1", Arrays.asList("broker1"));
+    _brokerData.put("table2", Arrays.asList("broker1"));
+    Set<String> tableSet = BrokerSelectorUtils.getTablesCommonBrokersSet(Arrays.asList("table1", "table2"), _brokerData);
     Assert.assertNotNull(tableSet);
     Assert.assertEquals(tableSet, Set.of("broker1"));
   }
 
   @Test
   public void getTablesCommonBrokersListTwoTables() {
-    _brokerData.put("table1", List.of("broker1"));
-    _brokerData.put("table2", List.of("broker1"));
-    List<String> tableList = BrokerSelectorUtils.getTablesCommonBrokers(List.of("table1", "table2"), _brokerData);
+    _brokerData.put("table1", Arrays.asList("broker1"));
+    _brokerData.put("table2", Arrays.asList("broker1"));
+    List<String> tableList = BrokerSelectorUtils.getTablesCommonBrokers(Arrays.asList("table1", "table2"), _brokerData);
     Assert.assertNotNull(tableList);
-    Assert.assertEquals(tableList, List.of("broker1"));
+    Assert.assertEquals(tableList, Arrays.asList("broker1"));
   }
 
   @Test
   public void getTablesCommonBrokersSetTwoTablesDifferentBrokers() {
-    _brokerData.put("table1", List.of("broker1"));
-    _brokerData.put("table2", List.of("broker2"));
-    Set<String> tableSet = BrokerSelectorUtils.getTablesCommonBrokersSet(List.of("table1", "table2"), _brokerData);
+    _brokerData.put("table1", Arrays.asList("broker1"));
+    _brokerData.put("table2", Arrays.asList("broker2"));
+    Set<String> tableSet = BrokerSelectorUtils.getTablesCommonBrokersSet(Arrays.asList("table1", "table2"), _brokerData);
     Assert.assertEquals(tableSet, Set.of());
   }
 
   @Test
   public void getTablesCommonBrokersListTwoTablesDifferentBrokers() {
-    _brokerData.put("table1", List.of("broker1"));
-    _brokerData.put("table2", List.of("broker2"));
-    List<String> tableList = BrokerSelectorUtils.getTablesCommonBrokers(List.of("table1", "table2"), _brokerData);
+    _brokerData.put("table1", Arrays.asList("broker1"));
+    _brokerData.put("table2", Arrays.asList("broker2"));
+    List<String> tableList = BrokerSelectorUtils.getTablesCommonBrokers(Arrays.asList("table1", "table2"), _brokerData);
     Assert.assertNull(tableList);
   }
 

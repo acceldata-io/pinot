@@ -264,7 +264,7 @@ public class PinotSortExchangeCopyRuleTest {
     Sort sort = LogicalSort.create(exchange, collation, null, null);
     Mockito.when(_call.rel(0)).thenReturn(sort);
     Mockito.when(_call.rel(1)).thenReturn(exchange);
-    Mockito.when(_query.collations(_input)).thenReturn(ImmutableList.of(collation));
+    Mockito.when(_query.collations(_input)).thenReturn(ImmutableArrays.asList(collation));
 
     // When:
     PinotSortExchangeCopyRule.SORT_EXCHANGE_COPY.onMatch(_call);

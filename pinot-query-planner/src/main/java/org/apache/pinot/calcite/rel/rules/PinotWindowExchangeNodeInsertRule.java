@@ -109,7 +109,7 @@ public class PinotWindowExchangeNodeInsertRule extends RelOptRule {
         }
 
         // TODO: Revisit whether we should use hash distribution
-        exchange = PinotLogicalExchange.create(input, RelDistributions.hash(List.of()));
+        exchange = PinotLogicalExchange.create(input, RelDistributions.hash(Arrays.asList()));
       } else {
         // Only ORDER BY
         // Add a LogicalSortExchange with collation on the order by key(s) and an empty hash partition key
@@ -118,7 +118,7 @@ public class PinotWindowExchangeNodeInsertRule extends RelOptRule {
         //       sort on the sender side is not available thus setting this up to only sort on the receiver.
         // TODO: Revisit whether we should use hash distribution
         exchange =
-            PinotLogicalSortExchange.create(input, RelDistributions.hash(List.of()), windowGroup.orderKeys, false,
+            PinotLogicalSortExchange.create(input, RelDistributions.hash(Arrays.asList()), windowGroup.orderKeys, false,
                 true);
       }
     } else {
@@ -144,7 +144,7 @@ public class PinotWindowExchangeNodeInsertRule extends RelOptRule {
     }
     // NOTE: Need to create a new LogicalWindow to use the modified window group.
     call.transformTo(LogicalWindow.create(window.getTraitSet(), exchange, window.constants, window.getRowType(),
-        List.of(windowGroup)));
+        Arrays.asList(windowGroup)));
   }
 
   /**

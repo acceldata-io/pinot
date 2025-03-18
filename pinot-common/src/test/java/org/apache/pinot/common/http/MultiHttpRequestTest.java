@@ -182,7 +182,7 @@ public class MultiHttpRequestTest {
   @Test
   public void testMultiPost() {
     List<Pair<String, String>> urlsAndRequestBodies =
-        List.of(Pair.of("http://localhost:" + String.valueOf(_portStart) + URI_PATH, "b0"),
+        Arrays.asList(Pair.of("http://localhost:" + String.valueOf(_portStart) + URI_PATH, "b0"),
             Pair.of("http://localhost:" + String.valueOf(_portStart + 1) + URI_PATH, "b1"),
             Pair.of("http://localhost:" + String.valueOf(_portStart + 2) + URI_PATH, "b2"),
             // 2nd request to the same server

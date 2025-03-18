@@ -158,6 +158,6 @@ public class LazyDataList implements List<GenericRow> {
 
   @Override
   public List<GenericRow> subList(int fromIndex, int toIndex) {
-    return List.of();
+    return Arrays.asList();
   }
 }

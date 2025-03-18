@@ -156,7 +156,7 @@ public class TableIndexingTest {
         continue;
       }
 
-      for (String encoding : List.of("raw", "dict")) {
+      for (String encoding : Arrays.asList("raw", "dict")) {
         if (type == DataType.BOOLEAN && "dict".equals(encoding)) {
           // pinot doesn't support dictionary encoding for boolean type
           continue;
@@ -186,8 +186,8 @@ public class TableIndexingTest {
     }
 
     // add maps with all possible value data types
-    for (DataType type : List.of(DataType.STRING, DataType.INT, DataType.LONG, DataType.FLOAT, DataType.DOUBLE)) {
-      for (String encoding : List.of("raw", "dict")) {
+    for (DataType type : Arrays.asList(DataType.STRING, DataType.INT, DataType.LONG, DataType.FLOAT, DataType.DOUBLE)) {
+      for (String encoding : Arrays.asList("raw", "dict")) {
         Map<String, FieldSpec> children = new HashMap<>();
         children.put("key", new DimensionFieldSpec("key", DataType.STRING, true));
         children.put("value",
@@ -424,7 +424,7 @@ public class TableIndexingTest {
             idxCfg.setStarTreeIndexConfigs(new ArrayList<>());
           }
           StarTreeIndexConfig stIdxCfg =
-              new StarTreeIndexConfig(List.of(COLUMN_NAME), Collections.emptyList(), List.of("SUM__col"),
+              new StarTreeIndexConfig(Arrays.asList(COLUMN_NAME), Collections.emptyList(), Arrays.asList("SUM__col"),
                   Collections.emptyList(), 1);
           idxCfg.getStarTreeIndexConfigs().add(stIdxCfg);
 
@@ -444,7 +444,7 @@ public class TableIndexingTest {
                 }
               } */
           tstmpConfig = new TimestampConfig(
-              List.of(TimestampIndexGranularity.DAY, TimestampIndexGranularity.WEEK, TimestampIndexGranularity.MONTH));
+              Arrays.asList(TimestampIndexGranularity.DAY, TimestampIndexGranularity.WEEK, TimestampIndexGranularity.MONTH));
           break;
         case "vector_index":
             /* vector
@@ -616,27 +616,27 @@ public class TableIndexingTest {
             default:
               throw new IllegalArgumentException("Unexpected map value type: " + valueType);
           }
-          return Map.of("key", value);
+          return Collections.singletonMap("key", value);
         default:
           throw new IllegalArgumentException("Unexpected data type " + fieldSpec.getDataType());
       }
     } else {
       switch (fieldSpec.getDataType()) {
         case INT:
-          return List.of(r.nextInt(), r.nextInt());
+          return Arrays.asList(r.nextInt(), r.nextInt());
         case LONG:
         case TIMESTAMP:
-          return List.of(r.nextLong(), r.nextLong());
+          return Arrays.asList(r.nextLong(), r.nextLong());
         case FLOAT:
-          return List.of(r.nextFloat(), r.nextFloat());
+          return Arrays.asList(r.nextFloat(), r.nextFloat());
         case DOUBLE:
-          return List.of(r.nextDouble(), r.nextDouble());
+          return Arrays.asList(r.nextDouble(), r.nextDouble());
         case BOOLEAN:
-          return List.of(r.nextBoolean(), r.nextBoolean());
+          return Arrays.asList(r.nextBoolean(), r.nextBoolean());
         case STRING:
-          return List.of("str" + r.nextInt(), "str" + r.nextInt());
+          return Arrays.asList("str" + r.nextInt(), "str" + r.nextInt());
         case BYTES:
-          return List.of(ByteBuffer.wrap(("bytes" + r.nextInt()).getBytes()),
+          return Arrays.asList(ByteBuffer.wrap(("bytes" + r.nextInt()).getBytes()),
               ByteBuffer.wrap(("bytes" + r.nextInt()).getBytes()));
         default:
           throw new IllegalArgumentException("Unexpected data type " + fieldSpec.getDataType());

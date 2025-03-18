@@ -18,6 +18,9 @@
  */
 package org.apache.pinot.core.query.aggregation.function;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.pinot.common.request.Literal;
@@ -32,39 +35,42 @@ public class DistinctCountHLLPlusAggregationFunctionTest {
   @Test
   public void testCanUseStarTreeDefaultP() {
     DistinctCountHLLPlusAggregationFunction function = new DistinctCountHLLPlusAggregationFunction(
-        List.of(ExpressionContext.forIdentifier("col")));
+        Arrays.asList(ExpressionContext.forIdentifier("col")));
 
-    Assert.assertTrue(function.canUseStarTree(Map.of()));
-    Assert.assertTrue(function.canUseStarTree(Map.of(Constants.HLLPLUS_ULL_P_KEY, "14")));
-    Assert.assertTrue(function.canUseStarTree(Map.of(Constants.HLLPLUS_ULL_P_KEY, 14)));
-    Assert.assertFalse(function.canUseStarTree(Map.of(Constants.HLLPLUS_ULL_P_KEY, 16)));
+    Assert.assertTrue(function.canUseStarTree(new HashMap<>()));
+    Assert.assertTrue(function.canUseStarTree(Collections.singletonMap(Constants.HLLPLUS_ULL_P_KEY, "14")));
+    Assert.assertTrue(function.canUseStarTree(
+        Collections.singletonMap(Constants.HLLPLUS_ULL_P_KEY, 14)));
+    Assert.assertFalse(function.canUseStarTree(Collections.singletonMap(Constants.HLLPLUS_ULL_P_KEY, 16)));
 
-    function = new DistinctCountHLLPlusAggregationFunction(List.of(ExpressionContext.forIdentifier("col"),
+    function = new DistinctCountHLLPlusAggregationFunction(Arrays.asList(ExpressionContext.forIdentifier("col"),
         ExpressionContext.forLiteral(Literal.stringValue("14"))));
 
-    Assert.assertTrue(function.canUseStarTree(Map.of()));
-    Assert.assertTrue(function.canUseStarTree(Map.of(Constants.HLLPLUS_ULL_P_KEY, "14")));
-    Assert.assertTrue(function.canUseStarTree(Map.of(Constants.HLLPLUS_ULL_P_KEY, 14)));
-    Assert.assertFalse(function.canUseStarTree(Map.of(Constants.HLLPLUS_ULL_P_KEY, "16")));
+    Assert.assertTrue(function.canUseStarTree(new HashMap<>()));
+    Assert.assertTrue(function.canUseStarTree(Collections.singletonMap(Constants.HLLPLUS_ULL_P_KEY, "14")));
+    Assert.assertTrue(function.canUseStarTree(Collections.singletonMap(Constants.HLLPLUS_ULL_P_KEY, 14)));
+    Assert.assertFalse(function.canUseStarTree(Collections.singletonMap(Constants.HLLPLUS_ULL_P_KEY, "16")));
 
     // sp value isn't checked
-    function = new DistinctCountHLLPlusAggregationFunction(List.of(ExpressionContext.forIdentifier("col"),
+    function = new DistinctCountHLLPlusAggregationFunction(Arrays.asList(ExpressionContext.forIdentifier("col"),
         ExpressionContext.forLiteral(Literal.intValue(14)), ExpressionContext.forLiteral(Literal.intValue(20))));
 
-    Assert.assertTrue(function.canUseStarTree(Map.of()));
-    Assert.assertTrue(function.canUseStarTree(Map.of(Constants.HLLPLUS_ULL_P_KEY, "14")));
-    Assert.assertTrue(function.canUseStarTree(Map.of(Constants.HLLPLUS_ULL_P_KEY, 14, Constants.HLLPLUS_SP_KEY, 28)));
-    Assert.assertFalse(function.canUseStarTree(Map.of(Constants.HLLPLUS_ULL_P_KEY, "16")));
+    Assert.assertTrue(function.canUseStarTree(new HashMap<>()));
+    Assert.assertTrue(function.canUseStarTree(Collections.singletonMap(Constants.HLLPLUS_ULL_P_KEY, "14")));
+    Assert.assertTrue(function.canUseStarTree(
+        Collections.singletonMap(Constants.HLLPLUS_ULL_P_KEY, 14, Constants.HLLPLUS_SP_KEY, 28)));
+    Assert.assertFalse(function.canUseStarTree(Collections.singletonMap(Constants.HLLPLUS_ULL_P_KEY, "16")));
   }
 
   @Test
   public void testCanUseStarTreeCustomP() {
     DistinctCountHLLPlusAggregationFunction function = new DistinctCountHLLPlusAggregationFunction(
-        List.of(ExpressionContext.forIdentifier("col"), ExpressionContext.forLiteral(Literal.intValue(16))));
+        Arrays.asList(ExpressionContext.forIdentifier("col"), ExpressionContext.forLiteral(Literal.intValue(16))));
 
-    Assert.assertFalse(function.canUseStarTree(Map.of()));
-    Assert.assertFalse(function.canUseStarTree(Map.of(Constants.HLLPLUS_ULL_P_KEY, "8")));
-    Assert.assertTrue(function.canUseStarTree(Map.of(Constants.HLLPLUS_ULL_P_KEY, 16, Constants.HLLPLUS_SP_KEY, 32)));
-    Assert.assertTrue(function.canUseStarTree(Map.of(Constants.HLLPLUS_ULL_P_KEY, "16")));
+    Assert.assertFalse(function.canUseStarTree(new HashMap<>()));
+    Assert.assertFalse(function.canUseStarTree(Collections.singletonMap(Constants.HLLPLUS_ULL_P_KEY, "8")));
+    Assert.assertTrue(function.canUseStarTree(
+        Collections.singletonMap(Constants.HLLPLUS_ULL_P_KEY, 16, Constants.HLLPLUS_SP_KEY, 32)));
+    Assert.assertTrue(function.canUseStarTree(Collections.singletonMap(Constants.HLLPLUS_ULL_P_KEY, "16")));
   }
 }

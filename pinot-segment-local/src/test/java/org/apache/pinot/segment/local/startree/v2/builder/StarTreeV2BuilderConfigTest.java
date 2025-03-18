@@ -133,41 +133,41 @@ public class StarTreeV2BuilderConfigTest {
 
   @Test
   public void testBuildFromIndexConfig() {
-    List<StarTreeAggregationConfig> aggregationConfigs = List.of(new StarTreeAggregationConfig("m1", "SUM"));
-    StarTreeIndexConfig starTreeIndexConfig = new StarTreeIndexConfig(List.of("d1"), null, null, aggregationConfigs, 1);
+    List<StarTreeAggregationConfig> aggregationConfigs = Arrays.asList(new StarTreeAggregationConfig("m1", "SUM"));
+    StarTreeIndexConfig starTreeIndexConfig = new StarTreeIndexConfig(Arrays.asList("d1"), null, null, aggregationConfigs, 1);
     StarTreeV2BuilderConfig builderConfig = StarTreeV2BuilderConfig.fromIndexConfig(starTreeIndexConfig);
-    assertEquals(builderConfig.getDimensionsSplitOrder(), List.of("d1"));
+    assertEquals(builderConfig.getDimensionsSplitOrder(), Arrays.asList("d1"));
     assertTrue(builderConfig.getSkipStarNodeCreationForDimensions().isEmpty());
     assertEquals(builderConfig.getAggregationSpecs(),
-        Map.of(new AggregationFunctionColumnPair(AggregationFunctionType.SUM, "m1"), AggregationSpec.DEFAULT));
+        Collections.singletonMap(new AggregationFunctionColumnPair(AggregationFunctionType.SUM, "m1"), AggregationSpec.DEFAULT));
     assertEquals(builderConfig.getMaxLeafRecords(), 1);
   }
 
   @Test
   public void testAggregationSpecUniqueness() {
     List<StarTreeAggregationConfig> aggregationConfigs =
-        List.of(new StarTreeAggregationConfig("m1", "distinctCountThetaSketch"),
+        Arrays.asList(new StarTreeAggregationConfig("m1", "distinctCountThetaSketch"),
             new StarTreeAggregationConfig("m1", "distinctCountRawThetaSketch"));
-    StarTreeIndexConfig starTreeIndexConfig = new StarTreeIndexConfig(List.of("d1"), null, null, aggregationConfigs, 1);
+    StarTreeIndexConfig starTreeIndexConfig = new StarTreeIndexConfig(Arrays.asList("d1"), null, null, aggregationConfigs, 1);
     StarTreeV2BuilderConfig builderConfig = StarTreeV2BuilderConfig.fromIndexConfig(starTreeIndexConfig);
-    assertEquals(builderConfig.getDimensionsSplitOrder(), List.of("d1"));
+    assertEquals(builderConfig.getDimensionsSplitOrder(), Arrays.asList("d1"));
     assertTrue(builderConfig.getSkipStarNodeCreationForDimensions().isEmpty());
     assertEquals(builderConfig.getAggregationSpecs(),
-        Map.of(new AggregationFunctionColumnPair(AggregationFunctionType.DISTINCTCOUNTTHETASKETCH, "m1"),
+        Collections.singletonMap(new AggregationFunctionColumnPair(AggregationFunctionType.DISTINCTCOUNTTHETASKETCH, "m1"),
             AggregationSpec.DEFAULT));
     assertEquals(builderConfig.getMaxLeafRecords(), 1);
   }
 
   @Test
   public void testFunctionColumnPairUniqueness() {
-    List<String> functionColumnPairs = List.of("distinctCountThetaSketch__m1", "distinctCountRawThetaSketch__m1");
+    List<String> functionColumnPairs = Arrays.asList("distinctCountThetaSketch__m1", "distinctCountRawThetaSketch__m1");
     StarTreeIndexConfig starTreeIndexConfig =
-        new StarTreeIndexConfig(List.of("d1"), null, functionColumnPairs, null, 1);
+        new StarTreeIndexConfig(Arrays.asList("d1"), null, functionColumnPairs, null, 1);
     StarTreeV2BuilderConfig builderConfig = StarTreeV2BuilderConfig.fromIndexConfig(starTreeIndexConfig);
-    assertEquals(builderConfig.getDimensionsSplitOrder(), List.of("d1"));
+    assertEquals(builderConfig.getDimensionsSplitOrder(), Arrays.asList("d1"));
     assertTrue(builderConfig.getSkipStarNodeCreationForDimensions().isEmpty());
     assertEquals(builderConfig.getAggregationSpecs(),
-        Map.of(new AggregationFunctionColumnPair(AggregationFunctionType.DISTINCTCOUNTTHETASKETCH, "m1"),
+        Collections.singletonMap(new AggregationFunctionColumnPair(AggregationFunctionType.DISTINCTCOUNTTHETASKETCH, "m1"),
             AggregationSpec.DEFAULT));
     assertEquals(builderConfig.getMaxLeafRecords(), 1);
   }

@@ -212,7 +212,7 @@ public class TimeSegmentPruner implements SegmentPruner {
       case EQUALS:
         if (isTimeColumn(operands.get(0))) {
           long timestamp = toMillisSinceEpoch(operands.get(1));
-          return List.of(new Interval(timestamp, timestamp));
+          return Arrays.asList(new Interval(timestamp, timestamp));
         }
         return null;
       case IN:
@@ -421,6 +421,6 @@ public class TimeSegmentPruner implements SegmentPruner {
   }
 
   private static List<Interval> getInterval(long inclusiveStart, long inclusiveEnd) {
-    return inclusiveStart <= inclusiveEnd ? List.of(new Interval(inclusiveStart, inclusiveEnd)) : List.of();
+    return inclusiveStart <= inclusiveEnd ? Arrays.asList(new Interval(inclusiveStart, inclusiveEnd)) : Arrays.asList();
   }
 }

@@ -249,7 +249,7 @@ public class TransformPipelineTest {
     GenericRow sampleRow = new GenericRow();
     sampleRow.putValue("id", "7044874109");
     sampleRow.putValue("type", "PushEvent");
-    sampleRow.putValue("actor", Map.of(
+    sampleRow.putValue("actor", Collections.singletonMap(
         "id", 18542751,
         "login", "LimeVista",
         "display_login", "LimeVista",
@@ -257,21 +257,21 @@ public class TransformPipelineTest {
         "url", "https://api.github.com/users/LimeVista",
         "avatar_url", "https://avatars.githubusercontent.com/u/18542751?"
     ));
-    sampleRow.putValue("repo", Map.of(
+    sampleRow.putValue("repo", Collections.singletonMap(
         "id", 115911530,
         "name", "LimeVista/Tapes",
         "url", "https://api.github.com/repos/LimeVista/Tapes"
     ));
-    sampleRow.putValue("payload", Map.of(
+    sampleRow.putValue("payload", Collections.singletonMap(
         "push_id", "2226018068",
         "size", 1,
         "distinct_size", 1,
         "ref", "refs/heads/master",
         "head", "c5fc8b32a9ead1eba315d97410cb4ac1e6ca1774",
         "before", "892d872c5d3f24cc6837900c9f4618dc2fe92930",
-        "commits", Map.of(
+        "commits", Collections.singletonMap(
             "sha", "c5fc8b32a9ead1eba315d97410cb4ac1e6ca1774",
-            "author", Map.of(
+            "author", Collections.singletonMap(
                 "name", "Lime",
                 "email", "4cc153d999e24274955157fc813e6f92f821525d@outlook.com"),
             "message", "Merge branch 'master' of https://github.com/LimeVista/Tapes\\n\\n# Conflicts:\\n#\\t.gitignore",
@@ -421,7 +421,7 @@ public class TransformPipelineTest {
     GenericRow sampleRow = new GenericRow();
     sampleRow.putValue("id", "7044874109");
     sampleRow.putValue("type", "PushEvent");
-    sampleRow.putValue("actor", Map.of(
+    sampleRow.putValue("actor", Collections.singletonMap(
         "id", 18542751,
         "login", "LimeVista",
         "display_login", "LimeVista",
@@ -430,21 +430,21 @@ public class TransformPipelineTest {
         "avatar_url", "https://avatars.githubusercontent.com/u/18542751?"
     ));
 
-    sampleRow.putValue("repo", Map.of(
+    sampleRow.putValue("repo", Collections.singletonMap(
         "id", 115911530,
         "name", "LimeVista/Tapes",
         "url", "https://api.github.com/repos/LimeVista/Tapes"
     ));
-    sampleRow.putValue("payload", Map.of(
+    sampleRow.putValue("payload", Collections.singletonMap(
         "push_id", "2226018068",
         "size", 1,
         "distinct_size", 1,
         "ref", "refs/heads/master",
         "head", "c5fc8b32a9ead1eba315d97410cb4ac1e6ca1774",
         "before", "892d872c5d3f24cc6837900c9f4618dc2fe92930",
-        "commits", Map.of(
+        "commits", Collections.singletonMap(
             "sha", "c5fc8b32a9ead1eba315d97410cb4ac1e6ca1774",
-            "author", Map.of(
+            "author", Collections.singletonMap(
                 "name", "Lime",
                 "email", "4cc153d999e24274955157fc813e6f92f821525d@outlook.com"),
             "message", "Merge branch 'master' of https://github.com/LimeVista/Tapes\\n\\n# Conflicts:\\n#\\t.gitignore",

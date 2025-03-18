@@ -56,7 +56,7 @@ public class FilterTransformer implements RecordTransformer {
 
   @Override
   public List<String> getInputColumns() {
-    return _evaluator != null ? _evaluator.getArguments() : List.of();
+    return _evaluator != null ? _evaluator.getArguments() : Arrays.asList();
   }
 
   @Override

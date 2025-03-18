@@ -33,7 +33,7 @@ import static org.testng.Assert.assertEquals;
 
 public class RexExpressionSerDeTest {
   private static final List<ColumnDataType> SUPPORTED_DATE_TYPES =
-      List.of(ColumnDataType.INT, ColumnDataType.LONG, ColumnDataType.FLOAT, ColumnDataType.DOUBLE,
+      Arrays.asList(ColumnDataType.INT, ColumnDataType.LONG, ColumnDataType.FLOAT, ColumnDataType.DOUBLE,
           ColumnDataType.BIG_DECIMAL, ColumnDataType.BOOLEAN, ColumnDataType.TIMESTAMP, ColumnDataType.STRING,
           ColumnDataType.BYTES, ColumnDataType.INT_ARRAY, ColumnDataType.LONG_ARRAY, ColumnDataType.FLOAT_ARRAY,
           ColumnDataType.DOUBLE_ARRAY, ColumnDataType.BOOLEAN_ARRAY, ColumnDataType.TIMESTAMP_ARRAY,

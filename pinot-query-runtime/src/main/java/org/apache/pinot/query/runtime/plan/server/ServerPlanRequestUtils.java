@@ -70,7 +70,7 @@ public class ServerPlanRequestUtils {
 
   private static final int DEFAULT_LEAF_NODE_LIMIT = Integer.MAX_VALUE;
   private static final List<String> QUERY_REWRITERS_CLASS_NAMES =
-      ImmutableList.of(PredicateComparisonRewriter.class.getName(),
+      ImmutableArrays.asList(PredicateComparisonRewriter.class.getName(),
           NonAggregationGroupByToDistinctQueryRewriter.class.getName());
   private static final List<QueryRewriter> QUERY_REWRITERS =
       new ArrayList<>(QueryRewriterFactory.getQueryRewriters(QUERY_REWRITERS_CLASS_NAMES));
@@ -155,14 +155,14 @@ public class ServerPlanRequestUtils {
       if (tableType.equals(TableType.OFFLINE.name())) {
         String offlineTableName = TableNameBuilder.forType(TableType.OFFLINE).tableNameWithType(rawTableName);
         TableConfig tableConfig = ZKMetadataProvider.getTableConfig(helixPropertyStore, offlineTableName);
-        return List.of(
+        return Arrays.asList(
             compileInstanceRequest(executionContext, pinotQuery, offlineTableName, tableConfig, schema, timeBoundary,
                 TableType.OFFLINE, segments));
       } else {
         assert tableType.equals(TableType.REALTIME.name());
         String realtimeTableName = TableNameBuilder.forType(TableType.REALTIME).tableNameWithType(rawTableName);
         TableConfig tableConfig = ZKMetadataProvider.getTableConfig(helixPropertyStore, realtimeTableName);
-        return List.of(
+        return Arrays.asList(
             compileInstanceRequest(executionContext, pinotQuery, realtimeTableName, tableConfig, schema, timeBoundary,
                 TableType.REALTIME, segments));
       }
@@ -176,7 +176,7 @@ public class ServerPlanRequestUtils {
       TableConfig offlineTableConfig = ZKMetadataProvider.getTableConfig(helixPropertyStore, offlineTableName);
       TableConfig realtimeTableConfig = ZKMetadataProvider.getTableConfig(helixPropertyStore, realtimeTableName);
       // NOTE: Make a deep copy of PinotQuery for OFFLINE request.
-      return List.of(
+      return Arrays.asList(
           compileInstanceRequest(executionContext, new PinotQuery(pinotQuery), offlineTableName, offlineTableConfig,
               schema, timeBoundary, TableType.OFFLINE, offlineSegments),
           compileInstanceRequest(executionContext, pinotQuery, realtimeTableName, realtimeTableConfig, schema,

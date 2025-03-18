@@ -313,7 +313,7 @@ public class SegmentFlushThresholdComputerTest {
       StreamConfig streamConfig = mock(StreamConfig.class);
       when(streamConfig.getFlushThresholdSegmentSizeBytes()).thenReturn(200_0000L);
       when(streamConfig.getStreamConfigsMap()).thenReturn(
-          Map.of("realtime.segment.flush.threshold.variance.percentage", String.valueOf(var)));
+          Collections.singletonMap("realtime.segment.flush.threshold.variance.percentage", String.valueOf(var)));
 
       CommittingSegmentDescriptor committingSegmentDescriptor = mock(CommittingSegmentDescriptor.class);
       when(committingSegmentDescriptor.getSegmentSizeBytes()).thenReturn(300_000L);

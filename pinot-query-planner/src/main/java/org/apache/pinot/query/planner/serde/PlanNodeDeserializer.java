@@ -123,7 +123,7 @@ public class PlanNodeDeserializer {
     List<Integer> protoReceiverIds = protoMailboxSendNode.getReceiverStageIdsList();
     if (protoReceiverIds == null || protoReceiverIds.isEmpty()) {
       // This should only happen if a not updated broker sends the request
-      receiverIds = List.of(protoMailboxSendNode.getReceiverStageId());
+      receiverIds = Arrays.asList(protoMailboxSendNode.getReceiverStageId());
     } else {
       receiverIds = protoReceiverIds;
     }
@@ -199,10 +199,10 @@ public class PlanNodeDeserializer {
     Map<String, Map<String, String>> hintOptions;
     int numHints = hintOptionsMap.size();
     if (numHints == 0) {
-      hintOptions = Map.of();
+      hintOptions = new HashMap<>();
     } else if (numHints == 1) {
       Map.Entry<String, Plan.StrStrMap> entry = hintOptionsMap.entrySet().iterator().next();
-      hintOptions = Map.of(entry.getKey(), entry.getValue().getOptionsMap());
+      hintOptions = Collections.singletonMap(entry.getKey(), entry.getValue().getOptionsMap());
     } else {
       hintOptions = Maps.newHashMapWithExpectedSize(numHints);
       for (Map.Entry<String, Plan.StrStrMap> entry : hintOptionsMap.entrySet()) {
@@ -216,13 +216,13 @@ public class PlanNodeDeserializer {
     List<Plan.PlanNode> protoInputs = protoNode.getInputsList();
     int numInputs = protoInputs.size();
     if (numInputs == 0) {
-      return List.of();
+      return Arrays.asList();
     }
     if (numInputs == 1) {
-      return List.of(process(protoInputs.get(0)));
+      return Arrays.asList(process(protoInputs.get(0)));
     }
     if (numInputs == 2) {
-      return List.of(process(protoInputs.get(0)), process(protoInputs.get(1)));
+      return Arrays.asList(process(protoInputs.get(0)), process(protoInputs.get(1)));
     }
     List<PlanNode> inputs = new ArrayList<>(numInputs);
     for (Plan.PlanNode protoInput : protoInputs) {

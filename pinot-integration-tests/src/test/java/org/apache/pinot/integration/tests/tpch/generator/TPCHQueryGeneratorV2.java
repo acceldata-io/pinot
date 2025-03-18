@@ -32,7 +32,7 @@ import org.codehaus.jettison.json.JSONException;
 public class TPCHQueryGeneratorV2 {
   private static final Map<String, Table> TABLES_MAP = new HashMap<>();
   private static final List<String> TABLE_NAMES =
-      List.of("nation", "region", "supplier", "customer", "part", "partsupp", "orders", "lineitem");
+      Arrays.asList("nation", "region", "supplier", "customer", "part", "partsupp", "orders", "lineitem");
   private static final String[] JOIN_TYPES = {
       "INNER JOIN", "LEFT JOIN", "RIGHT JOIN"
   };
@@ -60,46 +60,46 @@ public class TPCHQueryGeneratorV2 {
 
   public void init() {
     TABLES_MAP.put("nation", new Table("nation",
-        List.of(new Column("n_nationkey", ColumnType.NUMERIC), new Column("n_name", ColumnType.STRING),
+        Arrays.asList(new Column("n_nationkey", ColumnType.NUMERIC), new Column("n_name", ColumnType.STRING),
             new Column("n_regionkey", ColumnType.NUMERIC), new Column("n_comment", ColumnType.STRING))));
 
     TABLES_MAP.put("region", new Table("region",
-        List.of(new Column("r_regionkey", ColumnType.NUMERIC), new Column("r_name", ColumnType.STRING),
+        Arrays.asList(new Column("r_regionkey", ColumnType.NUMERIC), new Column("r_name", ColumnType.STRING),
             new Column("r_comment", ColumnType.STRING))));
 
     TABLES_MAP.put("supplier", new Table("supplier",
-        List.of(new Column("s_suppkey", ColumnType.NUMERIC), new Column("s_name", ColumnType.STRING),
+        Arrays.asList(new Column("s_suppkey", ColumnType.NUMERIC), new Column("s_name", ColumnType.STRING),
             new Column("s_address", ColumnType.STRING), new Column("s_nationkey", ColumnType.NUMERIC),
             new Column("s_phone", ColumnType.STRING), new Column("s_acctbal", ColumnType.NUMERIC),
             new Column("s_comment", ColumnType.STRING))));
 
     TABLES_MAP.put("customer", new Table("customer",
-        List.of(new Column("c_custkey", ColumnType.NUMERIC), new Column("c_name", ColumnType.STRING),
+        Arrays.asList(new Column("c_custkey", ColumnType.NUMERIC), new Column("c_name", ColumnType.STRING),
             new Column("c_address", ColumnType.STRING), new Column("c_nationkey", ColumnType.NUMERIC),
             new Column("c_phone", ColumnType.STRING), new Column("c_acctbal", ColumnType.NUMERIC),
             new Column("c_mktsegment", ColumnType.STRING), new Column("c_comment", ColumnType.STRING))));
 
     TABLES_MAP.put("part", new Table("part",
-        List.of(new Column("p_partkey", ColumnType.NUMERIC), new Column("p_name", ColumnType.STRING),
+        Arrays.asList(new Column("p_partkey", ColumnType.NUMERIC), new Column("p_name", ColumnType.STRING),
             new Column("p_mfgr", ColumnType.STRING), new Column("p_brand", ColumnType.STRING),
             new Column("p_type", ColumnType.STRING), new Column("p_size", ColumnType.NUMERIC),
             new Column("p_container", ColumnType.STRING), new Column("p_retailprice", ColumnType.NUMERIC),
             new Column("p_comment", ColumnType.STRING))));
 
     TABLES_MAP.put("partsupp", new Table("partsupp",
-        List.of(new Column("ps_partkey", ColumnType.NUMERIC), new Column("ps_suppkey", ColumnType.NUMERIC),
+        Arrays.asList(new Column("ps_partkey", ColumnType.NUMERIC), new Column("ps_suppkey", ColumnType.NUMERIC),
             new Column("ps_availqty", ColumnType.NUMERIC), new Column("ps_supplycost", ColumnType.NUMERIC),
             new Column("ps_comment", ColumnType.STRING))));
 
     TABLES_MAP.put("orders", new Table("orders",
-        List.of(new Column("o_orderkey", ColumnType.NUMERIC), new Column("o_custkey", ColumnType.NUMERIC),
+        Arrays.asList(new Column("o_orderkey", ColumnType.NUMERIC), new Column("o_custkey", ColumnType.NUMERIC),
             new Column("o_orderstatus", ColumnType.STRING), new Column("o_totalprice", ColumnType.NUMERIC),
             new Column("o_orderdate", ColumnType.STRING), new Column("o_orderpriority", ColumnType.STRING),
             new Column("o_clerk", ColumnType.STRING), new Column("o_shippriority", ColumnType.STRING),
             new Column("o_comment", ColumnType.STRING))));
 
     TABLES_MAP.put("lineitem", new Table("lineitem",
-        List.of(new Column("l_orderkey", ColumnType.NUMERIC), new Column("l_partkey", ColumnType.NUMERIC),
+        Arrays.asList(new Column("l_orderkey", ColumnType.NUMERIC), new Column("l_partkey", ColumnType.NUMERIC),
             new Column("l_suppkey", ColumnType.NUMERIC), new Column("l_linenumber", ColumnType.NUMERIC),
             new Column("l_quantity", ColumnType.NUMERIC), new Column("l_extendedprice", ColumnType.NUMERIC),
             new Column("l_discount", ColumnType.NUMERIC), new Column("l_tax", ColumnType.NUMERIC),

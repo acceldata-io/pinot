@@ -94,10 +94,10 @@ public class UpsertCompactMergeTaskGeneratorTest {
 
     // check with OFFLINE table
     Map<String, String> upsertCompactMergeTaskConfig =
-        ImmutableMap.of("bufferTimePeriod", "5d");
+        ImmutableCollections.singletonMap("bufferTimePeriod", "5d");
     TableConfig offlineTableConfig =
         new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME).setTaskConfig(
-                new TableTaskConfig(ImmutableMap.of(MinionConstants.UpsertCompactMergeTask.TASK_TYPE,
+                new TableTaskConfig(ImmutableCollections.singletonMap(MinionConstants.UpsertCompactMergeTask.TASK_TYPE,
                     upsertCompactMergeTaskConfig)))
             .build();
     Assert.assertThrows(IllegalStateException.class,
@@ -105,7 +105,7 @@ public class UpsertCompactMergeTaskGeneratorTest {
 
     // check with non-upsert REALTIME table
     TableConfig nonUpsertRealtimetableConfig = new TableConfigBuilder(TableType.REALTIME).setTableName(RAW_TABLE_NAME)
-        .setTaskConfig(new TableTaskConfig(ImmutableMap.of(MinionConstants.UpsertCompactMergeTask.TASK_TYPE,
+        .setTaskConfig(new TableTaskConfig(ImmutableCollections.singletonMap(MinionConstants.UpsertCompactMergeTask.TASK_TYPE,
             upsertCompactMergeTaskConfig)))
         .build();
 
@@ -116,7 +116,7 @@ public class UpsertCompactMergeTaskGeneratorTest {
     // check with snapshot disabled
     TableConfig disabledSnapshotTableConfig = new TableConfigBuilder(TableType.REALTIME).setTableName(RAW_TABLE_NAME)
         .setUpsertConfig(new UpsertConfig(UpsertConfig.Mode.FULL))
-        .setTaskConfig(new TableTaskConfig(ImmutableMap.of(MinionConstants.UpsertCompactMergeTask.TASK_TYPE,
+        .setTaskConfig(new TableTaskConfig(ImmutableCollections.singletonMap(MinionConstants.UpsertCompactMergeTask.TASK_TYPE,
             upsertCompactMergeTaskConfig)))
         .build();
     Assert.assertThrows(IllegalStateException.class,
@@ -128,14 +128,14 @@ public class UpsertCompactMergeTaskGeneratorTest {
     upsertConfig.setEnableSnapshot(true);
     TableConfig validTableConfig = new TableConfigBuilder(TableType.REALTIME).setTableName(RAW_TABLE_NAME)
         .setUpsertConfig(upsertConfig)
-        .setTaskConfig(new TableTaskConfig(ImmutableMap.of(MinionConstants.UpsertCompactMergeTask.TASK_TYPE,
+        .setTaskConfig(new TableTaskConfig(ImmutableCollections.singletonMap(MinionConstants.UpsertCompactMergeTask.TASK_TYPE,
             upsertCompactMergeTaskConfig)))
         .build();
     _taskGenerator.validateTaskConfigs(validTableConfig, new Schema(), upsertCompactMergeTaskConfig);
 
     // invalid buffer time period
     Map<String, String> upsertCompactMergeTaskConfig1 =
-        ImmutableMap.of("bufferTimePeriod", "5hd");
+        ImmutableCollections.singletonMap("bufferTimePeriod", "5hd");
     Assert.assertThrows(IllegalArgumentException.class,
         () -> _taskGenerator.validateTaskConfigs(validTableConfig, new Schema(), upsertCompactMergeTaskConfig1));
   }
@@ -188,7 +188,7 @@ public class UpsertCompactMergeTaskGeneratorTest {
     segmentWithNoDownloadUrl.setCrc(1000);
     segmentWithNoDownloadUrl.setDownloadUrl("");
     candidateSegments = UpsertCompactMergeTaskGenerator.getCandidateSegments(taskConfigs,
-        List.of(segmentWithNoDownloadUrl), System.currentTimeMillis());
+        Arrays.asList(segmentWithNoDownloadUrl), System.currentTimeMillis());
     Assert.assertEquals(candidateSegments.size(), 0);
 
     // candidates are within buffer period
@@ -201,7 +201,7 @@ public class UpsertCompactMergeTaskGeneratorTest {
     segmentWithinBufferPeriod.setCrc(1000);
     segmentWithinBufferPeriod.setDownloadUrl("fs://testTable__3");
     candidateSegments = UpsertCompactMergeTaskGenerator.getCandidateSegments(taskConfigs,
-        List.of(segmentWithinBufferPeriod), System.currentTimeMillis());
+        Arrays.asList(segmentWithinBufferPeriod), System.currentTimeMillis());
     Assert.assertEquals(candidateSegments.size(), 0);
 
     // no completed segment
@@ -212,7 +212,7 @@ public class UpsertCompactMergeTaskGeneratorTest {
     incompleteSegment.setTotalDocs(100L);
     incompleteSegment.setCrc(1000);
     candidateSegments = UpsertCompactMergeTaskGenerator.getCandidateSegments(taskConfigs,
-        List.of(incompleteSegment), System.currentTimeMillis());
+        Arrays.asList(incompleteSegment), System.currentTimeMillis());
     Assert.assertEquals(candidateSegments.size(), 0);
   }
 
@@ -224,7 +224,7 @@ public class UpsertCompactMergeTaskGeneratorTest {
 
     // single segment
     segmentMergerMetadataList =
-        List.of(new UpsertCompactMergeTaskGenerator.SegmentMergerMetadata(_completedSegment, 100, 10, 100000));
+        Arrays.asList(new UpsertCompactMergeTaskGenerator.SegmentMergerMetadata(_completedSegment, 100, 10, 100000));
     Assert.assertEquals(_taskGenerator.getDownloadUrl(segmentMergerMetadataList), "fs://testTable__0");
 
     // multiple segments
@@ -244,7 +244,7 @@ public class UpsertCompactMergeTaskGeneratorTest {
 
     // single segment
     segmentMergerMetadataList =
-        List.of(new UpsertCompactMergeTaskGenerator.SegmentMergerMetadata(_completedSegment, 100, 10, 100000));
+        Arrays.asList(new UpsertCompactMergeTaskGenerator.SegmentMergerMetadata(_completedSegment, 100, 10, 100000));
     Assert.assertEquals(_taskGenerator.getSegmentCrcList(segmentMergerMetadataList), "1000");
 
     // multiple segments

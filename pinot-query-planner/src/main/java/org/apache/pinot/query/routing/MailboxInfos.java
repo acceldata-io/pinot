@@ -31,7 +31,7 @@ public class MailboxInfos {
   }
 
   public MailboxInfos(MailboxInfo mailboxInfo) {
-    _mailboxInfos = ImmutableList.of(mailboxInfo);
+    _mailboxInfos = ImmutableArrays.asList(mailboxInfo);
   }
 
   public List<MailboxInfo> getMailboxInfos() {

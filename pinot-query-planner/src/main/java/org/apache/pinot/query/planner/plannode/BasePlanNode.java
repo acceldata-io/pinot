@@ -34,7 +34,7 @@ public abstract class BasePlanNode implements PlanNode {
   public BasePlanNode(int stageId, DataSchema dataSchema, @Nullable NodeHint nodeHint, List<PlanNode> inputs) {
     _stageId = stageId;
     _dataSchema = dataSchema;
-    _nodeHint = nodeHint != null ? nodeHint : new NodeHint(Map.of());
+    _nodeHint = nodeHint != null ? nodeHint : new NodeHint(new HashMap<>());
     _inputs = inputs;
   }
 

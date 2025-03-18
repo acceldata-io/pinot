@@ -228,7 +228,7 @@ public class PinotSegmentRestletResourceTest {
     ControllerRequestURLBuilder urlBuilder = TEST_INSTANCE.getControllerRequestURLBuilder();
     // case 1: send list of segments
     String reply = ControllerTest.sendDeleteRequest(urlBuilder.forDeleteMultipleSegments(
-        TEST_RAW_OFFLINE_TABLE_NAME, TableType.OFFLINE.toString(), List.of("segment1")));
+        TEST_RAW_OFFLINE_TABLE_NAME, TableType.OFFLINE.toString(), Arrays.asList("segment1")));
     assertTrue(reply.contains("Deleted segments: [segment1] from table: offlineTableName1_OFFLINE"));
 
     // case 2: delete all remaining segments

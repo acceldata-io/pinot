@@ -119,10 +119,10 @@ public class StarTreeFunctionParametersIntegrationTest extends BaseClusterIntegr
 
     List<StarTreeIndexConfig> starTreeIndexConfigs = _tableConfig.getIndexingConfig().getStarTreeIndexConfigs();
     StarTreeAggregationConfig aggregationConfig = new StarTreeAggregationConfig("OriginAirportSeqID",
-        "DISTINCTCOUNTHLL", Map.of(Constants.HLL_LOG2M_KEY, 4), null, null, null, null, null);
+        "DISTINCTCOUNTHLL", Collections.singletonMap(Constants.HLL_LOG2M_KEY, 4), null, null, null, null, null);
 
     starTreeIndexConfigs.add(new StarTreeIndexConfig(Collections.singletonList("DistanceGroup"), null,
-        null, List.of(aggregationConfig), 1));
+        null, Arrays.asList(aggregationConfig), 1));
     updateTableConfig(_tableConfig);
     waitForTableConfigUpdate(tableConfig -> tableConfig.getIndexingConfig().getStarTreeIndexConfigs().size() == 1);
     reloadOfflineTable(DEFAULT_TABLE_NAME);
@@ -140,7 +140,7 @@ public class StarTreeFunctionParametersIntegrationTest extends BaseClusterIntegr
         null, null, null, null, null, null);
     starTreeIndexConfigs.remove(starTreeIndexConfigs.size() - 1);
     starTreeIndexConfigs.add(new StarTreeIndexConfig(Collections.singletonList("DistanceGroup"), null,
-        null, List.of(aggregationConfig), 1));
+        null, Arrays.asList(aggregationConfig), 1));
 
     updateTableConfig(_tableConfig);
     waitForTableConfigUpdate(tableConfig -> tableConfig.getIndexingConfig().getStarTreeIndexConfigs()
@@ -158,9 +158,9 @@ public class StarTreeFunctionParametersIntegrationTest extends BaseClusterIntegr
     // be created for the same function / column pair with different configurations.
 
     aggregationConfig = new StarTreeAggregationConfig("OriginAirportSeqID", "DISTINCTCOUNTHLL",
-        Map.of(Constants.HLL_LOG2M_KEY, "4"), null, null, null, null, null);
+        Collections.singletonMap(Constants.HLL_LOG2M_KEY, "4"), null, null, null, null, null);
     starTreeIndexConfigs.add(new StarTreeIndexConfig(Collections.singletonList("DistanceGroup"), null,
-        null, List.of(aggregationConfig), 1));
+        null, Arrays.asList(aggregationConfig), 1));
     updateTableConfig(_tableConfig);
     waitForTableConfigUpdate(tableConfig -> tableConfig.getIndexingConfig().getStarTreeIndexConfigs().size() == 2);
     reloadOfflineTable(DEFAULT_TABLE_NAME);
@@ -173,10 +173,10 @@ public class StarTreeFunctionParametersIntegrationTest extends BaseClusterIntegr
     // Update the previously added star-tree index to ensure that the star-tree index is rebuilt with new config
     // parameters
     aggregationConfig = new StarTreeAggregationConfig("OriginAirportSeqID", "DISTINCTCOUNTHLL",
-        Map.of(Constants.HLL_LOG2M_KEY, "6"), null, null, null, null, null);
+        Collections.singletonMap(Constants.HLL_LOG2M_KEY, "6"), null, null, null, null, null);
     starTreeIndexConfigs.remove(starTreeIndexConfigs.size() - 1);
     starTreeIndexConfigs.add(new StarTreeIndexConfig(Collections.singletonList("DistanceGroup"), null,
-        null, List.of(aggregationConfig), 1));
+        null, Arrays.asList(aggregationConfig), 1));
     updateTableConfig(_tableConfig);
     waitForTableConfigUpdate(tableConfig -> tableConfig.getIndexingConfig().getStarTreeIndexConfigs()
         .get(starTreeIndexConfigs.size() - 1).getAggregationConfigs().get(0).getFunctionParameters()

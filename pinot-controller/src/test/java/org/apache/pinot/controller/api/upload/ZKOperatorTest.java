@@ -120,7 +120,7 @@ public class ZKOperatorTest {
     config.setSegmentName(SEGMENT_NAME);
     GenericRow row = new GenericRow();
     row.putValue("colA", "100");
-    List<GenericRow> rows = ImmutableList.of(row);
+    List<GenericRow> rows = ImmutableArrays.asList(row);
 
     SegmentIndexCreationDriverImpl driver = new SegmentIndexCreationDriverImpl();
     driver.init(config, new GenericRowRecordReader(rows));

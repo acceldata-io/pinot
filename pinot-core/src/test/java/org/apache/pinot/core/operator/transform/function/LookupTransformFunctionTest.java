@@ -65,7 +65,7 @@ public class LookupTransformFunctionTest extends BaseTransformFunctionTest {
   private DimensionTableDataManager mockDataManager() {
     DimensionTableDataManager tableManager = mock(DimensionTableDataManager.class);
 
-    when(tableManager.getPrimaryKeyColumns()).thenReturn(List.of("teamID"));
+    when(tableManager.getPrimaryKeyColumns()).thenReturn(Arrays.asList("teamID"));
     when(tableManager.isPopulated()).thenReturn(true);
     when(tableManager.getColumnFieldSpec("teamID")).thenReturn(new DimensionFieldSpec("teamID", DataType.STRING, true));
     when(tableManager.getColumnFieldSpec("teamName")).thenReturn(
@@ -188,7 +188,7 @@ public class LookupTransformFunctionTest extends BaseTransformFunctionTest {
   public void dimensionTableNotPopulated() {
     DimensionTableDataManager tableManager = mock(DimensionTableDataManager.class);
     when(tableManager.isPopulated()).thenReturn(false);
-    when(tableManager.getPrimaryKeyColumns()).thenReturn(List.of("leagueID"));
+    when(tableManager.getPrimaryKeyColumns()).thenReturn(Arrays.asList("leagueID"));
     when(tableManager.getColumnFieldSpec("leagueID")).thenReturn(
         new DimensionFieldSpec("leagueID", DataType.STRING, true));
     when(tableManager.getColumnFieldSpec("leagueName")).thenReturn(
@@ -210,7 +210,7 @@ public class LookupTransformFunctionTest extends BaseTransformFunctionTest {
   public void dimensionTableIsPopulated() {
     DimensionTableDataManager tableManager = mock(DimensionTableDataManager.class);
     when(tableManager.isPopulated()).thenReturn(true);
-    when(tableManager.getPrimaryKeyColumns()).thenReturn(List.of("playerID"));
+    when(tableManager.getPrimaryKeyColumns()).thenReturn(Arrays.asList("playerID"));
     when(tableManager.getColumnFieldSpec("playerID")).thenReturn(
         new DimensionFieldSpec("playerID", DataType.STRING, true));
     when(tableManager.getColumnFieldSpec("playerName")).thenReturn(
@@ -358,7 +358,7 @@ public class LookupTransformFunctionTest extends BaseTransformFunctionTest {
       DimensionTableDataManager mgr = mock(DimensionTableDataManager.class);
       DimensionTableDataManager.registerDimensionTable(table.getKey(), mgr);
       when(mgr.isPopulated()).thenReturn(true);
-      when(mgr.getPrimaryKeyColumns()).thenReturn(List.of("primaryColumn"));
+      when(mgr.getPrimaryKeyColumns()).thenReturn(Arrays.asList("primaryColumn"));
       when(mgr.getColumnFieldSpec("primaryColumn")).thenReturn(
           new DimensionFieldSpec("primaryColumn", table.getValue(), true));
       when(mgr.getColumnFieldSpec("lookupColumn")).thenReturn(

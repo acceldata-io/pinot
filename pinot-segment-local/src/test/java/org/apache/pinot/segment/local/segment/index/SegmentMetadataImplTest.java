@@ -56,7 +56,7 @@ public class SegmentMetadataImplTest {
         .getSegmentGenSpecWithSchemAndProjectedColumns(new File(filePath), INDEX_DIR, "daysSinceEpoch", TimeUnit.HOURS,
             "testTable");
     config.setSegmentNamePostfix("1");
-    config.setCustomProperties(ImmutableMap.of("custom.k1", "v1", "custom.k2", "v2"));
+    config.setCustomProperties(ImmutableCollections.singletonMap("custom.k1", "v1", "custom.k2", "v2"));
     final SegmentIndexCreationDriver driver = SegmentCreationDriverFactory.get(null);
     driver.init(config);
     driver.build();

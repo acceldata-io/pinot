@@ -129,7 +129,7 @@ public final class ComplexFieldSpec extends FieldSpec {
 
   public static ComplexFieldSpec fromMapFieldSpec(MapFieldSpec mapFieldSpec) {
     return new ComplexFieldSpec(mapFieldSpec.getFieldName(), DataType.MAP, true,
-        Map.of(KEY_FIELD, mapFieldSpec.getKeyFieldSpec(), VALUE_FIELD, mapFieldSpec.getValueFieldSpec()));
+        Collections.singletonMap(KEY_FIELD, mapFieldSpec.getKeyFieldSpec(), VALUE_FIELD, mapFieldSpec.getValueFieldSpec()));
   }
 
   /**

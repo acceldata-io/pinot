@@ -147,7 +147,7 @@ public class FilterOperatorTest {
     when(_input.nextBlock()).thenReturn(
         OperatorTestUtil.block(inputSchema, new Object[]{1, 1}, new Object[]{0, 0}, new Object[]{1, 0}));
     RexExpression.FunctionCall andCall = new RexExpression.FunctionCall(ColumnDataType.BOOLEAN, SqlKind.AND.name(),
-        List.of(new RexExpression.InputRef(0), new RexExpression.InputRef(1)));
+        Arrays.asList(new RexExpression.InputRef(0), new RexExpression.InputRef(1)));
     FilterOperator operator = getOperator(inputSchema, andCall);
     List<Object[]> resultRows = operator.nextBlock().getContainer();
     assertEquals(resultRows.size(), 1);
@@ -162,7 +162,7 @@ public class FilterOperatorTest {
     when(_input.nextBlock()).thenReturn(
         OperatorTestUtil.block(inputSchema, new Object[]{1, 1}, new Object[]{0, 0}, new Object[]{1, 0}));
     RexExpression.FunctionCall orCall = new RexExpression.FunctionCall(ColumnDataType.BOOLEAN, SqlKind.OR.name(),
-        List.of(new RexExpression.InputRef(0), new RexExpression.InputRef(1)));
+        Arrays.asList(new RexExpression.InputRef(0), new RexExpression.InputRef(1)));
     FilterOperator operator = getOperator(inputSchema, orCall);
     List<Object[]> resultRows = operator.nextBlock().getContainer();
     assertEquals(resultRows.size(), 2);
@@ -178,7 +178,7 @@ public class FilterOperatorTest {
     when(_input.nextBlock()).thenReturn(
         OperatorTestUtil.block(inputSchema, new Object[]{1, 1}, new Object[]{0, 0}, new Object[]{1, 0}));
     RexExpression.FunctionCall notCall = new RexExpression.FunctionCall(ColumnDataType.BOOLEAN, SqlKind.NOT.name(),
-        List.of(new RexExpression.InputRef(0)));
+        Arrays.asList(new RexExpression.InputRef(0)));
     FilterOperator operator = getOperator(inputSchema, notCall);
     List<Object[]> resultRows = operator.nextBlock().getContainer();
     assertEquals(resultRows.size(), 1);
@@ -195,7 +195,7 @@ public class FilterOperatorTest {
         OperatorTestUtil.block(inputSchema, new Object[]{1, 2}, new Object[]{3, 2}, new Object[]{1, 1}));
     RexExpression.FunctionCall greaterThan =
         new RexExpression.FunctionCall(ColumnDataType.BOOLEAN, SqlKind.GREATER_THAN.name(),
-            List.of(new RexExpression.InputRef(0), new RexExpression.InputRef(1)));
+            Arrays.asList(new RexExpression.InputRef(0), new RexExpression.InputRef(1)));
     FilterOperator operator = getOperator(inputSchema, greaterThan);
     List<Object[]> resultRows = operator.nextBlock().getContainer();
     assertEquals(resultRows.size(), 1);
@@ -211,7 +211,7 @@ public class FilterOperatorTest {
         OperatorTestUtil.block(inputSchema, new Object[]{"starTree"}, new Object[]{"treeStar"}));
     RexExpression.FunctionCall startsWith =
         new RexExpression.FunctionCall(ColumnDataType.BOOLEAN, SqlKind.STARTS_WITH.name(),
-            List.of(new RexExpression.InputRef(0), new RexExpression.Literal(ColumnDataType.STRING, "star")));
+            Arrays.asList(new RexExpression.InputRef(0), new RexExpression.Literal(ColumnDataType.STRING, "star")));
     FilterOperator operator = getOperator(inputSchema, startsWith);
     List<Object[]> resultRows = operator.nextBlock().getContainer();
     assertEquals(resultRows.size(), 1);
@@ -231,12 +231,12 @@ public class FilterOperatorTest {
     when(_input.nextBlock()).thenReturn(
         OperatorTestUtil.block(inputSchema, new Object[]{"starTree"}, new Object[]{"treeStar"}));
     RexExpression.FunctionCall startsWith = new RexExpression.FunctionCall(ColumnDataType.BOOLEAN, "startsWithError",
-        List.of(new RexExpression.InputRef(0), new RexExpression.Literal(ColumnDataType.STRING, "star")));
+        Arrays.asList(new RexExpression.InputRef(0), new RexExpression.Literal(ColumnDataType.STRING, "star")));
     getOperator(inputSchema, startsWith);
   }
 
   private FilterOperator getOperator(DataSchema schema, RexExpression condition) {
     return new FilterOperator(OperatorTestUtil.getTracingContext(), _input,
-        new FilterNode(-1, schema, PlanNode.NodeHint.EMPTY, List.of(), condition));
+        new FilterNode(-1, schema, PlanNode.NodeHint.EMPTY, Arrays.asList(), condition));
   }
 }

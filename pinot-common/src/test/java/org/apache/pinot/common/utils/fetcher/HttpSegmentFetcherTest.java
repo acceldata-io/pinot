@@ -61,7 +61,7 @@ public class HttpSegmentFetcherTest {
     FileUploadDownloadClient client = mock(FileUploadDownloadClient.class);
     when(client.downloadFile(any(), any(), any())).thenReturn(200);
     HttpSegmentFetcher segmentFetcher = getSegmentFetcher(client);
-    List<URI> uris = List.of(new URI("http://h1:8080"), new URI("http://h2:8080"));
+    List<URI> uris = Arrays.asList(new URI("http://h1:8080"), new URI("http://h2:8080"));
     segmentFetcher.fetchSegmentToLocal(SEGMENT_NAME, () -> uris, SEGMENT_FILE);
   }
 
@@ -72,7 +72,7 @@ public class HttpSegmentFetcherTest {
     // All attempts failed
     when(client.downloadFile(any(), any(), any())).thenReturn(300);
     HttpSegmentFetcher segmentFetcher = getSegmentFetcher(client);
-    List<URI> uris = List.of(new URI("http://h1:8080"), new URI("http://h2:8080"));
+    List<URI> uris = Arrays.asList(new URI("http://h1:8080"), new URI("http://h2:8080"));
     segmentFetcher.fetchSegmentToLocal(SEGMENT_NAME, () -> uris, SEGMENT_FILE);
   }
 
@@ -83,7 +83,7 @@ public class HttpSegmentFetcherTest {
     // The first two attempts failed and the last attempt succeeded
     when(client.downloadFile(any(), any(), any())).thenReturn(300).thenReturn(300).thenReturn(200);
     HttpSegmentFetcher segmentFetcher = getSegmentFetcher(client);
-    List<URI> uris = List.of(new URI("http://h1:8080"), new URI("http://h2:8080"));
+    List<URI> uris = Arrays.asList(new URI("http://h1:8080"), new URI("http://h2:8080"));
     segmentFetcher.fetchSegmentToLocal(SEGMENT_NAME, () -> uris, SEGMENT_FILE);
   }
 
@@ -94,11 +94,11 @@ public class HttpSegmentFetcherTest {
     // The download always succeeds
     when(client.downloadFile(any(), any(), any())).thenReturn(200);
     HttpSegmentFetcher segmentFetcher = getSegmentFetcher(client);
-    List<URI> uris = List.of(new URI("http://h1:8080"), new URI("http://h2:8080"));
+    List<URI> uris = Arrays.asList(new URI("http://h1:8080"), new URI("http://h2:8080"));
     // The first two attempts found NO peers hosting the segment, and the last one found two servers
     //noinspection unchecked
     Supplier<List<URI>> uriSupplier = mock(Supplier.class);
-    when(uriSupplier.get()).thenReturn(List.of()).thenReturn(List.of()).thenReturn(uris);
+    when(uriSupplier.get()).thenReturn(Arrays.asList()).thenReturn(Arrays.asList()).thenReturn(uris);
     segmentFetcher.fetchSegmentToLocal(SEGMENT_NAME, uriSupplier, SEGMENT_FILE);
   }
 
@@ -109,7 +109,7 @@ public class HttpSegmentFetcherTest {
     // The download always succeeds
     when(client.downloadFile(any(), any(), any())).thenReturn(200);
     HttpSegmentFetcher segmentFetcher = getSegmentFetcher(client);
-    List<URI> uris = List.of();
+    List<URI> uris = Arrays.asList();
     segmentFetcher.fetchSegmentToLocal(SEGMENT_NAME, () -> uris, SEGMENT_FILE);
   }
 }

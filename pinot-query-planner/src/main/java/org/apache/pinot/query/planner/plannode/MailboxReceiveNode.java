@@ -45,12 +45,12 @@ public class MailboxReceiveNode extends BasePlanNode {
       PinotRelExchangeType exchangeType, RelDistribution.Type distributionType, @Nullable List<Integer> keys,
       @Nullable List<RelFieldCollation> collations, boolean sort, boolean sortedOnSender,
       @Nullable MailboxSendNode sender) {
-    super(stageId, dataSchema, null, List.of());
+    super(stageId, dataSchema, null, Arrays.asList());
     _senderStageId = senderStageId;
     _exchangeType = exchangeType;
     _distributionType = distributionType;
-    _keys = keys != null ? keys : List.of();
-    _collations = collations != null ? collations : List.of();
+    _keys = keys != null ? keys : Arrays.asList();
+    _collations = collations != null ? collations : Arrays.asList();
     _sort = sort;
     _sortedOnSender = sortedOnSender;
     _sender = sender;

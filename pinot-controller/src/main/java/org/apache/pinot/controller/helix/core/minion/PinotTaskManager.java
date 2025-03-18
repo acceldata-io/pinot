@@ -164,7 +164,7 @@ public class PinotTaskManager extends ControllerPeriodicTask<Void> {
         taskConfigs.getOrDefault(MINION_INSTANCE_TAG_CONFIG, CommonConstants.Helix.UNTAGGED_MINION_INSTANCE);
     _helixTaskResourceManager.ensureTaskQueueExists(taskType);
     addTaskTypeMetricsUpdaterIfNeeded(taskType);
-    if (!isTaskSchedulable(taskType, List.of(tableName))) {
+    if (!isTaskSchedulable(taskType, Arrays.asList(tableName))) {
       return new HashMap<>();
     }
     String parentTaskName = _helixTaskResourceManager.getParentTaskName(taskType, taskName);
@@ -509,7 +509,7 @@ public class PinotTaskManager extends ControllerPeriodicTask<Void> {
    */
   public synchronized Map<String, List<String>> scheduleAllTasksForTable(String tableNameWithType,
       @Nullable String minionInstanceTag) {
-    return scheduleTasks(List.of(tableNameWithType), false, minionInstanceTag);
+    return scheduleTasks(Arrays.asList(tableNameWithType), false, minionInstanceTag);
   }
 
   /**
@@ -541,7 +541,7 @@ public class PinotTaskManager extends ControllerPeriodicTask<Void> {
   @Nullable
   public synchronized List<String> scheduleTaskForTable(String taskType, String tableNameWithType,
       @Nullable String minionInstanceTag) {
-    return scheduleTask(taskType, List.of(tableNameWithType), minionInstanceTag);
+    return scheduleTask(taskType, Arrays.asList(tableNameWithType), minionInstanceTag);
   }
 
   /**
@@ -628,7 +628,7 @@ public class PinotTaskManager extends ControllerPeriodicTask<Void> {
             : taskGenerator.getMinionInstanceTag(tableConfig);
         List<PinotTaskConfig> presentTaskConfig =
             minionInstanceTagToTaskConfigs.computeIfAbsent(minionInstanceTag, k -> new ArrayList<>());
-        taskGenerator.generateTasks(List.of(tableConfig), presentTaskConfig);
+        taskGenerator.generateTasks(Arrays.asList(tableConfig), presentTaskConfig);
         minionInstanceTagToTaskConfigs.put(minionInstanceTag, presentTaskConfig);
         long successRunTimestamp = System.currentTimeMillis();
         _taskManagerStatusCache.saveTaskGeneratorInfo(tableName, taskType,

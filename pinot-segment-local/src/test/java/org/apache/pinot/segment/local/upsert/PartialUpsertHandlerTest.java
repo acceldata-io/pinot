@@ -71,25 +71,25 @@ public class PartialUpsertHandlerTest {
   @Test
   public void testCustomPartialUpsertMergerWithNonNullResult() {
     GenericRow newRecord = initGenericRow(new GenericRow(),
-        ImmutableMap.of("pk", "pk1", "field1", 3L, "field2", "inc", "hoursSinceEpoch", 2L));
+        ImmutableCollections.singletonMap("pk", "pk1", "field1", 3L, "field2", "inc", "hoursSinceEpoch", 2L));
     LazyRow prevRecord = mock(LazyRow.class);
-    mockLazyRow(prevRecord, ImmutableMap.of("pk", "pk1", "field1", 5L, "field2", "set", "hoursSinceEpoch", 2L));
+    mockLazyRow(prevRecord, ImmutableCollections.singletonMap("pk", "pk1", "field1", 5L, "field2", "set", "hoursSinceEpoch", 2L));
     GenericRow expectedRecord = initGenericRow(new GenericRow(),
-        ImmutableMap.of("pk", "pk1", "field1", 8L, "field2", "inc", "hoursSinceEpoch", 2L));
+        ImmutableCollections.singletonMap("pk", "pk1", "field1", 8L, "field2", "inc", "hoursSinceEpoch", 2L));
 
     testCustomMerge(prevRecord, newRecord, expectedRecord, getCustomMerger());
   }
 
   @Test
   public void testCustomPartialUpsertMergerWithNullResult() {
-    Map newRowData = new HashMap(Map.of("pk", "pk1", "field1", 3L, "field2", "reset"));
+    Map newRowData = new HashMap(Collections.singletonMap("pk", "pk1", "field1", 3L, "field2", "reset"));
     newRowData.put("hoursSinceEpoch", null); // testing null comparison column
     GenericRow newRecord = initGenericRow(new GenericRow(), newRowData);
     LazyRow prevRecord = mock(LazyRow.class);
     mockLazyRow(prevRecord,
-        Map.of("pk", "pk1", "field1", 5L, "field2", "set", "field3", new Integer[]{0}, "hoursSinceEpoch", 2L));
+        Collections.singletonMap("pk", "pk1", "field1", 5L, "field2", "set", "field3", new Integer[]{0}, "hoursSinceEpoch", 2L));
     Map<String, Object> expectedData = new HashMap<>(
-        Map.of("pk", "pk1", "field2", "reset", "hoursSinceEpoch", 2L));
+        Collections.singletonMap("pk", "pk1", "field2", "reset", "hoursSinceEpoch", 2L));
     expectedData.put("field1", Long.MIN_VALUE);
     GenericRow expectedRecord = initGenericRow(new GenericRow(), expectedData);
     expectedRecord.addNullValueField("field1");

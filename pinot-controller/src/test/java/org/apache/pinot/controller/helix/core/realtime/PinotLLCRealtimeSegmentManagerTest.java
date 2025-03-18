@@ -1220,7 +1220,7 @@ public class PinotLLCRealtimeSegmentManagerTest {
   @Test
   public void testGetPartitionIds()
       throws Exception {
-    List<StreamConfig> streamConfigs = List.of(FakeStreamConfigUtils.getDefaultLowLevelStreamConfigs());
+    List<StreamConfig> streamConfigs = Arrays.asList(FakeStreamConfigUtils.getDefaultLowLevelStreamConfigs());
     IdealState idealState = new IdealState("table");
     FakePinotLLCRealtimeSegmentManager segmentManager = new FakePinotLLCRealtimeSegmentManager();
     segmentManager._numPartitions = 2;
@@ -1234,12 +1234,12 @@ public class PinotLLCRealtimeSegmentManagerTest {
     PinotLLCRealtimeSegmentManager segmentManagerSpy = spy(FakePinotLLCRealtimeSegmentManager.class);
     doThrow(new RuntimeException()).when(segmentManagerSpy).getPartitionIds(any(StreamConfig.class));
     List<PartitionGroupConsumptionStatus> partitionGroupConsumptionStatusList =
-        List.of(new PartitionGroupConsumptionStatus(0, 12, new LongMsgOffset(123), new LongMsgOffset(234), "ONLINE"),
+        Arrays.asList(new PartitionGroupConsumptionStatus(0, 12, new LongMsgOffset(123), new LongMsgOffset(234), "ONLINE"),
             new PartitionGroupConsumptionStatus(1, 12, new LongMsgOffset(123), new LongMsgOffset(345), "ONLINE"));
     doReturn(partitionGroupConsumptionStatusList).when(segmentManagerSpy)
         .getPartitionGroupConsumptionStatusList(idealState, streamConfigs);
     List<PartitionGroupMetadata> partitionGroupMetadataList =
-        List.of(new PartitionGroupMetadata(0, new LongMsgOffset(234)),
+        Arrays.asList(new PartitionGroupMetadata(0, new LongMsgOffset(234)),
             new PartitionGroupMetadata(1, new LongMsgOffset(345)));
     doReturn(partitionGroupMetadataList).when(segmentManagerSpy)
         .getNewPartitionGroupMetadataList(streamConfigs, partitionGroupConsumptionStatusList);

@@ -140,7 +140,7 @@ public class StarTreeUtils {
                 break;
               }
               predicateEvaluatorsMap.computeIfAbsent(predicate.getLhs().getIdentifier(), k -> new ArrayList<>())
-                  .add(new CompositePredicateEvaluator(List.of(ObjectBooleanPair.of(predicateEvaluator, negated))));
+                  .add(new CompositePredicateEvaluator(Arrays.asList(ObjectBooleanPair.of(predicateEvaluator, negated))));
               break;
             }
             if (type == FilterContext.Type.NOT) {
@@ -162,7 +162,7 @@ public class StarTreeUtils {
           }
           if (!predicateEvaluator.isAlwaysTrue()) {
             predicateEvaluatorsMap.computeIfAbsent(predicate.getLhs().getIdentifier(), k -> new ArrayList<>())
-                .add(new CompositePredicateEvaluator(List.of(ObjectBooleanPair.of(predicateEvaluator, false))));
+                .add(new CompositePredicateEvaluator(Arrays.asList(ObjectBooleanPair.of(predicateEvaluator, false))));
           }
           break;
         default:

@@ -62,7 +62,7 @@ public class SortedMailboxReceiveOperatorTest {
   private static final DataSchema DATA_SCHEMA =
       new DataSchema(new String[]{"col1", "col2"}, new DataSchema.ColumnDataType[]{INT, INT});
   private static final List<RelFieldCollation> FIELD_COLLATIONS =
-      List.of(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.LAST));
+      Arrays.asList(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.LAST));
   private static final String MAILBOX_ID_1 = MailboxIdUtils.toMailboxId(0, 1, 0, 0, 0);
   private static final String MAILBOX_ID_2 = MailboxIdUtils.toMailboxId(0, 1, 1, 0, 0);
 
@@ -79,13 +79,13 @@ public class SortedMailboxReceiveOperatorTest {
 
   @BeforeClass
   public void setUp() {
-    MailboxInfos mailboxInfosBoth = new SharedMailboxInfos(new MailboxInfo("localhost", 1234, List.of(0, 1)));
+    MailboxInfos mailboxInfosBoth = new SharedMailboxInfos(new MailboxInfo("localhost", 1234, Arrays.asList(0, 1)));
     _stageMetadataBoth = new StageMetadata(0,
-        Stream.of(0, 1).map(workerId -> new WorkerMetadata(workerId, Map.of(1, mailboxInfosBoth), Map.of()))
-            .collect(Collectors.toList()), Map.of());
-    MailboxInfos mailboxInfos1 = new SharedMailboxInfos(new MailboxInfo("localhost", 1234, List.of(0)));
+        Stream.of(0, 1).map(workerId -> new WorkerMetadata(workerId, Collections.singletonMap(1, mailboxInfosBoth), new HashMap<>()))
+            .collect(Collectors.toList()), new HashMap<>());
+    MailboxInfos mailboxInfos1 = new SharedMailboxInfos(new MailboxInfo("localhost", 1234, Arrays.asList(0)));
     _stageMetadata1 =
-        new StageMetadata(0, List.of(new WorkerMetadata(0, Map.of(1, mailboxInfos1), Map.of())), Map.of());
+        new StageMetadata(0, Arrays.asList(new WorkerMetadata(0, Collections.singletonMap(1, mailboxInfos1), new HashMap<>())), new HashMap<>());
   }
 
   @BeforeMethod
@@ -111,7 +111,7 @@ public class SortedMailboxReceiveOperatorTest {
   @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Field collations.*")
   public void shouldThrowOnEmptyCollationKey() {
     when(_mailboxService.getReceivingMailbox(eq(MAILBOX_ID_1))).thenReturn(_mailbox1);
-    getOperator(_stageMetadata1, RelDistribution.Type.SINGLETON, DATA_SCHEMA, List.of(), Long.MAX_VALUE);
+    getOperator(_stageMetadata1, RelDistribution.Type.SINGLETON, DATA_SCHEMA, Arrays.asList(), Long.MAX_VALUE);
   }
 
   @Test
@@ -212,7 +212,7 @@ public class SortedMailboxReceiveOperatorTest {
         TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
     try (SortedMailboxReceiveOperator operator = getOperator(_stageMetadataBoth,
         RelDistribution.Type.HASH_DISTRIBUTED)) {
-      assertEquals(operator.nextBlock().getContainer(), List.of(row5, row2, row4, row1, row3));
+      assertEquals(operator.nextBlock().getContainer(), Arrays.asList(row5, row2, row4, row1, row3));
       assertTrue(operator.nextBlock().isSuccessfulEndOfStreamBlock());
     }
   }
@@ -221,7 +221,7 @@ public class SortedMailboxReceiveOperatorTest {
   public void shouldReceiveMailboxFromTwoServersWithCollationKeyTwoColumns() {
     DataSchema dataSchema =
         new DataSchema(new String[]{"col1", "col2", "col3"}, new DataSchema.ColumnDataType[]{INT, INT, STRING});
-    List<RelFieldCollation> collations = List.of(new RelFieldCollation(2, Direction.DESCENDING, NullDirection.FIRST),
+    List<RelFieldCollation> collations = Arrays.asList(new RelFieldCollation(2, Direction.DESCENDING, NullDirection.FIRST),
         new RelFieldCollation(0, Direction.ASCENDING, NullDirection.LAST));
     when(_mailboxService.getReceivingMailbox(eq(MAILBOX_ID_1))).thenReturn(_mailbox1);
     Object[] row1 = new Object[]{3, 3, "queen"};
@@ -237,7 +237,7 @@ public class SortedMailboxReceiveOperatorTest {
         TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
     try (SortedMailboxReceiveOperator operator = getOperator(_stageMetadataBoth, RelDistribution.Type.HASH_DISTRIBUTED,
         dataSchema, collations, Long.MAX_VALUE)) {
-      assertEquals(operator.nextBlock().getContainer(), List.of(row1, row2, row3, row5, row4));
+      assertEquals(operator.nextBlock().getContainer(), Arrays.asList(row1, row2, row3, row5, row4));
       assertTrue(operator.nextBlock().isSuccessfulEndOfStreamBlock());
     }
   }

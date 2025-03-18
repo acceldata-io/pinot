@@ -446,7 +446,7 @@ public class ArrayTest extends CustomDataQueryClusterIntegrationTest {
   public void testIntArrayLiteral(boolean useMultiStageQueryEngine)
       throws Exception {
     setUseMultiStageQueryEngine(useMultiStageQueryEngine);
-    for (String arrayLiteral : List.of("ARRAY[1,2,3]", "ARRAY'{1,2,3}'")) {
+    for (String arrayLiteral : Arrays.asList("ARRAY[1,2,3]", "ARRAY'{1,2,3}'")) {
       for (boolean withFrom : new boolean[]{true, false}) {
         String query = withFrom ? String.format("SELECT %s FROM %s LIMIT 1", arrayLiteral, getTableName())
             : "SELECT " + arrayLiteral;
@@ -468,7 +468,7 @@ public class ArrayTest extends CustomDataQueryClusterIntegrationTest {
   public void testLongArrayLiteral(boolean useMultiStageQueryEngine)
       throws Exception {
     setUseMultiStageQueryEngine(useMultiStageQueryEngine);
-    for (String arrayLiteral : List.of("ARRAY[2147483648,2147483649,2147483650]",
+    for (String arrayLiteral : Arrays.asList("ARRAY[2147483648,2147483649,2147483650]",
         "ARRAY'{2147483648,2147483649,2147483650}'")) {
       for (boolean withFrom : new boolean[]{true, false}) {
         String query = withFrom ? String.format("SELECT %s FROM %s LIMIT 1", arrayLiteral, getTableName())
@@ -520,7 +520,7 @@ public class ArrayTest extends CustomDataQueryClusterIntegrationTest {
   public void testFloatArrayLiteral(boolean useMultiStageQueryEngine)
       throws Exception {
     setUseMultiStageQueryEngine(useMultiStageQueryEngine);
-    for (String arrayLiteral : List.of("ARRAY[0.1,0.2,0.3]", "ARRAY'{0.1,0.2,0.3}'")) {
+    for (String arrayLiteral : Arrays.asList("ARRAY[0.1,0.2,0.3]", "ARRAY'{0.1,0.2,0.3}'")) {
       for (boolean withFrom : new boolean[]{true, false}) {
         String query = withFrom ? String.format("SELECT %s FROM %s LIMIT 1", arrayLiteral, getTableName())
             : "SELECT " + arrayLiteral;
@@ -563,7 +563,7 @@ public class ArrayTest extends CustomDataQueryClusterIntegrationTest {
   public void testStringArrayLiteral(boolean useMultiStageQueryEngine)
       throws Exception {
     setUseMultiStageQueryEngine(useMultiStageQueryEngine);
-    for (String arrayLiteral : List.of("ARRAY['a','bb','ccc']", "ARRAY'{\"a\",\"bb\",\"ccc\"}'")) {
+    for (String arrayLiteral : Arrays.asList("ARRAY['a','bb','ccc']", "ARRAY'{\"a\",\"bb\",\"ccc\"}'")) {
       for (boolean withFrom : new boolean[]{true, false}) {
         String query = withFrom ? String.format("SELECT %s FROM %s LIMIT 1", arrayLiteral, getTableName())
             : "SELECT " + arrayLiteral;
@@ -877,7 +877,7 @@ public class ArrayTest extends CustomDataQueryClusterIntegrationTest {
       throws Exception {
     // create avro schema
     org.apache.avro.Schema avroSchema = org.apache.avro.Schema.createRecord("myRecord", null, null, false);
-    avroSchema.setFields(ImmutableList.of(
+    avroSchema.setFields(ImmutableArrays.asList(
         new org.apache.avro.Schema.Field(BOOLEAN_COLUMN,
             org.apache.avro.Schema.create(org.apache.avro.Schema.Type.BOOLEAN),
             null, null),
@@ -943,11 +943,11 @@ public class ArrayTest extends CustomDataQueryClusterIntegrationTest {
               record.put(STRING_COLUMN, RandomStringUtils.random(finalI));
               record.put(TIMESTAMP_COLUMN, finalI);
               record.put(GROUP_BY_COLUMN, String.valueOf(finalI % 10));
-              record.put(BOOLEAN_ARRAY_COLUMN, ImmutableList.of(true, true, false, false));
-              record.put(BOOLEAN_FROM_INT_ARRAY_COLUMN, ImmutableList.of(1, 1, 0, 0));
-              record.put(BOOLEAN_FROM_STRING_ARRAY_COLUMN, ImmutableList.of("true", "true", "false", "false"));
-              record.put(LONG_ARRAY_COLUMN, ImmutableList.of(0, 1, 2, 3));
-              record.put(DOUBLE_ARRAY_COLUMN, ImmutableList.of(0.0, 0.1, 0.2, 0.3));
+              record.put(BOOLEAN_ARRAY_COLUMN, ImmutableArrays.asList(true, true, false, false));
+              record.put(BOOLEAN_FROM_INT_ARRAY_COLUMN, ImmutableArrays.asList(1, 1, 0, 0));
+              record.put(BOOLEAN_FROM_STRING_ARRAY_COLUMN, ImmutableArrays.asList("true", "true", "false", "false"));
+              record.put(LONG_ARRAY_COLUMN, ImmutableArrays.asList(0, 1, 2, 3));
+              record.put(DOUBLE_ARRAY_COLUMN, ImmutableArrays.asList(0.0, 0.1, 0.2, 0.3));
               return record;
             }
         ));

@@ -76,7 +76,7 @@ public class PinotTaskRestletResourceTest {
     Map<String, String> minionWorkerEndpoints
         = invokeGetSubtaskWithGivenStateProgressAndReturnCapturedMinionWorkerEndpoints(null);
     assertEquals(minionWorkerEndpoints,
-        ImmutableMap.of("minion1", "http://minion1:9514", "minion2", "http://minion2:9514"));
+        ImmutableCollections.singletonMap("minion1", "http://minion1:9514", "minion2", "http://minion2:9514"));
   }
 
   @Test
@@ -86,7 +86,7 @@ public class PinotTaskRestletResourceTest {
     Map<String, String> minionWorkerEndpoints
         = invokeGetSubtaskWithGivenStateProgressAndReturnCapturedMinionWorkerEndpoints(" minion1 , minion2 ");
     assertEquals(minionWorkerEndpoints,
-        ImmutableMap.of("minion1", "http://minion1:9514", "minion2", "http://minion2:9514"));
+        ImmutableCollections.singletonMap("minion1", "http://minion1:9514", "minion2", "http://minion2:9514"));
   }
 
   @Test
@@ -95,7 +95,7 @@ public class PinotTaskRestletResourceTest {
     Map<String, String> minionWorkerEndpoints
         = invokeGetSubtaskWithGivenStateProgressAndReturnCapturedMinionWorkerEndpoints("minion1");
     assertEquals(minionWorkerEndpoints,
-        ImmutableMap.of("minion1", "http://minion1:9514"));
+        ImmutableCollections.singletonMap("minion1", "http://minion1:9514"));
   }
 
   private Map<String, String> invokeGetSubtaskWithGivenStateProgressAndReturnCapturedMinionWorkerEndpoints(
@@ -103,7 +103,7 @@ public class PinotTaskRestletResourceTest {
       throws JsonProcessingException {
     InstanceConfig minion1 = createInstanceConfig("minion1", "minion1", "9514");
     InstanceConfig minion2 = createInstanceConfig("minion2", "minion2", "9514");
-    when(_pinotHelixResourceManager.getAllMinionInstanceConfigs()).thenReturn(ImmutableList.of(minion1, minion2));
+    when(_pinotHelixResourceManager.getAllMinionInstanceConfigs()).thenReturn(ImmutableArrays.asList(minion1, minion2));
     HttpHeaders httpHeaders = Mockito.mock(HttpHeaders.class);
     when(httpHeaders.getRequestHeaders()).thenReturn(new MultivaluedHashMap<>());
     ArgumentCaptor<Map<String, String>> minionWorkerEndpointsCaptor = ArgumentCaptor.forClass(Map.class);

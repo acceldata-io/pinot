@@ -106,7 +106,7 @@ public class MetadataAndDictionaryAggregationPlanMakerTest {
     ingestionConfig.setRowTimeValueCheck(false);
     TableConfig tableConfig =
         new TableConfigBuilder(TableType.OFFLINE).setTableName("testTable").setTimeColumnName("daysSinceEpoch")
-            .setInvertedIndexColumns(List.of("column6", "column7", "column11", "column17", "column18"))
+            .setInvertedIndexColumns(Arrays.asList("column6", "column7", "column11", "column17", "column18"))
             .setCreateInvertedIndexDuringSegmentGeneration(true).setIngestionConfig(ingestionConfig).build();
 
     // Create the segment generator config.

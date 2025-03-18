@@ -60,7 +60,7 @@ public class PinotLogicalQueryPlanner {
 
     PlanFragment rootFragment = planNodeToPlanFragment(rootNode, tracker, useSpools);
     return new SubPlan(rootFragment,
-        new SubPlanMetadata(RelToPlanNodeConverter.getTableNamesFromRelRoot(relRoot.rel), relRoot.fields), List.of());
+        new SubPlanMetadata(RelToPlanNodeConverter.getTableNamesFromRelRoot(relRoot.rel), relRoot.fields), Arrays.asList());
 
     // TODO: Currently we don't support multiple sub-plans. Revisit the following logic when we add the support.
     // Fragment the stage tree into multiple SubPlans.
@@ -105,7 +105,7 @@ public class PinotLogicalQueryPlanner {
     // Sub plan root needs to send final results back to the Broker
     // TODO: Should be SINGLETON (currently SINGLETON has to be local, so use BROADCAST_DISTRIBUTED instead)
     MailboxSendNode subPlanRootSenderNode =
-        new MailboxSendNode(node.getStageId(), node.getDataSchema(), List.of(node), 0,
+        new MailboxSendNode(node.getStageId(), node.getDataSchema(), Arrays.asList(node), 0,
             PinotRelExchangeType.getDefaultExchangeType(), RelDistribution.Type.BROADCAST_DISTRIBUTED, null, false,
             null, false);
     PlanFragment planFragment1 = new PlanFragment(1, subPlanRootSenderNode, new ArrayList<>());

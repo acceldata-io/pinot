@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -346,7 +347,7 @@ public class BrokerResponseNativeV2 implements BrokerResponse {
 
   @Override
   public Map<String, String> getTraceInfo() {
-    return Map.of();
+    return new HashMap<>();
   }
 
   public void addBrokerStats(StatMap<StatKey> brokerStats) {

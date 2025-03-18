@@ -63,6 +63,6 @@ public class TransformNullPlanNode extends BaseTimeSeriesPlanNode {
     Preconditions.checkState(_inputs.size() == 1,
         "TransformNullPlanNode should have only 1 child, got: %s", _inputs.size());
     BaseTimeSeriesOperator childOperator = _inputs.get(0).run();
-    return new TransformNullOperator(_defaultValue, ImmutableList.of(childOperator));
+    return new TransformNullOperator(_defaultValue, ImmutableArrays.asList(childOperator));
   }
 }

@@ -333,7 +333,7 @@ public class TablesResourceTest extends BaseResourceTest {
     downLoadAndVerifyValidDocIdsSnapshotBitmap(TableNameBuilder.REALTIME.tableNameWithType(TABLE_NAME),
         (ImmutableSegmentImpl) segment);
 
-    List<String> segments = List.of(segment.getSegmentName());
+    List<String> segments = Arrays.asList(segment.getSegmentName());
     TableSegments tableSegments = new TableSegments(segments);
     String validDocIdsMetadataPath =
         "/tables/" + TableNameBuilder.REALTIME.tableNameWithType(TABLE_NAME) + "/validDocIdsMetadata";

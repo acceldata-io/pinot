@@ -96,7 +96,7 @@ public class TransformFilterQueriesTest extends BaseQueriesTest {
     Schema schema = new Schema.SchemaBuilder().addSingleValueDimension(INT_COLUMN, FieldSpec.DataType.INT)
         .addSingleValueDimension(STRING_COLUMN, FieldSpec.DataType.STRING).build();
     TableConfig tableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(TABLE_NAME)
-        .setNoDictionaryColumns(List.of(STRING_COLUMN, INT_COLUMN)).build();
+        .setNoDictionaryColumns(Arrays.asList(STRING_COLUMN, INT_COLUMN)).build();
     SegmentGeneratorConfig config = new SegmentGeneratorConfig(tableConfig, schema);
     config.setOutDir(INDEX_DIR.getPath());
     config.setTableName(TABLE_NAME);

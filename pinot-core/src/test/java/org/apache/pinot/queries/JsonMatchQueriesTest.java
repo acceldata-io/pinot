@@ -61,7 +61,7 @@ public class JsonMatchQueriesTest extends BaseQueriesTest {
   private static final Schema SCHEMA = new Schema.SchemaBuilder().addSingleValueDimension(ID_COLUMN, DataType.INT)
       .addSingleValueDimension(JSON_COLUMN, DataType.JSON).build();
   private static final TableConfig TABLE_CONFIG =
-      new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME).setJsonIndexColumns(List.of(JSON_COLUMN))
+      new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME).setJsonIndexColumns(Arrays.asList(JSON_COLUMN))
           .build();
 
   private IndexSegment _indexSegment;

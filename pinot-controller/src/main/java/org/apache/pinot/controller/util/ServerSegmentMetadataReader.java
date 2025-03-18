@@ -307,7 +307,7 @@ public class ServerSegmentMetadataReader {
     CompletionServiceHelper completionServiceHelper =
         new CompletionServiceHelper(_executor, _connectionManager, endpointsToServers);
 
-    Map<String, String> requestHeaders = Map.of("Content-Type", "application/json");
+    Map<String, String> requestHeaders = Collections.singletonMap("Content-Type", "application/json");
     CompletionServiceHelper.CompletionServiceResponse serviceResponse =
         completionServiceHelper.doMultiPostRequest(serverURLsAndBodies, tableNameWithType, true, requestHeaders,
             timeoutMs, null);

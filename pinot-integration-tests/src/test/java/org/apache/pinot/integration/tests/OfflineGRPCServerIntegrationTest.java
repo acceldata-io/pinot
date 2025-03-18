@@ -207,7 +207,7 @@ public class OfflineGRPCServerIntegrationTest extends BaseClusterIntegrationTest
             DATATABLE_REDUCER_CONTEXT, mock(BrokerMetrics.class));
         BrokerResponseNative nonStreamBrokerResponse = new BrokerResponseNative();
         reducer.reduceAndSetResults("mytable_OFFLINE", nonStreamResultDataTable.getDataSchema(),
-            Map.of(mock(ServerRoutingInstance.class), nonStreamResultDataTable), nonStreamBrokerResponse,
+            Collections.singletonMap(mock(ServerRoutingInstance.class), nonStreamResultDataTable), nonStreamBrokerResponse,
             DATATABLE_REDUCER_CONTEXT, mock(BrokerMetrics.class));
         assertEquals(streamingBrokerResponse.getResultTable().getRows().size(),
             nonStreamBrokerResponse.getResultTable().getRows().size());

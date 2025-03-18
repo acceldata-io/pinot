@@ -48,7 +48,7 @@ public class MapIndexReaderWrapper implements org.apache.pinot.segment.spi.index
 
   @Override
   public Map<IndexType, IndexReader> getKeyIndexes(String key) {
-    return Map.of(StandardIndexes.forward(), new MapKeyIndexReader(_forwardIndexReader, key, getKeyFieldSpec(key)));
+    return Collections.singletonMap(StandardIndexes.forward(), new MapKeyIndexReader(_forwardIndexReader, key, getKeyFieldSpec(key)));
   }
 
   @Override
@@ -133,7 +133,7 @@ public class MapIndexReaderWrapper implements org.apache.pinot.segment.spi.index
 
       @Override
       public Map<IndexType<?, ?, ?>, Long> getIndexSizeMap() {
-        return Map.of();
+        return new HashMap<>();
       }
 
       @Override

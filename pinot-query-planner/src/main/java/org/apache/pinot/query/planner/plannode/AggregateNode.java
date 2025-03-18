@@ -47,7 +47,7 @@ public class AggregateNode extends BasePlanNode {
     _groupKeys = groupKeys;
     _aggType = aggType;
     _leafReturnFinalResult = leafReturnFinalResult;
-    _collations = collations != null ? collations : List.of();
+    _collations = collations != null ? collations : Arrays.asList();
     _limit = limit;
   }
 

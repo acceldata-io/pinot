@@ -22,8 +22,8 @@ import java.util.List;
  * under the License.
  */
 public enum ColumnType {
-  NUMERIC(List.of("=", "!=", "<", ">", "<=", ">=", "<>"), List.of("max", "min", "avg", "sum", "count")),
-  STRING(List.of("=", "!=", "LIKE"), List.of());
+  NUMERIC(Arrays.asList("=", "!=", "<", ">", "<=", ">=", "<>"), Arrays.asList("max", "min", "avg", "sum", "count")),
+  STRING(Arrays.asList("=", "!=", "LIKE"), Arrays.asList());
 
   List<String> _operators;
   List<String> _aggregations;

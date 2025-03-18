@@ -90,7 +90,7 @@ public class RenewableTlsUtilsTest {
   public void setUp()
       throws IOException, URISyntaxException {
     copyResourceFilesToTempFolder(
-        ImmutableMap.of(TLS_KEYSTORE_FILE, TLS_KEYSTORE_FILE, TLS_TRUSTSTORE_FILE, TLS_TRUSTSTORE_FILE));
+        ImmutableCollections.singletonMap(TLS_KEYSTORE_FILE, TLS_KEYSTORE_FILE, TLS_TRUSTSTORE_FILE, TLS_TRUSTSTORE_FILE));
   }
 
   private static void copyResourceFilesToTempFolder(Map<String, String> srcAndDestFileMap)
@@ -356,7 +356,7 @@ public class RenewableTlsUtilsTest {
 
     // update tls files
     copyResourceFilesToTempFolder(
-        ImmutableMap.of(TLS_KEYSTORE_UPDATED_FILE, TLS_KEYSTORE_FILE, TLS_TRUSTSTORE_UPDATED_FILE,
+        ImmutableCollections.singletonMap(TLS_KEYSTORE_UPDATED_FILE, TLS_KEYSTORE_FILE, TLS_TRUSTSTORE_UPDATED_FILE,
             TLS_TRUSTSTORE_FILE));
 
     // wait for the file change event to be detected

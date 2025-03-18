@@ -88,7 +88,7 @@ public class RealtimeConsumerMonitorTest {
       ZkHelixPropertyStore<ZNRecord> helixPropertyStore = mock(ZkHelixPropertyStore.class);
       when(helixResourceManager.getTableConfig(realtimeTableName)).thenReturn(tableConfig);
       when(helixResourceManager.getPropertyStore()).thenReturn(helixPropertyStore);
-      when(helixResourceManager.getAllTables()).thenReturn(List.of(realtimeTableName));
+      when(helixResourceManager.getAllTables()).thenReturn(Arrays.asList(realtimeTableName));
       when(helixResourceManager.getTableIdealState(realtimeTableName)).thenReturn(idealState);
       when(helixResourceManager.getTableExternalView(realtimeTableName)).thenReturn(externalView);
       ZNRecord znRecord = new ZNRecord("0");
@@ -115,13 +115,13 @@ public class RealtimeConsumerMonitorTest {
     // Segment 1 in replicas:
     TreeMap<String, List<ConsumingSegmentInfoReader.ConsumingSegmentInfo>> response = new TreeMap<>();
     List<ConsumingSegmentInfoReader.ConsumingSegmentInfo> part1ServerConsumingSegmentInfo =
-        List.of(getConsumingSegmentInfoForServer("pinot1", "1", "100", "100", "0"),
+        Arrays.asList(getConsumingSegmentInfoForServer("pinot1", "1", "100", "100", "0"),
             getConsumingSegmentInfoForServer("pinot2", "1", "100", "100", "0"));
     response.put(segmentPartition1Seq1.getSegmentName(), part1ServerConsumingSegmentInfo);
 
     // Segment 2 in replicas
     List<ConsumingSegmentInfoReader.ConsumingSegmentInfo> part2ServerConsumingSegmentInfo =
-        List.of(getConsumingSegmentInfoForServer("pinot1", "2", "120", "120", "0"),
+        Arrays.asList(getConsumingSegmentInfoForServer("pinot1", "2", "120", "120", "0"),
             getConsumingSegmentInfoForServer("pinot2", "2", "80", "120", "60000"));
     response.put(segmentPartition2Seq0.getSegmentName(), part2ServerConsumingSegmentInfo);
 
@@ -146,11 +146,11 @@ public class RealtimeConsumerMonitorTest {
 
   ConsumingSegmentInfoReader.ConsumingSegmentInfo getConsumingSegmentInfoForServer(String serverName,
       String partitionId, String currentOffset, String upstreamLatestOffset, String availabilityLagMs) {
-    Map<String, String> currentOffsetMap = Map.of(partitionId, currentOffset);
-    Map<String, String> latestUpstreamOffsetMap = Map.of(partitionId, upstreamLatestOffset);
+    Map<String, String> currentOffsetMap = Collections.singletonMap(partitionId, currentOffset);
+    Map<String, String> latestUpstreamOffsetMap = Collections.singletonMap(partitionId, upstreamLatestOffset);
     Map<String, String> recordsLagMap =
-        Map.of(partitionId, String.valueOf(Long.parseLong(upstreamLatestOffset) - Long.parseLong(currentOffset)));
-    Map<String, String> availabilityLagMsMap = Map.of(partitionId, availabilityLagMs);
+        Collections.singletonMap(partitionId, String.valueOf(Long.parseLong(upstreamLatestOffset) - Long.parseLong(currentOffset)));
+    Map<String, String> availabilityLagMsMap = Collections.singletonMap(partitionId, availabilityLagMs);
 
     ConsumingSegmentInfoReader.PartitionOffsetInfo partitionOffsetInfo =
         new ConsumingSegmentInfoReader.PartitionOffsetInfo(currentOffsetMap, latestUpstreamOffsetMap, recordsLagMap,
@@ -160,7 +160,7 @@ public class RealtimeConsumerMonitorTest {
   }
 
   Map<String, String> getStreamConfigMap() {
-    return Map.of("streamType", "kafka", "stream.kafka.consumer.type", "simple", "stream.kafka.topic.name", "test",
+    return Collections.singletonMap("streamType", "kafka", "stream.kafka.consumer.type", "simple", "stream.kafka.topic.name", "test",
         "stream.kafka.decoder.class.name", "org.apache.pinot.plugin.stream.kafka.KafkaAvroMessageDecoder",
         "stream.kafka.consumer.factory.class.name",
         "org.apache.pinot.core.realtime.impl.fakestream.FakeStreamConsumerFactory");

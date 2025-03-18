@@ -70,7 +70,7 @@ public class PercentileKLLMVQueriesTest extends PercentileKLLQueriesTest {
     schema.addField(new MetricFieldSpec(KLL_COLUMN, FieldSpec.DataType.BYTES));
     schema.addField(new DimensionFieldSpec(GROUP_BY_COLUMN, FieldSpec.DataType.STRING, true));
     TableConfig tableConfig =
-        new TableConfigBuilder(TableType.OFFLINE).setTableName(TABLE_NAME).setNoDictionaryColumns(List.of(KLL_COLUMN))
+        new TableConfigBuilder(TableType.OFFLINE).setTableName(TABLE_NAME).setNoDictionaryColumns(Arrays.asList(KLL_COLUMN))
             .build();
 
     SegmentGeneratorConfig config = new SegmentGeneratorConfig(tableConfig, schema);

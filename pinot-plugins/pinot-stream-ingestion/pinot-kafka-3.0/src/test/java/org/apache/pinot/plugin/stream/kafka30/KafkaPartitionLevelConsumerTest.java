@@ -425,6 +425,6 @@ public class KafkaPartitionLevelConsumerTest {
     List<String> topicNames = topics.stream()
         .map(StreamMetadataProvider.TopicMetadata::getName)
         .collect(Collectors.toList());
-    assertTrue(topicNames.containsAll(List.of(TEST_TOPIC_1, TEST_TOPIC_2, TEST_TOPIC_3)));
+    assertTrue(topicNames.containsAll(Arrays.asList(TEST_TOPIC_1, TEST_TOPIC_2, TEST_TOPIC_3)));
   }
 }

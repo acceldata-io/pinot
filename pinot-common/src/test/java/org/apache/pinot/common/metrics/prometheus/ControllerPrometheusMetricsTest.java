@@ -38,22 +38,22 @@ public abstract class ControllerPrometheusMetricsTest extends PinotPrometheusMet
 
   //that accept global gauge with suffix
   private static final List<ControllerGauge> GLOBAL_GAUGES_ACCEPTING_TASKTYPE =
-      List.of(ControllerGauge.NUM_MINION_TASKS_IN_PROGRESS, ControllerGauge.NUM_MINION_SUBTASKS_RUNNING,
+      Arrays.asList(ControllerGauge.NUM_MINION_TASKS_IN_PROGRESS, ControllerGauge.NUM_MINION_SUBTASKS_RUNNING,
           ControllerGauge.NUM_MINION_SUBTASKS_WAITING, ControllerGauge.NUM_MINION_SUBTASKS_ERROR,
           ControllerGauge.NUM_MINION_SUBTASKS_UNKNOWN,
           ControllerGauge.PERCENT_MINION_SUBTASKS_IN_QUEUE, ControllerGauge.PERCENT_MINION_SUBTASKS_IN_ERROR);
 
   //local gauges that accept partition
   private static final List<ControllerGauge> GAUGES_ACCEPTING_PARTITION =
-      List.of(ControllerGauge.MAX_RECORDS_LAG, ControllerGauge.MAX_RECORD_AVAILABILITY_LAG_MS);
+      Arrays.asList(ControllerGauge.MAX_RECORDS_LAG, ControllerGauge.MAX_RECORD_AVAILABILITY_LAG_MS);
 
   //these accept task type
   private static final List<ControllerGauge> GAUGES_ACCEPTING_TASKTYPE =
-      List.of(ControllerGauge.TIME_MS_SINCE_LAST_MINION_TASK_METADATA_UPDATE,
+      Arrays.asList(ControllerGauge.TIME_MS_SINCE_LAST_MINION_TASK_METADATA_UPDATE,
           ControllerGauge.TIME_MS_SINCE_LAST_SUCCESSFUL_MINION_TASK_GENERATION,
           ControllerGauge.LAST_MINION_TASK_GENERATION_ENCOUNTERS_ERROR);
 
-  private static final List<ControllerGauge> GAUGES_ACCEPTING_RAW_TABLENAME = List.of();
+  private static final List<ControllerGauge> GAUGES_ACCEPTING_RAW_TABLENAME = Arrays.asList();
 
   private ControllerMetrics _controllerMetrics;
 
@@ -97,7 +97,7 @@ public abstract class ControllerPrometheusMetricsTest extends PinotPrometheusMet
       if (meter == ControllerMeter.CONTROLLER_PERIODIC_TASK_ERROR) {
         addMeterWithLabels(meter, ExportedLabelValues.CONTROLLER_PERIODIC_TASK_CHC);
         assertMeterExportedCorrectly(meterName,
-            List.of(ExportedLabelKeys.TABLE, ExportedLabelValues.CONTROLLER_PERIODIC_TASK_CHC), EXPORTED_METRIC_PREFIX);
+            Arrays.asList(ExportedLabelKeys.TABLE, ExportedLabelValues.CONTROLLER_PERIODIC_TASK_CHC), EXPORTED_METRIC_PREFIX);
       } else if (meter == ControllerMeter.CONTROLLER_PERIODIC_TASK_RUN) {
         addMeterWithLabels(meter, ExportedLabelValues.CONTROLLER_PERIODIC_TASK_CHC);
         assertMeterExportedCorrectly(
@@ -130,7 +130,7 @@ public abstract class ControllerPrometheusMetricsTest extends PinotPrometheusMet
         _controllerMetrics.setValueOfGlobalGauge(controllerGauge, ExportedLabelValues.CONTROLLER_PERIODIC_TASK_CHC, 1L);
         String strippedMetricName = getStrippedMetricName(controllerGauge);
         assertGaugeExportedCorrectly(strippedMetricName,
-            List.of(LABEL_KEY_TASK_TYPE, ExportedLabelValues.CONTROLLER_PERIODIC_TASK_CHC), EXPORTED_METRIC_PREFIX);
+            Arrays.asList(LABEL_KEY_TASK_TYPE, ExportedLabelValues.CONTROLLER_PERIODIC_TASK_CHC), EXPORTED_METRIC_PREFIX);
       } else {
         _controllerMetrics.setValueOfGlobalGauge(controllerGauge, 1L);
         String strippedMetricName = getStrippedMetricName(controllerGauge);

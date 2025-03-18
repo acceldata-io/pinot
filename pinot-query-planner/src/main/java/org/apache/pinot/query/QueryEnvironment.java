@@ -120,7 +120,7 @@ public class QueryEnvironment {
     CalciteSchema rootSchema = CalciteSchema.createRootSchema(false, false, database, catalog);
     _config = Frameworks.newConfigBuilder().traitDefs().operatorTable(PinotOperatorTable.instance())
         .defaultSchema(rootSchema.plus()).sqlToRelConverterConfig(PinotRuleUtils.PINOT_SQL_TO_REL_CONFIG).build();
-    _catalogReader = new CalciteCatalogReader(rootSchema, List.of(database), _typeFactory, CONNECTION_CONFIG);
+    _catalogReader = new CalciteCatalogReader(rootSchema, Arrays.asList(database), _typeFactory, CONNECTION_CONFIG);
     _optProgram = getOptProgram();
   }
 

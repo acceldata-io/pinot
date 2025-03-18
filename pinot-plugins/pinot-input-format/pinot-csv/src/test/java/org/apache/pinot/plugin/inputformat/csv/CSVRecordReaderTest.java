@@ -140,7 +140,7 @@ public class CSVRecordReaderTest extends AbstractRecordReaderTest {
     try (CSVRecordReader recordReader = new CSVRecordReader()) {
       recordReader.init(_dataFile, null, readerConfig);
       assertEquals(recordReader.getColumns(),
-          List.of("col1", "col2", "col3", "col4", "col5", "col6", "col7", "col8", "col9", "col10"));
+          Arrays.asList("col1", "col2", "col3", "col4", "col5", "col6", "col7", "col8", "col9", "col10"));
       assertTrue(recordReader.hasNext());
     }
   }
@@ -150,7 +150,7 @@ public class CSVRecordReaderTest extends AbstractRecordReaderTest {
       throws IOException {
     File dataFile = getDataFile("dataFileBasic.csv");
     for (CSVRecordReaderConfig readerConfig : NULL_AND_EMPTY_CONFIGS) {
-      validate(dataFile, readerConfig, List.of(
+      validate(dataFile, readerConfig, Arrays.asList(
           createMap("id", "100", "name", "John"),
           createMap("id", "101", "name", "Jane"),
           createMap("id", "102", "name", "Alice"),
@@ -164,7 +164,7 @@ public class CSVRecordReaderTest extends AbstractRecordReaderTest {
       throws IOException {
     File dataFile = getDataFile("dataFileWithSingleColumn.csv");
     for (CSVRecordReaderConfig readerConfig : NULL_AND_EMPTY_CONFIGS) {
-      validate(dataFile, readerConfig, List.of(
+      validate(dataFile, readerConfig, Arrays.asList(
           createMap("name", "John"),
           createMap("name", "Jane"),
           createMap("name", "Jen")
@@ -174,7 +174,7 @@ public class CSVRecordReaderTest extends AbstractRecordReaderTest {
     CSVRecordReaderConfig readerConfig = new CSVRecordReaderConfig();
     readerConfig.setHeader("firstName,lastName,id");
     readerConfig.setSkipHeader(true);
-    validate(dataFile, readerConfig, List.of(
+    validate(dataFile, readerConfig, Arrays.asList(
         createMap("firstName", "John", "lastName", null, "id", null),
         createMap("firstName", "Jane", "lastName", null, "id", null),
         createMap("firstName", "Jen", "lastName", null, "id", null)
@@ -194,7 +194,7 @@ public class CSVRecordReaderTest extends AbstractRecordReaderTest {
     CSVRecordReaderConfig readerConfig = new CSVRecordReaderConfig();
     readerConfig.setHeader("firstName,lastName,id");
     readerConfig.setSkipHeader(true);
-    validate(dataFile, readerConfig, List.of(
+    validate(dataFile, readerConfig, Arrays.asList(
         createMap("firstName", "John", "lastName", "Doe", "id", "100"),
         createMap("firstName", "Jane", "lastName", "Doe", "id", "101"),
         createMap("firstName", "Jen", "lastName", "Doe", "id", "102")
@@ -207,7 +207,7 @@ public class CSVRecordReaderTest extends AbstractRecordReaderTest {
     File dataFile = getDataFile("dataFileWithAlternateDelimiter.csv");
     CSVRecordReaderConfig readerConfig = new CSVRecordReaderConfig();
     readerConfig.setDelimiter('|');
-    validate(dataFile, readerConfig, List.of(
+    validate(dataFile, readerConfig, Arrays.asList(
         createMap("id", "100", "firstName", "John", "lastName", "Doe"),
         createMap("id", "101", "firstName", "Jane", "lastName", "Doe"),
         createMap("id", "102", "firstName", "Jen", "lastName", "Doe")
@@ -219,7 +219,7 @@ public class CSVRecordReaderTest extends AbstractRecordReaderTest {
       throws IOException {
     File dataFile = getDataFile("dataFileWithSurroundingSpaces.csv");
     for (CSVRecordReaderConfig readerConfig : NULL_AND_EMPTY_CONFIGS) {
-      validate(dataFile, readerConfig, List.of(
+      validate(dataFile, readerConfig, Arrays.asList(
           createMap("firstName", "John", "lastName", "Doe", "id", "100"),
           createMap("firstName", "Jane", "lastName", "Doe", "id", "101"),
           createMap("firstName", "Jen", "lastName", "Doe", "id", "102")
@@ -228,7 +228,7 @@ public class CSVRecordReaderTest extends AbstractRecordReaderTest {
 
     CSVRecordReaderConfig readerConfig = new CSVRecordReaderConfig();
     readerConfig.setIgnoreSurroundingSpaces(false);
-    validate(dataFile, readerConfig, List.of(
+    validate(dataFile, readerConfig, Arrays.asList(
         createMap(" firstName ", "John  ", " lastName ", " Doe", " id", "100"),
         createMap(" firstName ", "Jane", " lastName ", " Doe", " id", "  101"),
         createMap(" firstName ", "Jen", " lastName ", "Doe ", " id", "102")
@@ -240,7 +240,7 @@ public class CSVRecordReaderTest extends AbstractRecordReaderTest {
       throws IOException {
     File dataFile = getDataFile("dataFileWithQuotes.csv");
     for (CSVRecordReaderConfig readerConfig : NULL_AND_EMPTY_CONFIGS) {
-      validate(dataFile, readerConfig, List.of(
+      validate(dataFile, readerConfig, Arrays.asList(
           createMap("key", "key00", "num0", "12.3", "num1", "8.42"),
           createMap("key", "key01", "num0", null, "num1", "7.1"),
           createMap("key", "key02", "num0", null, "num1", "16.81"),
@@ -255,7 +255,7 @@ public class CSVRecordReaderTest extends AbstractRecordReaderTest {
     File dataFile = getDataFile("dataFileWithCustomNull.csv");
     CSVRecordReaderConfig readerConfig = new CSVRecordReaderConfig();
     readerConfig.setNullStringValue("NULL");
-    validate(dataFile, readerConfig, List.of(
+    validate(dataFile, readerConfig, Arrays.asList(
         createMap("id", "100", "name", null),
         createMap("id", null, "name", "Jane"),
         createMap("id", null, "name", null),
@@ -269,12 +269,12 @@ public class CSVRecordReaderTest extends AbstractRecordReaderTest {
     File dataFile = getDataFile("dataFileWithCommentedLines.csv");
     for (CSVRecordReaderConfig readerConfig : NULL_AND_EMPTY_CONFIGS) {
       // Verify first row
-      validate(dataFile, readerConfig, 5, List.of(createMap("id", "# ignore line#1", "name", null)));
+      validate(dataFile, readerConfig, 5, Arrays.asList(createMap("id", "# ignore line#1", "name", null)));
     }
 
     CSVRecordReaderConfig readerConfig = new CSVRecordReaderConfig();
     readerConfig.setCommentMarker('#');
-    validate(dataFile, readerConfig, List.of(
+    validate(dataFile, readerConfig, Arrays.asList(
         createMap("id", "100", "name", "Jane"),
         createMap("id", "101", "name", "John"),
         createMap("id", "102", "name", "Sam")
@@ -299,7 +299,7 @@ public class CSVRecordReaderTest extends AbstractRecordReaderTest {
       throws IOException {
     File dataFile = getDataFile("dataFileWithEscapedQuotes.csv");
     for (CSVRecordReaderConfig readerConfig : NULL_AND_EMPTY_CONFIGS) {
-      validate(dataFile, readerConfig, List.of(
+      validate(dataFile, readerConfig, Arrays.asList(
           createMap("\\\"id\\\"", "\\\"100\\\"", "\\\"name\\\"", "\\\"Jane\\\""),
           createMap("\\\"id\\\"", "\\\"101\\\"", "\\\"name\\\"", "\\\"John\\\"")
       ));
@@ -307,7 +307,7 @@ public class CSVRecordReaderTest extends AbstractRecordReaderTest {
 
     CSVRecordReaderConfig readerConfig = new CSVRecordReaderConfig();
     readerConfig.setEscapeCharacter('\\');
-    validate(dataFile, readerConfig, List.of(
+    validate(dataFile, readerConfig, Arrays.asList(
         createMap("\"id\"", "\"100\"", "\"name\"", "\"Jane\""),
         createMap("\"id\"", "\"101\"", "\"name\"", "\"John\"")
     ));
@@ -318,7 +318,7 @@ public class CSVRecordReaderTest extends AbstractRecordReaderTest {
       throws IOException {
     File dataFile = getDataFile("dataFileWithNoHeader.csv");
     for (CSVRecordReaderConfig readerConfig : NULL_AND_EMPTY_CONFIGS) {
-      validate(dataFile, readerConfig, List.of(
+      validate(dataFile, readerConfig, Arrays.asList(
           createMap("100", "101", "Jane", "John"),
           createMap("100", "102", "Jane", "Sam")
       ));
@@ -326,7 +326,7 @@ public class CSVRecordReaderTest extends AbstractRecordReaderTest {
 
     CSVRecordReaderConfig readerConfig = new CSVRecordReaderConfig();
     readerConfig.setHeader("id,name");
-    validate(dataFile, readerConfig, List.of(
+    validate(dataFile, readerConfig, Arrays.asList(
         createMap("id", "100", "name", "Jane"),
         createMap("id", "101", "name", "John"),
         createMap("id", "102", "name", "Sam")
@@ -338,7 +338,7 @@ public class CSVRecordReaderTest extends AbstractRecordReaderTest {
       throws IOException {
     File dataFile = getDataFile("dataFileWithNoHeaderAndEmptyValues.csv");
     for (CSVRecordReaderConfig readerConfig : NULL_AND_EMPTY_CONFIGS) {
-      validate(dataFile, readerConfig, List.of(
+      validate(dataFile, readerConfig, Arrays.asList(
           createMap("key00", "key01", "12.3", null, "8.42", "7.1"),
           createMap("key00", "key02", "12.3", null, "8.42", "16.81"),
           createMap("key00", "key03", "12.3", null, "8.42", "7.12")
@@ -347,7 +347,7 @@ public class CSVRecordReaderTest extends AbstractRecordReaderTest {
 
     CSVRecordReaderConfig readerConfig = new CSVRecordReaderConfig();
     readerConfig.setHeader("key,num0,num1");
-    validate(dataFile, readerConfig, List.of(
+    validate(dataFile, readerConfig, Arrays.asList(
         createMap("key", "key00", "num0", "12.3", "num1", "8.42"),
         createMap("key", "key01", "num0", null, "num1", "7.1"),
         createMap("key", "key02", "num0", null, "num1", "16.81"),
@@ -387,7 +387,7 @@ public class CSVRecordReaderTest extends AbstractRecordReaderTest {
       throws IOException {
     File dataFile = getDataFile("dataFileWithMultiLineValues.csv");
     for (CSVRecordReaderConfig readerConfig : NULL_AND_EMPTY_CONFIGS) {
-      validate(dataFile, readerConfig, List.of(
+      validate(dataFile, readerConfig, Arrays.asList(
           createMap("id", "100", "name", "John\n101,Jane"),
           createMap("id", "102", "name", "Alice")
       ));

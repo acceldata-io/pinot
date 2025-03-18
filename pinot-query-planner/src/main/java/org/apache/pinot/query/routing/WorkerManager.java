@@ -110,7 +110,7 @@ public class WorkerManager {
         Map<Integer, Map<String, List<String>>> workerIdToSegmentsMap =
             Maps.newHashMapWithExpectedSize(workerIds.size());
         for (Integer workerId : workerIds) {
-          workerIdToSegmentsMap.put(workerId, Map.of(TableType.OFFLINE.name(), List.of()));
+          workerIdToSegmentsMap.put(workerId, Collections.singletonMap(TableType.OFFLINE.name(), Arrays.asList()));
         }
         metadata.setWorkerIdToSegmentsMap(workerIdToSegmentsMap);
       }

@@ -193,10 +193,10 @@ public class MailboxSendOperatorTest {
   }
 
   private MailboxSendOperator getOperator() {
-    WorkerMetadata workerMetadata = new WorkerMetadata(0, Map.of(), Map.of());
-    StageMetadata stageMetadata = new StageMetadata(SENDER_STAGE_ID, List.of(workerMetadata), Map.of());
+    WorkerMetadata workerMetadata = new WorkerMetadata(0, new HashMap<>(), new HashMap<>());
+    StageMetadata stageMetadata = new StageMetadata(SENDER_STAGE_ID, Arrays.asList(workerMetadata), new HashMap<>());
     OpChainExecutionContext context =
-        new OpChainExecutionContext(_mailboxService, 123L, Long.MAX_VALUE, Map.of(), stageMetadata, workerMetadata,
+        new OpChainExecutionContext(_mailboxService, 123L, Long.MAX_VALUE, new HashMap<>(), stageMetadata, workerMetadata,
             null, null);
     return new MailboxSendOperator(context, _input, statMap -> _exchange);
   }

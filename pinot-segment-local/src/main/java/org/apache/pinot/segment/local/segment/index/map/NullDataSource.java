@@ -56,7 +56,7 @@ public class NullDataSource implements DataSource {
 
   public NullDataSource(String name) {
     _md = new NullDataSourceMetadata(name);
-    _indexes = new ColumnIndexContainer.FromMap(Map.of(StandardIndexes.forward(), new NullForwardIndex()));
+    _indexes = new ColumnIndexContainer.FromMap(Collections.singletonMap(StandardIndexes.forward(), new NullForwardIndex()));
   }
 
   @Override

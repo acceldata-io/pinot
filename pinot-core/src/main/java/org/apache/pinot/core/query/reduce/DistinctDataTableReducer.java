@@ -58,7 +58,7 @@ public class DistinctDataTableReducer implements DataTableReducer {
     dataSchema = ReducerDataSchemaUtils.canonicalizeDataSchemaForDistinct(_queryContext, dataSchema);
     int limit = _queryContext.getLimit();
     if (dataTableMap.isEmpty() || limit == 0) {
-      brokerResponseNative.setResultTable(new ResultTable(dataSchema, List.of()));
+      brokerResponseNative.setResultTable(new ResultTable(dataSchema, Arrays.asList()));
       return;
     }
     DistinctTable distinctTable = null;

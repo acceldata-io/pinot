@@ -81,7 +81,7 @@ public class SegmentPartitionMetadataManagerTest extends ControllerTest {
   public void testPartitionMetadataManagerProcessingThroughSegmentChangesSinglePartitionTable() {
     ExternalView externalView = new ExternalView(OFFLINE_TABLE_NAME);
     Map<String, Map<String, String>> segmentAssignment = externalView.getRecord().getMapFields();
-    Map<String, String> onlineInstanceStateMap = ImmutableMap.of(SERVER_0, ONLINE, SERVER_1, ONLINE);
+    Map<String, String> onlineInstanceStateMap = ImmutableCollections.singletonMap(SERVER_0, ONLINE, SERVER_1, ONLINE);
     Set<String> onlineSegments = new HashSet<>();
     // NOTE: Ideal state is not used in the current implementation.
     IdealState idealState = new IdealState(OFFLINE_TABLE_NAME);
@@ -226,7 +226,7 @@ public class SegmentPartitionMetadataManagerTest extends ControllerTest {
     assertTrue(tablePartitionInfo.getSegmentsWithInvalidPartition().isEmpty());
 
     // Updating the segment to be replicated on 2 servers should add the fully replicated server back
-    segmentAssignment.put(segment2, ImmutableMap.of(SERVER_0, ONLINE, SERVER_1, ONLINE));
+    segmentAssignment.put(segment2, ImmutableCollections.singletonMap(SERVER_0, ONLINE, SERVER_1, ONLINE));
     segmentZkMetadataFetcher.onAssignmentChange(idealState, externalView, onlineSegments);
     tablePartitionInfo = partitionMetadataManager.getTablePartitionInfo();
     partitionInfoMap = tablePartitionInfo.getPartitionInfoMap();
@@ -250,10 +250,10 @@ public class SegmentPartitionMetadataManagerTest extends ControllerTest {
     assertTrue(tablePartitionInfo.getSegmentsWithInvalidPartition().isEmpty());
 
     // Making all of them replicated will show full list, even for the new segment
-    segmentAssignment.put(segment0, ImmutableMap.of(SERVER_0, ONLINE, SERVER_1, ONLINE));
-    segmentAssignment.put(segment1, ImmutableMap.of(SERVER_0, ONLINE, SERVER_1, ONLINE));
-    segmentAssignment.put(segment2, ImmutableMap.of(SERVER_0, ONLINE, SERVER_1, ONLINE));
-    segmentAssignment.put(newSegment, ImmutableMap.of(SERVER_0, ONLINE, SERVER_1, ONLINE));
+    segmentAssignment.put(segment0, ImmutableCollections.singletonMap(SERVER_0, ONLINE, SERVER_1, ONLINE));
+    segmentAssignment.put(segment1, ImmutableCollections.singletonMap(SERVER_0, ONLINE, SERVER_1, ONLINE));
+    segmentAssignment.put(segment2, ImmutableCollections.singletonMap(SERVER_0, ONLINE, SERVER_1, ONLINE));
+    segmentAssignment.put(newSegment, ImmutableCollections.singletonMap(SERVER_0, ONLINE, SERVER_1, ONLINE));
     segmentZkMetadataFetcher.onAssignmentChange(idealState, externalView, onlineSegments);
     tablePartitionInfo = partitionMetadataManager.getTablePartitionInfo();
     partitionInfoMap = tablePartitionInfo.getPartitionInfoMap();

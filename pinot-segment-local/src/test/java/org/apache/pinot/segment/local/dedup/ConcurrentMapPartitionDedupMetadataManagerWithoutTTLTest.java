@@ -56,7 +56,7 @@ public class ConcurrentMapPartitionDedupMetadataManagerWithoutTTLTest {
     FileUtils.forceMkdir(TEMP_DIR);
     _dedupContextBuilder = new DedupContext.Builder();
     _dedupContextBuilder.setTableConfig(mock(TableConfig.class)).setSchema(mock(Schema.class))
-        .setPrimaryKeyColumns(List.of("primaryKeyColumn")).setTableIndexDir(mock(File.class))
+        .setPrimaryKeyColumns(Arrays.asList("primaryKeyColumn")).setTableIndexDir(mock(File.class))
         .setTableDataManager(mock(TableDataManager.class)).setTableIndexDir(TEMP_DIR);
   }
 

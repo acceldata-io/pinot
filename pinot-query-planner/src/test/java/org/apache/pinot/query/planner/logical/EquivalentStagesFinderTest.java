@@ -104,12 +104,12 @@ public class EquivalentStagesFinderTest extends StagesTestBase {
             exchange(
                 1,
                 tableScan("T1")
-                    .withHints("hint1", Map.of("key1", "value1"))
+                    .withHints("hint1", Collections.singletonMap("key1", "value1"))
             ),
             exchange(
                 2,
                 tableScan("T1")
-                    .withHints("hint1", Map.of("key1", "value1"))
+                    .withHints("hint1", Collections.singletonMap("key1", "value1"))
             )
         )
     );
@@ -124,12 +124,12 @@ public class EquivalentStagesFinderTest extends StagesTestBase {
             exchange(
                 1,
                 tableScan("T1")
-                    .withHints("hint1", Map.of("key1", "value1"))
+                    .withHints("hint1", Collections.singletonMap("key1", "value1"))
             ),
             exchange(
                 2,
                 tableScan("T1")
-                    .withHints("hint1", Map.of("key1", "value2"))
+                    .withHints("hint1", Collections.singletonMap("key1", "value2"))
             )
         )
     );
@@ -145,7 +145,7 @@ public class EquivalentStagesFinderTest extends StagesTestBase {
             exchange(
                 2,
                 tableScan("T1")
-                    .withHints("hint1", Map.of("key1", "value2"))
+                    .withHints("hint1", Collections.singletonMap("key1", "value2"))
             )
         )
     );

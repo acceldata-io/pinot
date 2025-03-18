@@ -39,7 +39,7 @@ public class StarTreeV2MetadataTest {
     expected.put(AggregationFunctionColumnPair.fromColumnName("count__*"), AggregationSpec.DEFAULT);
     expected.put(AggregationFunctionColumnPair.fromColumnName("sum__dimX"), AggregationSpec.DEFAULT);
 
-    Configuration metadataProperties = createMetadata(List.of("dimX"), expected);
+    Configuration metadataProperties = createMetadata(Arrays.asList("dimX"), expected);
     StarTreeV2Metadata starTreeV2Metadata = new StarTreeV2Metadata(metadataProperties);
     TreeMap<AggregationFunctionColumnPair, AggregationSpec> actual = starTreeV2Metadata.getAggregationSpecs();
     assertEquals(expected, actual);
@@ -56,7 +56,7 @@ public class StarTreeV2MetadataTest {
     expected.put(thetaColumnPair, AggregationSpec.DEFAULT);
     expected.put(rawThetaColumnPair, AggregationSpec.DEFAULT);
 
-    Configuration metadataProperties = createMetadata(List.of("dimX"), expected);
+    Configuration metadataProperties = createMetadata(Arrays.asList("dimX"), expected);
     StarTreeV2Metadata starTreeV2Metadata = new StarTreeV2Metadata(metadataProperties);
     TreeMap<AggregationFunctionColumnPair, AggregationSpec> actual = starTreeV2Metadata.getAggregationSpecs();
     expected.remove(rawThetaColumnPair);
@@ -70,7 +70,7 @@ public class StarTreeV2MetadataTest {
     expected.add(AggregationFunctionColumnPair.fromColumnName("count__*"));
     expected.add(AggregationFunctionColumnPair.fromColumnName("sum__dimX"));
 
-    Configuration metadataProperties = createMetadata(List.of("dimX"), expected);
+    Configuration metadataProperties = createMetadata(Arrays.asList("dimX"), expected);
     StarTreeV2Metadata starTreeV2Metadata = new StarTreeV2Metadata(metadataProperties);
     Set<AggregationFunctionColumnPair> actual = starTreeV2Metadata.getFunctionColumnPairs();
     assertEquals(expected, actual);

@@ -153,7 +153,7 @@ public class RetentionManagerTest {
   private void setupPinotHelixResourceManager(TableConfig tableConfig, final List<String> removedSegments,
       PinotHelixResourceManager resourceManager, LeadControllerManager leadControllerManager) {
     String tableNameWithType = tableConfig.getTableName();
-    when(resourceManager.getAllTables()).thenReturn(List.of(tableNameWithType));
+    when(resourceManager.getAllTables()).thenReturn(Arrays.asList(tableNameWithType));
 
     ZkHelixPropertyStore<ZNRecord> propertyStore = mock(ZkHelixPropertyStore.class);
     when(resourceManager.getPropertyStore()).thenReturn(propertyStore);

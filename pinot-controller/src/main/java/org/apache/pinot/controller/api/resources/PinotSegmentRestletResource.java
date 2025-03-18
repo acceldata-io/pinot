@@ -623,7 +623,7 @@ public class PinotSegmentRestletResource {
     List<String> segmnetNameList = new ArrayList<>();
     Collections.addAll(segmnetNameList, StringUtils.split(segmentNames, SegmentNameUtils.SEGMENT_NAME_SEPARATOR));
     if (instanceName != null) {
-      return Map.of(instanceName, segmnetNameList);
+      return Collections.singletonMap(instanceName, segmnetNameList);
     }
     // If instance is null, then either one or all segments are being reloaded via current segment reload restful APIs.
     // And the if-check at the beginning of this method has handled the case of reloading all segments. So here we

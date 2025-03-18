@@ -35,7 +35,7 @@ public class LiteralValueNode extends BasePlanNode {
   private DataTable _dataTable;
 
   public LiteralValueNode(DataSchema dataSchema) {
-    super(-1, dataSchema, null, List.of());
+    super(-1, dataSchema, null, Arrays.asList());
   }
 
   public void setDataTable(DataTable dataTable) {

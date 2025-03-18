@@ -31,7 +31,7 @@ import org.apache.pinot.tools.utils.SampleQueries;
 public class MultiStageResourceTrackerQuickStart extends SingleStageResourceTrackingQuickStart {
   @Override
   protected List<String> getQueries() {
-    return List.of(SampleQueries.COUNT_BASEBALL_STATS, SampleQueries.BASEBALL_STATS_SELF_JOIN,
+    return Arrays.asList(SampleQueries.COUNT_BASEBALL_STATS, SampleQueries.BASEBALL_STATS_SELF_JOIN,
         SampleQueries.BASEBALL_JOIN_DIM_BASEBALL_TEAMS);
   }
 

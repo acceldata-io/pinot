@@ -64,7 +64,7 @@ public class TransformOperatorTest {
         OperatorTestUtil.block(inputSchema, new Object[]{1, "a"}, new Object[]{2, "b"}));
     DataSchema resultSchema = new DataSchema(new String[]{"inCol", "strCol"},
         new ColumnDataType[]{ColumnDataType.INT, ColumnDataType.STRING});
-    List<RexExpression> projects = List.of(new RexExpression.InputRef(0), new RexExpression.InputRef(1));
+    List<RexExpression> projects = Arrays.asList(new RexExpression.InputRef(0), new RexExpression.InputRef(1));
     TransformOperator operator = getOperator(inputSchema, resultSchema, projects);
     List<Object[]> resultRows = operator.nextBlock().getContainer();
     assertEquals(resultRows.size(), 2);
@@ -82,7 +82,7 @@ public class TransformOperatorTest {
     DataSchema resultSchema = new DataSchema(new String[]{"boolCol", "strCol"},
         new ColumnDataType[]{ColumnDataType.BOOLEAN, ColumnDataType.STRING});
     List<RexExpression> projects =
-        List.of(RexExpression.Literal.TRUE, new RexExpression.Literal(ColumnDataType.STRING, "str"));
+        Arrays.asList(RexExpression.Literal.TRUE, new RexExpression.Literal(ColumnDataType.STRING, "str"));
     TransformOperator operator = getOperator(inputSchema, resultSchema, projects);
     List<Object[]> resultRows = operator.nextBlock().getContainer();
     assertEquals(resultRows.size(), 2);
@@ -99,9 +99,9 @@ public class TransformOperatorTest {
         OperatorTestUtil.block(inputSchema, new Object[]{1.0, 1.0}, new Object[]{2.0, 3.0}));
     DataSchema resultSchema = new DataSchema(new String[]{"plusR", "minusR"},
         new ColumnDataType[]{ColumnDataType.DOUBLE, ColumnDataType.DOUBLE});
-    List<RexExpression> operands = List.of(new RexExpression.InputRef(0), new RexExpression.InputRef(1));
+    List<RexExpression> operands = Arrays.asList(new RexExpression.InputRef(0), new RexExpression.InputRef(1));
     List<RexExpression> projects =
-        List.of(new RexExpression.FunctionCall(ColumnDataType.DOUBLE, SqlKind.PLUS.name(), operands),
+        Arrays.asList(new RexExpression.FunctionCall(ColumnDataType.DOUBLE, SqlKind.PLUS.name(), operands),
             new RexExpression.FunctionCall(ColumnDataType.DOUBLE, SqlKind.MINUS.name(), operands));
     TransformOperator operator = getOperator(inputSchema, resultSchema, projects);
     List<Object[]> resultRows = operator.nextBlock().getContainer();
@@ -119,9 +119,9 @@ public class TransformOperatorTest {
         OperatorTestUtil.block(inputSchema, new Object[]{"str1", "str1"}, new Object[]{"str2", "str3"}));
     DataSchema resultSchema = new DataSchema(new String[]{"plusR", "minusR"},
         new ColumnDataType[]{ColumnDataType.DOUBLE, ColumnDataType.DOUBLE});
-    List<RexExpression> operands = List.of(new RexExpression.InputRef(0), new RexExpression.InputRef(1));
+    List<RexExpression> operands = Arrays.asList(new RexExpression.InputRef(0), new RexExpression.InputRef(1));
     List<RexExpression> projects =
-        List.of(new RexExpression.FunctionCall(ColumnDataType.DOUBLE, SqlKind.PLUS.name(), operands),
+        Arrays.asList(new RexExpression.FunctionCall(ColumnDataType.DOUBLE, SqlKind.PLUS.name(), operands),
             new RexExpression.FunctionCall(ColumnDataType.DOUBLE, SqlKind.MINUS.name(), operands));
     TransformOperator operator = getOperator(inputSchema, resultSchema, projects);
     TransferableBlock block = operator.nextBlock();
@@ -139,7 +139,7 @@ public class TransformOperatorTest {
     DataSchema resultSchema = new DataSchema(new String[]{"inCol", "strCol"},
         new ColumnDataType[]{ColumnDataType.INT, ColumnDataType.STRING});
     List<RexExpression> projects =
-        List.of(RexExpression.Literal.TRUE, new RexExpression.Literal(ColumnDataType.STRING, "str"));
+        Arrays.asList(RexExpression.Literal.TRUE, new RexExpression.Literal(ColumnDataType.STRING, "str"));
     TransformOperator operator = getOperator(inputSchema, resultSchema, projects);
     TransferableBlock block = operator.nextBlock();
     assertTrue(block.isErrorBlock());
@@ -159,7 +159,7 @@ public class TransformOperatorTest {
     DataSchema resultSchema = new DataSchema(new String[]{"boolCol", "strCol"},
         new ColumnDataType[]{ColumnDataType.BOOLEAN, ColumnDataType.STRING});
     List<RexExpression> projects =
-        List.of(RexExpression.Literal.TRUE, new RexExpression.Literal(ColumnDataType.STRING, "str"));
+        Arrays.asList(RexExpression.Literal.TRUE, new RexExpression.Literal(ColumnDataType.STRING, "str"));
     TransformOperator operator = getOperator(inputSchema, resultSchema, projects);
     // First block has 1 row.
     List<Object[]> resultRows1 = operator.nextBlock().getContainer();
@@ -176,6 +176,6 @@ public class TransformOperatorTest {
 
   private TransformOperator getOperator(DataSchema inputSchema, DataSchema resultSchema, List<RexExpression> projects) {
     return new TransformOperator(OperatorTestUtil.getTracingContext(), _input, inputSchema,
-        new ProjectNode(-1, resultSchema, PlanNode.NodeHint.EMPTY, List.of(), projects));
+        new ProjectNode(-1, resultSchema, PlanNode.NodeHint.EMPTY, Arrays.asList(), projects));
   }
 }

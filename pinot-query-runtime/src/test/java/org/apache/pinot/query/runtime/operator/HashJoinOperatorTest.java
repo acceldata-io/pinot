@@ -87,7 +87,7 @@ public class HashJoinOperatorTest {
             ColumnDataType.INT, ColumnDataType.STRING, ColumnDataType.INT, ColumnDataType.STRING
         });
     HashJoinOperator operator =
-        getOperator(leftSchema, resultSchema, JoinRelType.INNER, List.of(1), List.of(1), List.of());
+        getOperator(leftSchema, resultSchema, JoinRelType.INNER, Arrays.asList(1), Arrays.asList(1), Arrays.asList());
     List<Object[]> resultRows = operator.nextBlock().getContainer();
     assertEquals(resultRows.size(), 3);
     assertEquals(resultRows.get(0), new Object[]{1, "Aa", 2, "Aa"});
@@ -114,7 +114,7 @@ public class HashJoinOperatorTest {
             ColumnDataType.INT, ColumnDataType.STRING, ColumnDataType.INT, ColumnDataType.STRING
         });
     HashJoinOperator operator =
-        getOperator(leftSchema, resultSchema, JoinRelType.INNER, List.of(0), List.of(0), List.of());
+        getOperator(leftSchema, resultSchema, JoinRelType.INNER, Arrays.asList(0), Arrays.asList(0), Arrays.asList());
     List<Object[]> resultRows = operator.nextBlock().getContainer();
     assertEquals(resultRows.size(), 2);
     assertEquals(resultRows.get(0), new Object[]{2, "BB", 2, "Aa"});
@@ -140,7 +140,7 @@ public class HashJoinOperatorTest {
             ColumnDataType.INT, ColumnDataType.STRING, ColumnDataType.INT, ColumnDataType.STRING
         });
     HashJoinOperator operator =
-        getOperator(leftSchema, resultSchema, JoinRelType.INNER, List.of(), List.of(), List.of());
+        getOperator(leftSchema, resultSchema, JoinRelType.INNER, Arrays.asList(), Arrays.asList(), Arrays.asList());
     List<Object[]> resultRows = operator.nextBlock().getContainer();
     assertEquals(resultRows.size(), 6);
     assertEquals(resultRows.get(0), new Object[]{1, "Aa", 2, "Aa"});
@@ -170,7 +170,7 @@ public class HashJoinOperatorTest {
             ColumnDataType.INT, ColumnDataType.STRING, ColumnDataType.INT, ColumnDataType.STRING
         });
     HashJoinOperator operator =
-        getOperator(leftSchema, resultSchema, JoinRelType.LEFT, List.of(1), List.of(1), List.of());
+        getOperator(leftSchema, resultSchema, JoinRelType.LEFT, Arrays.asList(1), Arrays.asList(1), Arrays.asList());
     List<Object[]> resultRows = operator.nextBlock().getContainer();
     assertEquals(resultRows.size(), 2);
     assertEquals(resultRows.get(0), new Object[]{1, "Aa", 2, "Aa"});
@@ -194,7 +194,7 @@ public class HashJoinOperatorTest {
             ColumnDataType.INT, ColumnDataType.STRING, ColumnDataType.INT, ColumnDataType.STRING
         });
     HashJoinOperator operator =
-        getOperator(leftSchema, resultSchema, JoinRelType.INNER, List.of(0), List.of(0), List.of());
+        getOperator(leftSchema, resultSchema, JoinRelType.INNER, Arrays.asList(0), Arrays.asList(0), Arrays.asList());
     TransferableBlock block = operator.nextBlock();
     assertTrue(block.isEndOfStreamBlock());
   }
@@ -217,7 +217,7 @@ public class HashJoinOperatorTest {
             ColumnDataType.INT, ColumnDataType.STRING, ColumnDataType.INT, ColumnDataType.STRING
         });
     HashJoinOperator operator =
-        getOperator(leftSchema, resultSchema, JoinRelType.LEFT, List.of(0), List.of(0), List.of());
+        getOperator(leftSchema, resultSchema, JoinRelType.LEFT, Arrays.asList(0), Arrays.asList(0), Arrays.asList());
     List<Object[]> resultRows = operator.nextBlock().getContainer();
     assertEquals(resultRows.size(), 2);
     assertEquals(resultRows.get(0), new Object[]{1, "Aa", 1, "BB"});
@@ -241,7 +241,7 @@ public class HashJoinOperatorTest {
             ColumnDataType.INT, ColumnDataType.STRING, ColumnDataType.INT, ColumnDataType.STRING
         });
     HashJoinOperator operator =
-        getOperator(leftSchema, resultSchema, JoinRelType.INNER, List.of(0), List.of(0), List.of());
+        getOperator(leftSchema, resultSchema, JoinRelType.INNER, Arrays.asList(0), Arrays.asList(0), Arrays.asList());
     assertTrue(operator.nextBlock().isSuccessfulEndOfStreamBlock());
   }
 
@@ -259,15 +259,15 @@ public class HashJoinOperatorTest {
     when(_rightInput.nextBlock()).thenReturn(
             OperatorTestUtil.block(rightSchema, new Object[]{2, "Aa"}, new Object[]{2, "BB"}, new Object[]{3, "BB"}))
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
-    List<RexExpression> functionOperands = List.of(new RexExpression.InputRef(1), new RexExpression.InputRef(3));
+    List<RexExpression> functionOperands = Arrays.asList(new RexExpression.InputRef(1), new RexExpression.InputRef(3));
     List<RexExpression> nonEquiConditions =
-        List.of(new RexExpression.FunctionCall(ColumnDataType.BOOLEAN, SqlKind.NOT_EQUALS.name(), functionOperands));
+        Arrays.asList(new RexExpression.FunctionCall(ColumnDataType.BOOLEAN, SqlKind.NOT_EQUALS.name(), functionOperands));
     DataSchema resultSchema =
         new DataSchema(new String[]{"int_col1", "string_col1", "int_col2", "string_col2"}, new ColumnDataType[]{
             ColumnDataType.INT, ColumnDataType.STRING, ColumnDataType.INT, ColumnDataType.STRING
         });
     HashJoinOperator operator =
-        getOperator(leftSchema, resultSchema, JoinRelType.INNER, List.of(), List.of(), nonEquiConditions);
+        getOperator(leftSchema, resultSchema, JoinRelType.INNER, Arrays.asList(), Arrays.asList(), nonEquiConditions);
     List<Object[]> resultRows = operator.nextBlock().getContainer();
     assertEquals(resultRows.size(), 3);
     assertEquals(resultRows.get(0), new Object[]{1, "Aa", 2, "BB"});
@@ -289,15 +289,15 @@ public class HashJoinOperatorTest {
     when(_rightInput.nextBlock()).thenReturn(
             OperatorTestUtil.block(rightSchema, new Object[]{2, "Aa"}, new Object[]{1, "BB"}))
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
-    List<RexExpression> functionOperands = List.of(new RexExpression.InputRef(0), new RexExpression.InputRef(2));
+    List<RexExpression> functionOperands = Arrays.asList(new RexExpression.InputRef(0), new RexExpression.InputRef(2));
     List<RexExpression> nonEquiConditions =
-        List.of(new RexExpression.FunctionCall(ColumnDataType.BOOLEAN, SqlKind.NOT_EQUALS.name(), functionOperands));
+        Arrays.asList(new RexExpression.FunctionCall(ColumnDataType.BOOLEAN, SqlKind.NOT_EQUALS.name(), functionOperands));
     DataSchema resultSchema =
         new DataSchema(new String[]{"int_col1", "string_col1", "int_co2", "string_col2"}, new ColumnDataType[]{
             ColumnDataType.INT, ColumnDataType.STRING, ColumnDataType.INT, ColumnDataType.STRING
         });
     HashJoinOperator operator =
-        getOperator(leftSchema, resultSchema, JoinRelType.INNER, List.of(), List.of(), nonEquiConditions);
+        getOperator(leftSchema, resultSchema, JoinRelType.INNER, Arrays.asList(), Arrays.asList(), nonEquiConditions);
     List<Object[]> resultRows = operator.nextBlock().getContainer();
     assertEquals(resultRows.size(), 2);
     assertEquals(resultRows.get(0), new Object[]{1, "Aa", 2, "Aa"});
@@ -322,7 +322,7 @@ public class HashJoinOperatorTest {
         ColumnDataType.INT, ColumnDataType.STRING, ColumnDataType.INT, ColumnDataType.STRING
     });
     HashJoinOperator operator =
-        getOperator(leftSchema, resultSchema, JoinRelType.RIGHT, List.of(0), List.of(0), List.of());
+        getOperator(leftSchema, resultSchema, JoinRelType.RIGHT, Arrays.asList(0), Arrays.asList(0), Arrays.asList());
     List<Object[]> resultRows1 = operator.nextBlock().getContainer();
     assertEquals(resultRows1.size(), 2);
     assertEquals(resultRows1.get(0), new Object[]{2, "BB", 2, "Aa"});
@@ -353,7 +353,7 @@ public class HashJoinOperatorTest {
         ColumnDataType.INT, ColumnDataType.STRING
     });
     HashJoinOperator operator =
-        getOperator(leftSchema, resultSchema, JoinRelType.SEMI, List.of(1), List.of(1), List.of());
+        getOperator(leftSchema, resultSchema, JoinRelType.SEMI, Arrays.asList(1), Arrays.asList(1), Arrays.asList());
     List<Object[]> resultRows = operator.nextBlock().getContainer();
     assertEquals(resultRows.size(), 2);
     assertEquals(resultRows.get(0), new Object[]{1, "Aa"});
@@ -379,7 +379,7 @@ public class HashJoinOperatorTest {
         ColumnDataType.INT, ColumnDataType.STRING, ColumnDataType.INT, ColumnDataType.STRING
     });
     HashJoinOperator operator =
-        getOperator(leftSchema, resultSchema, JoinRelType.FULL, List.of(0), List.of(0), List.of());
+        getOperator(leftSchema, resultSchema, JoinRelType.FULL, Arrays.asList(0), Arrays.asList(0), Arrays.asList());
     List<Object[]> resultRows1 = operator.nextBlock().getContainer();
     assertEquals(resultRows1.size(), 4);
     assertEquals(resultRows1.get(0), new Object[]{1, "Aa", null, null});
@@ -412,7 +412,7 @@ public class HashJoinOperatorTest {
         ColumnDataType.INT, ColumnDataType.STRING
     });
     HashJoinOperator operator =
-        getOperator(leftSchema, resultSchema, JoinRelType.ANTI, List.of(1), List.of(1), List.of());
+        getOperator(leftSchema, resultSchema, JoinRelType.ANTI, Arrays.asList(1), Arrays.asList(1), Arrays.asList());
     List<Object[]> resultRows = operator.nextBlock().getContainer();
     assertEquals(resultRows.size(), 1);
     assertEquals(resultRows.get(0), new Object[]{4, "CC"});
@@ -437,7 +437,7 @@ public class HashJoinOperatorTest {
             ColumnDataType.INT, ColumnDataType.STRING, ColumnDataType.INT, ColumnDataType.STRING
         });
     HashJoinOperator operator =
-        getOperator(leftSchema, resultSchema, JoinRelType.INNER, List.of(0), List.of(0), List.of());
+        getOperator(leftSchema, resultSchema, JoinRelType.INNER, Arrays.asList(0), Arrays.asList(0), Arrays.asList());
     TransferableBlock block = operator.nextBlock();
     assertTrue(block.isErrorBlock());
     assertTrue(block.getExceptions().get(QueryException.UNKNOWN_ERROR_CODE).contains("testInnerJoinRightError"));
@@ -461,7 +461,7 @@ public class HashJoinOperatorTest {
             ColumnDataType.INT, ColumnDataType.STRING, ColumnDataType.INT, ColumnDataType.STRING
         });
     HashJoinOperator operator =
-        getOperator(leftSchema, resultSchema, JoinRelType.INNER, List.of(0), List.of(0), List.of());
+        getOperator(leftSchema, resultSchema, JoinRelType.INNER, Arrays.asList(0), Arrays.asList(0), Arrays.asList());
     TransferableBlock block = operator.nextBlock();
     assertTrue(block.isErrorBlock());
     assertTrue(block.getExceptions().get(QueryException.UNKNOWN_ERROR_CODE).contains("testInnerJoinLeftError"));
@@ -485,11 +485,11 @@ public class HashJoinOperatorTest {
         new DataSchema(new String[]{"int_col1", "string_col1", "int_co2", "string_col2"}, new ColumnDataType[]{
             ColumnDataType.INT, ColumnDataType.STRING, ColumnDataType.INT, ColumnDataType.STRING
         });
-    PlanNode.NodeHint nodeHint = new PlanNode.NodeHint(Map.of(PinotHintOptions.JOIN_HINT_OPTIONS,
-        Map.of(PinotHintOptions.JoinHintOptions.JOIN_OVERFLOW_MODE, "THROW",
+    PlanNode.NodeHint nodeHint = new PlanNode.NodeHint(Collections.singletonMap(PinotHintOptions.JOIN_HINT_OPTIONS,
+        Collections.singletonMap(PinotHintOptions.JoinHintOptions.JOIN_OVERFLOW_MODE, "THROW",
             PinotHintOptions.JoinHintOptions.MAX_ROWS_IN_JOIN, "1")));
     HashJoinOperator operator =
-        getOperator(leftSchema, resultSchema, JoinRelType.INNER, List.of(0), List.of(0), List.of(), nodeHint);
+        getOperator(leftSchema, resultSchema, JoinRelType.INNER, Arrays.asList(0), Arrays.asList(0), Arrays.asList(), nodeHint);
     TransferableBlock block = operator.nextBlock();
     assertTrue(block.isErrorBlock());
     assertTrue(block.getExceptions().get(QueryException.SERVER_RESOURCE_LIMIT_EXCEEDED_ERROR_CODE)
@@ -516,11 +516,11 @@ public class HashJoinOperatorTest {
         new DataSchema(new String[]{"int_col1", "string_col1", "int_co2", "string_col2"}, new ColumnDataType[]{
             ColumnDataType.INT, ColumnDataType.STRING, ColumnDataType.INT, ColumnDataType.STRING
         });
-    PlanNode.NodeHint nodeHint = new PlanNode.NodeHint(Map.of(PinotHintOptions.JOIN_HINT_OPTIONS,
-        Map.of(PinotHintOptions.JoinHintOptions.JOIN_OVERFLOW_MODE, "BREAK",
+    PlanNode.NodeHint nodeHint = new PlanNode.NodeHint(Collections.singletonMap(PinotHintOptions.JOIN_HINT_OPTIONS,
+        Collections.singletonMap(PinotHintOptions.JoinHintOptions.JOIN_OVERFLOW_MODE, "BREAK",
             PinotHintOptions.JoinHintOptions.MAX_ROWS_IN_JOIN, "1")));
     HashJoinOperator operator =
-        getOperator(leftSchema, resultSchema, JoinRelType.INNER, List.of(0), List.of(0), List.of(), nodeHint);
+        getOperator(leftSchema, resultSchema, JoinRelType.INNER, Arrays.asList(0), Arrays.asList(0), Arrays.asList(), nodeHint);
     List<Object[]> resultRows1 = operator.nextBlock().getContainer();
     Mockito.verify(_rightInput).earlyTerminate();
     assertEquals(resultRows1.size(), 1);
@@ -549,11 +549,11 @@ public class HashJoinOperatorTest {
         new DataSchema(new String[]{"int_col1", "string_col1", "int_co2", "string_col2"}, new ColumnDataType[]{
             ColumnDataType.INT, ColumnDataType.STRING, ColumnDataType.INT, ColumnDataType.STRING
         });
-    PlanNode.NodeHint nodeHint = new PlanNode.NodeHint(Map.of(PinotHintOptions.JOIN_HINT_OPTIONS,
-        Map.of(PinotHintOptions.JoinHintOptions.JOIN_OVERFLOW_MODE, "THROW",
+    PlanNode.NodeHint nodeHint = new PlanNode.NodeHint(Collections.singletonMap(PinotHintOptions.JOIN_HINT_OPTIONS,
+        Collections.singletonMap(PinotHintOptions.JoinHintOptions.JOIN_OVERFLOW_MODE, "THROW",
             PinotHintOptions.JoinHintOptions.MAX_ROWS_IN_JOIN, "2")));
     HashJoinOperator operator =
-        getOperator(leftSchema, resultSchema, JoinRelType.INNER, List.of(1), List.of(1), List.of(), nodeHint);
+        getOperator(leftSchema, resultSchema, JoinRelType.INNER, Arrays.asList(1), Arrays.asList(1), Arrays.asList(), nodeHint);
     TransferableBlock block = operator.nextBlock();
     assertTrue(block.isErrorBlock());
     assertTrue(block.getExceptions().get(QueryException.SERVER_RESOURCE_LIMIT_EXCEEDED_ERROR_CODE)
@@ -580,11 +580,11 @@ public class HashJoinOperatorTest {
         new DataSchema(new String[]{"int_col1", "string_col1", "int_co2", "string_col2"}, new ColumnDataType[]{
             ColumnDataType.INT, ColumnDataType.STRING, ColumnDataType.INT, ColumnDataType.STRING
         });
-    PlanNode.NodeHint nodeHint = new PlanNode.NodeHint(Map.of(PinotHintOptions.JOIN_HINT_OPTIONS,
-        Map.of(PinotHintOptions.JoinHintOptions.JOIN_OVERFLOW_MODE, "BREAK",
+    PlanNode.NodeHint nodeHint = new PlanNode.NodeHint(Collections.singletonMap(PinotHintOptions.JOIN_HINT_OPTIONS,
+        Collections.singletonMap(PinotHintOptions.JoinHintOptions.JOIN_OVERFLOW_MODE, "BREAK",
             PinotHintOptions.JoinHintOptions.MAX_ROWS_IN_JOIN, "2")));
     HashJoinOperator operator =
-        getOperator(leftSchema, resultSchema, JoinRelType.INNER, List.of(1), List.of(1), List.of(), nodeHint);
+        getOperator(leftSchema, resultSchema, JoinRelType.INNER, Arrays.asList(1), Arrays.asList(1), Arrays.asList(), nodeHint);
     List<Object[]> resultRows = operator.nextBlock().getContainer();
     Mockito.verify(_leftInput).earlyTerminate();
     assertEquals(resultRows.size(), 2);
@@ -599,7 +599,7 @@ public class HashJoinOperatorTest {
       List<Integer> leftKeys, List<Integer> rightKeys, List<RexExpression> nonEquiConditions,
       PlanNode.NodeHint nodeHint) {
     return new HashJoinOperator(OperatorTestUtil.getTracingContext(), _leftInput, leftSchema, _rightInput,
-        new JoinNode(-1, resultSchema, nodeHint, List.of(), joinType, leftKeys, rightKeys, nonEquiConditions,
+        new JoinNode(-1, resultSchema, nodeHint, Arrays.asList(), joinType, leftKeys, rightKeys, nonEquiConditions,
             JoinNode.JoinStrategy.HASH));
   }
 

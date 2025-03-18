@@ -146,7 +146,7 @@ public abstract class BaseJsonQueryTest extends BaseQueriesTest {
     records.add(createRecord(17, 17, "john doe", "{\"longVal\": \"-100.12345\" }"));
     records.add(createRecord(18, 18, "john doe", "{\"longVal\": \"10e2\" }"));
 
-    tableConfig.getIndexingConfig().setJsonIndexColumns(List.of("jsonColumn"));
+    tableConfig.getIndexingConfig().setJsonIndexColumns(Arrays.asList("jsonColumn"));
     SegmentGeneratorConfig segmentGeneratorConfig = new SegmentGeneratorConfig(tableConfig, schema);
     segmentGeneratorConfig.setTableName(RAW_TABLE_NAME);
     segmentGeneratorConfig.setSegmentName(SEGMENT_NAME);

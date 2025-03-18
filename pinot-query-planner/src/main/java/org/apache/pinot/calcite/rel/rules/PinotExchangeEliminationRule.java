@@ -45,6 +45,6 @@ public class PinotExchangeEliminationRule extends RelOptRule {
     Exchange exchange0 = call.rel(0);
     RelNode input = call.rel(2);
     // convert the call to skip the exchange.
-    call.transformTo(exchange0.copy(input.getTraitSet(), List.of(input)));
+    call.transformTo(exchange0.copy(input.getTraitSet(), Arrays.asList(input)));
   }
 }

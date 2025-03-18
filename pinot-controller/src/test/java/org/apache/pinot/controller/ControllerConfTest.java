@@ -143,7 +143,7 @@ public class ControllerConfTest {
 
   @Test
   public void validateSegmentRelocatorRebalanceDefaultConfigs() {
-    ControllerConf conf = new ControllerConf(Map.of());
+    ControllerConf conf = new ControllerConf(new HashMap<>());
     Assert.assertFalse(conf.getSegmentRelocatorReassignInstances());
     Assert.assertFalse(conf.getSegmentRelocatorBootstrap());
     Assert.assertFalse(conf.getSegmentRelocatorDowntime());

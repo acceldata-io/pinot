@@ -63,7 +63,7 @@ public class LiteralValueOperator extends MultiStageOperator {
 
   @Override
   public List<MultiStageOperator> getChildOperators() {
-    return List.of();
+    return Arrays.asList();
   }
 
   @Override

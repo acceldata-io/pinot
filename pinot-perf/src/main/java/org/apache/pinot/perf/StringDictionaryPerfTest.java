@@ -61,7 +61,7 @@ public class StringDictionaryPerfTest {
   };
   private static final Joiner COMMA_JOINER = Joiner.on(",");
   private static final TableConfig TABLE_CONFIG =
-      new TableConfigBuilder(TableType.OFFLINE).setOnHeapDictionaryColumns(List.of(COLUMN_NAME)).setTableName("test")
+      new TableConfigBuilder(TableType.OFFLINE).setOnHeapDictionaryColumns(Arrays.asList(COLUMN_NAME)).setTableName("test")
           .build();
 
   private final DescriptiveStatistics _statistics = new DescriptiveStatistics();

@@ -85,8 +85,8 @@ public abstract class BaseMultiValueQueriesTest extends BaseQueriesTest {
   protected static final TableConfig TABLE_CONFIG = new TableConfigBuilder(TableType.OFFLINE)
       .setTableName(RAW_TABLE_NAME)
       .setTimeColumnName("daysSinceEpoch")
-      .setNoDictionaryColumns(List.of("column5"))
-      .setInvertedIndexColumns(List.of("column3", "column7", "column8", "column9"))
+      .setNoDictionaryColumns(Arrays.asList("column5"))
+      .setInvertedIndexColumns(Arrays.asList("column3", "column7", "column8", "column9"))
       .build();
   static {
     // The segment generation code in SegmentColumnarIndexCreator will throw exception if start and end time in time

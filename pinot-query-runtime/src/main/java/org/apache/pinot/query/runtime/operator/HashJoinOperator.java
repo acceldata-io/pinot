@@ -191,7 +191,7 @@ public class HashJoinOperator extends MultiStageOperator {
 
   @Override
   public List<MultiStageOperator> getChildOperators() {
-    return List.of(_leftInput, _rightInput);
+    return Arrays.asList(_leftInput, _rightInput);
   }
 
   @Override

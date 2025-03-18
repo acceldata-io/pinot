@@ -53,8 +53,8 @@ public class SegmentConversionUtilsTest {
     _testServer = HttpServer.create(new InetSocketAddress(TEST_PORT), 0);
     _testServer.createContext("/segments/myTable", exchange -> {
       String response = JsonUtils.objectToString(
-          ImmutableList.of(
-              ImmutableMap.of(TEST_TABLE_TYPE, ImmutableList.of(TEST_TABLE_SEGMENT_1, TEST_TABLE_SEGMENT_2))));
+          ImmutableArrays.asList(
+              ImmutableCollections.singletonMap(TEST_TABLE_TYPE, ImmutableArrays.asList(TEST_TABLE_SEGMENT_1, TEST_TABLE_SEGMENT_2))));
       exchange.sendResponseHeaders(HttpStatus.SC_OK, response.length());
       OutputStream os = exchange.getResponseBody();
       os.write(response.getBytes());

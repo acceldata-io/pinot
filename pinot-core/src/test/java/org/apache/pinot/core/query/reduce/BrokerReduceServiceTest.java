@@ -49,7 +49,7 @@ public class BrokerReduceServiceTest {
   public void testReduceTimeout()
       throws IOException {
     BrokerReduceService brokerReduceService =
-        new BrokerReduceService(new PinotConfiguration(Map.of(Broker.CONFIG_OF_MAX_REDUCE_THREADS_PER_QUERY, 2)));
+        new BrokerReduceService(new PinotConfiguration(Collections.singletonMap(Broker.CONFIG_OF_MAX_REDUCE_THREADS_PER_QUERY, 2)));
     BrokerRequest brokerRequest =
         CalciteSqlCompiler.compileToBrokerRequest("SELECT COUNT(*) FROM testTable GROUP BY col1");
     DataSchema dataSchema =

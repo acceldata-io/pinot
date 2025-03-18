@@ -76,7 +76,7 @@ public class PinotConvertletTable implements SqlRexConvertletTable {
     public RexNode convertCall(SqlRexContext cx, SqlCall call) {
       RexBuilder rexBuilder = cx.getRexBuilder();
       return rexBuilder.makeCall(cx.getValidator().getValidatedNodeType(call), SqlStdOperatorTable.TIMESTAMP_ADD,
-          List.of(cx.convertExpression(call.operand(0)), cx.convertExpression(call.operand(1)),
+          Arrays.asList(cx.convertExpression(call.operand(0)), cx.convertExpression(call.operand(1)),
               cx.convertExpression(call.operand(2))));
     }
   }
@@ -92,7 +92,7 @@ public class PinotConvertletTable implements SqlRexConvertletTable {
     public RexNode convertCall(SqlRexContext cx, SqlCall call) {
       RexBuilder rexBuilder = cx.getRexBuilder();
       return rexBuilder.makeCall(cx.getValidator().getValidatedNodeType(call), SqlStdOperatorTable.TIMESTAMP_DIFF,
-          List.of(cx.convertExpression(call.operand(0)), cx.convertExpression(call.operand(1)),
+          Arrays.asList(cx.convertExpression(call.operand(0)), cx.convertExpression(call.operand(1)),
               cx.convertExpression(call.operand(2))));
     }
   }
@@ -113,7 +113,7 @@ public class PinotConvertletTable implements SqlRexConvertletTable {
         SqlBetweenOperator betweenOperator = (SqlBetweenOperator) call.getOperator();
 
         RexNode rexNode = rexBuilder.makeCall(cx.getValidator().getValidatedNodeType(call), PINOT_BETWEEN,
-            List.of(cx.convertExpression(call.operand(0)), cx.convertExpression(call.operand(1)),
+            Arrays.asList(cx.convertExpression(call.operand(0)), cx.convertExpression(call.operand(1)),
                 cx.convertExpression(call.operand(2))));
 
         // Since Pinot only has support for ASYMMETRIC BETWEEN, we need to rewrite SYMMETRIC BETWEEN, ASYMMETRIC NOT
@@ -122,7 +122,7 @@ public class PinotConvertletTable implements SqlRexConvertletTable {
         // (val BETWEEN SYMMETRIC x AND y) is equivalent to (val BETWEEN x AND y OR val BETWEEN y AND x)
         if (betweenOperator.flag == SqlBetweenOperator.Flag.SYMMETRIC) {
           RexNode flipped = rexBuilder.makeCall(cx.getValidator().getValidatedNodeType(call), PINOT_BETWEEN,
-              List.of(cx.convertExpression(call.operand(0)), cx.convertExpression(call.operand(2)),
+              Arrays.asList(cx.convertExpression(call.operand(0)), cx.convertExpression(call.operand(2)),
                   cx.convertExpression(call.operand(1))));
           rexNode = rexBuilder.makeCall(SqlStdOperatorTable.OR, rexNode, flipped);
         }

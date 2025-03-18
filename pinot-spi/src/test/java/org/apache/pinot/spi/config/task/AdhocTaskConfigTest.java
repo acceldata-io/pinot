@@ -33,7 +33,7 @@ public class AdhocTaskConfigTest {
   public void testDeserializeFromJson()
       throws IOException {
     AdhocTaskConfig adhocTaskConfig = new AdhocTaskConfig("SegmentGenerationAndPushTask", "myTable", "myTask-0",
-        ImmutableMap.of("inputDirURI", "s3://my-bucket/my-file.json"));
+        ImmutableCollections.singletonMap("inputDirURI", "s3://my-bucket/my-file.json"));
     adhocTaskConfig = JsonUtils.stringToObject(JsonUtils.objectToString(adhocTaskConfig), AdhocTaskConfig.class);
     assertEquals(adhocTaskConfig.getTaskType(), "SegmentGenerationAndPushTask");
     assertEquals(adhocTaskConfig.getTableName(), "myTable");
@@ -46,16 +46,16 @@ public class AdhocTaskConfigTest {
   public void testInvalidArgumentsForAdhocTaskConfig() {
     // Test 1 : pass invalid taskType(null) to AdhocTaskConfig.
     assertThrows(IllegalArgumentException.class, () -> new AdhocTaskConfig(null, "TestTable", "TestTaskName",
-        ImmutableMap.of("inputDirURI", "s3://my-bucket/my-file.json")));
+        ImmutableCollections.singletonMap("inputDirURI", "s3://my-bucket/my-file.json")));
 
     // Test 2 : pass invalid tableName(null) to AdhocTaskConfig.
     assertThrows(IllegalArgumentException.class,
         () -> new AdhocTaskConfig("SegmentGenerationAndPushTask", null, "TestTaskName",
-            ImmutableMap.of("inputDirURI", "s3://my-bucket/my-file.json")));
+            ImmutableCollections.singletonMap("inputDirURI", "s3://my-bucket/my-file.json")));
 
     //Test 3 : pass invalid taskName(String with path separator '/') to AdhocTaskConfig.
     assertThrows(IllegalArgumentException.class,
         () -> new AdhocTaskConfig("SegmentGenerationAndPushTask", "TestTable", "Invalid/TestTaskName",
-            ImmutableMap.of("inputDirURI", "s3://my-bucket/my-file.json")));
+            ImmutableCollections.singletonMap("inputDirURI", "s3://my-bucket/my-file.json")));
   }
 }

@@ -208,7 +208,7 @@ public class PulsarMessageBatchTest {
   public void testMessageBatchNoStitching() {
     PulsarConfig config = mock(PulsarConfig.class);
     when(config.getEnableKeyValueStitch()).thenReturn(false);
-    List<BytesStreamMessage> streamMessages = List.of(PulsarUtils.buildPulsarStreamMessage(_message, config));
+    List<BytesStreamMessage> streamMessages = Arrays.asList(PulsarUtils.buildPulsarStreamMessage(_message, config));
     PulsarMessageBatch messageBatch = new PulsarMessageBatch(streamMessages, mock(MessageIdStreamOffset.class), false);
     byte[] valueBytes = messageBatch.getStreamMessage(0).getValue();
     assertEquals(valueBytes, _expectedValueBytes);
@@ -218,7 +218,7 @@ public class PulsarMessageBatchTest {
   public void testMessageBatchWithStitching() {
     PulsarConfig config = mock(PulsarConfig.class);
     when(config.getEnableKeyValueStitch()).thenReturn(true);
-    List<BytesStreamMessage> streamMessages = List.of(PulsarUtils.buildPulsarStreamMessage(_message, config));
+    List<BytesStreamMessage> streamMessages = Arrays.asList(PulsarUtils.buildPulsarStreamMessage(_message, config));
     PulsarMessageBatch messageBatch = new PulsarMessageBatch(streamMessages, mock(MessageIdStreamOffset.class), false);
     BytesStreamMessage streamMessage = messageBatch.getStreamMessage(0);
     byte[] keyValueBytes = streamMessage.getValue();

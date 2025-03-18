@@ -170,7 +170,7 @@ public class PlanFragmenter implements PlanNodeVisitor<PlanNode, PlanFragmenter.
     RelDistribution.Type distributionType = node.getDistributionType();
     List<Integer> keys = node.getKeys();
     MailboxSendNode mailboxSendNode =
-        new MailboxSendNode(senderPlanFragmentId, nextPlanFragmentRoot.getDataSchema(), List.of(nextPlanFragmentRoot),
+        new MailboxSendNode(senderPlanFragmentId, nextPlanFragmentRoot.getDataSchema(), Arrays.asList(nextPlanFragmentRoot),
             receiverPlanFragmentId, exchangeType, distributionType, keys, node.isPrePartitioned(), node.getCollations(),
             node.isSortOnSender());
     _planFragmentMap.put(senderPlanFragmentId,

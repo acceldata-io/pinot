@@ -175,7 +175,7 @@ public class PinotRelDistributionTraitRule extends RelOptRule {
         RelDataTypeField field = tableScan.getRowType().getField(partitionKey, true, true);
         Preconditions.checkState(field != null, "Failed to find partition key: %s in table: %s", partitionKey,
             RelToPlanNodeConverter.getTableNameFromTableScan(tableScan));
-        return RelDistributions.hash(List.of(field.getIndex()));
+        return RelDistributions.hash(Arrays.asList(field.getIndex()));
       } else {
         return RelDistributions.of(RelDistribution.Type.RANDOM_DISTRIBUTED, RelDistributions.EMPTY);
       }

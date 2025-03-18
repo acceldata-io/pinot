@@ -28,8 +28,8 @@ public final class BasicAuthTestUtils {
 
   public static final String AUTH_TOKEN = "Basic YWRtaW46dmVyeXNlY3JldA=====";
   public static final String AUTH_TOKEN_USER = "Basic dXNlcjpzZWNyZXQ==";
-  public static final Map<String, String> AUTH_HEADER = Map.of("Authorization", AUTH_TOKEN);
-  public static final Map<String, String> AUTH_HEADER_USER = Map.of("Authorization", AUTH_TOKEN_USER);
+  public static final Map<String, String> AUTH_HEADER = Collections.singletonMap("Authorization", AUTH_TOKEN);
+  public static final Map<String, String> AUTH_HEADER_USER = Collections.singletonMap("Authorization", AUTH_TOKEN_USER);
 
   public static void addControllerConfiguration(Map<String, Object> properties) {
     properties.put("controller.segment.fetcher.auth.token", AUTH_TOKEN);

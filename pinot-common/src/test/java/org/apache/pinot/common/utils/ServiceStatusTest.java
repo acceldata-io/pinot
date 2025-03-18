@@ -96,32 +96,32 @@ public class ServiceStatusTest {
   public void testMultipleServiceStatusCallback() {
     // Only good should return good
     ServiceStatus.MultipleCallbackServiceStatusCallback onlyGood =
-        new ServiceStatus.MultipleCallbackServiceStatusCallback(ImmutableList.of(ALWAYS_GOOD));
+        new ServiceStatus.MultipleCallbackServiceStatusCallback(ImmutableArrays.asList(ALWAYS_GOOD));
 
     assertEquals(onlyGood.getServiceStatus(), ServiceStatus.Status.GOOD);
 
     // Only bad should return bad
     ServiceStatus.MultipleCallbackServiceStatusCallback onlyBad =
-        new ServiceStatus.MultipleCallbackServiceStatusCallback(ImmutableList.of(ALWAYS_BAD));
+        new ServiceStatus.MultipleCallbackServiceStatusCallback(ImmutableArrays.asList(ALWAYS_BAD));
 
     assertEquals(onlyBad.getServiceStatus(), ServiceStatus.Status.BAD);
 
     // Only starting should return starting
     ServiceStatus.MultipleCallbackServiceStatusCallback onlyStarting =
-        new ServiceStatus.MultipleCallbackServiceStatusCallback(ImmutableList.of(ALWAYS_STARTING));
+        new ServiceStatus.MultipleCallbackServiceStatusCallback(ImmutableArrays.asList(ALWAYS_STARTING));
 
     assertEquals(onlyStarting.getServiceStatus(), ServiceStatus.Status.STARTING);
 
     // Good + starting = starting
     ServiceStatus.MultipleCallbackServiceStatusCallback goodAndStarting =
-        new ServiceStatus.MultipleCallbackServiceStatusCallback(ImmutableList.of(ALWAYS_GOOD, ALWAYS_STARTING));
+        new ServiceStatus.MultipleCallbackServiceStatusCallback(ImmutableArrays.asList(ALWAYS_GOOD, ALWAYS_STARTING));
 
     assertEquals(goodAndStarting.getServiceStatus(), ServiceStatus.Status.STARTING);
 
     // Good + starting + bad = starting (check for left-to-right evaluation)
     ServiceStatus.MultipleCallbackServiceStatusCallback goodStartingAndBad =
         new ServiceStatus.MultipleCallbackServiceStatusCallback(
-            ImmutableList.of(ALWAYS_GOOD, ALWAYS_STARTING, ALWAYS_BAD));
+            ImmutableArrays.asList(ALWAYS_GOOD, ALWAYS_STARTING, ALWAYS_BAD));
 
     assertEquals(goodStartingAndBad.getServiceStatus(), ServiceStatus.Status.STARTING);
   }
@@ -139,7 +139,7 @@ public class ServiceStatusTest {
     callback = buildTestISEVCallback();
     ZNRecord znRecord = new ZNRecord(TABLE_NAME);
     znRecord.setSimpleField("REBALANCE_MODE", "CUSTOMIZED");
-    znRecord.setMapField("segment1", Map.of(INSTANCE_NAME, "ONLINE"));
+    znRecord.setMapField("segment1", Collections.singletonMap(INSTANCE_NAME, "ONLINE"));
     callback.setIdealState(new IdealState(znRecord));
     assertEquals(callback.getServiceStatus(), ServiceStatus.Status.STARTING);
 
@@ -147,7 +147,7 @@ public class ServiceStatusTest {
     callback = buildTestISEVCallback();
     znRecord = new ZNRecord(TABLE_NAME);
     znRecord.setSimpleField("REBALANCE_MODE", "CUSTOMIZED");
-    znRecord.setMapField("segment1", Map.of("otherServerInstance", "ONLINE"));
+    znRecord.setMapField("segment1", Collections.singletonMap("otherServerInstance", "ONLINE"));
     callback.setIdealState(new IdealState(znRecord));
     assertEquals(callback.getServiceStatus(), ServiceStatus.Status.GOOD);
 
@@ -155,8 +155,8 @@ public class ServiceStatusTest {
     callback = buildTestISEVCallback();
     znRecord = new ZNRecord(TABLE_NAME);
     znRecord.setSimpleField("REBALANCE_MODE", "CUSTOMIZED");
-    znRecord.setMapField("segment1", Map.of(INSTANCE_NAME, "ONLINE"));
-    znRecord.setMapField("segment2", Map.of(INSTANCE_NAME, "ONLINE"));
+    znRecord.setMapField("segment1", Collections.singletonMap(INSTANCE_NAME, "ONLINE"));
+    znRecord.setMapField("segment2", Collections.singletonMap(INSTANCE_NAME, "ONLINE"));
     callback.setIdealState(new IdealState(znRecord));
     ExternalView externalView = new ExternalView(TABLE_NAME);
     externalView.setState("segment1", INSTANCE_NAME, "ONLINE");

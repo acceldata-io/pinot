@@ -154,7 +154,7 @@ public class CSVMessageDecoderTest {
   @Test
   public void testDefaultProps()
       throws Exception {
-    Map<String, String> decoderProps = ImmutableMap.of();
+    Map<String, String> decoderProps = Immutablenew HashMap<>();
     CSVMessageDecoder messageDecoder = new CSVMessageDecoder();
     messageDecoder.init(decoderProps, ImmutableSet.of("name", "age", "gender", "subjects"), "");
     String incomingRecord = "name,age,gender,subjects\nAlice,18,F,maths";

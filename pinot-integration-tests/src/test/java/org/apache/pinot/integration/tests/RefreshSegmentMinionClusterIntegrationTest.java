@@ -353,7 +353,7 @@ public class RefreshSegmentMinionClusterIntegrationTest extends BaseClusterInteg
     // Verify the index sizes
     JsonNode columnIndexSizeMap = JsonUtils.stringToJsonNode(sendGetRequest(
             _controllerRequestURLBuilder.forTableAggregateMetadata(getTableName(),
-                List.of("DivAirportSeqIDs", "NewAddedDerivedDivAirportSeqIDs", "NewAddedDerivedDivAirportSeqIDsString",
+                Arrays.asList("DivAirportSeqIDs", "NewAddedDerivedDivAirportSeqIDs", "NewAddedDerivedDivAirportSeqIDsString",
                     "NewAddedRawDerivedStringDimension", "NewAddedRawDerivedMVIntDimension",
                     "NewAddedDerivedNullString"))))
         .get("columnIndexSizeMap");

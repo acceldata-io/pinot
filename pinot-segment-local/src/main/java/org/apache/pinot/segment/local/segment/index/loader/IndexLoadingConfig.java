@@ -163,7 +163,7 @@ public class IndexLoadingConfig {
     _segmentDirectoryLoader = _instanceDataManagerConfig.getSegmentDirectoryLoader();
 
     Map<String, Map<String, String>> tierConfigs = _instanceDataManagerConfig.getTierConfigs();
-    _instanceTierConfigs = tierConfigs != null ? tierConfigs : Map.of();
+    _instanceTierConfigs = tierConfigs != null ? tierConfigs : new HashMap<>();
   }
 
   private void extractFromTableConfigAndSchema() {

@@ -68,7 +68,7 @@ public class SortOperatorTest {
     // Given:
     DataSchema schema = new DataSchema(new String[]{"sort"}, new DataSchema.ColumnDataType[]{INT});
     when(_input.nextBlock()).thenReturn(TransferableBlockUtils.getErrorTransferableBlock(new Exception("foo!")));
-    List<RelFieldCollation> collations = List.of(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.LAST));
+    List<RelFieldCollation> collations = Arrays.asList(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.LAST));
     SortOperator operator = getOperator(schema, collations);
 
     // When:
@@ -83,7 +83,7 @@ public class SortOperatorTest {
     // Given:
     DataSchema schema = new DataSchema(new String[]{"sort"}, new DataSchema.ColumnDataType[]{INT});
     when(_input.nextBlock()).thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
-    List<RelFieldCollation> collations = List.of(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.LAST));
+    List<RelFieldCollation> collations = Arrays.asList(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.LAST));
     SortOperator operator = getOperator(schema, collations);
 
     // When:
@@ -99,7 +99,7 @@ public class SortOperatorTest {
     DataSchema schema = new DataSchema(new String[]{"sort"}, new DataSchema.ColumnDataType[]{INT});
     when(_input.nextBlock()).thenReturn(block(schema, new Object[]{2}, new Object[]{1}))
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
-    List<RelFieldCollation> collations = List.of(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.LAST));
+    List<RelFieldCollation> collations = Arrays.asList(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.LAST));
     SortOperator operator = getOperator(schema, collations);
 
     // When:
@@ -121,7 +121,7 @@ public class SortOperatorTest {
     // sorted
     when(_input.nextBlock()).thenReturn(block(schema, new Object[]{2}, new Object[]{1}))
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
-    List<RelFieldCollation> collations = List.of(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.LAST));
+    List<RelFieldCollation> collations = Arrays.asList(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.LAST));
     SortOperator operator = getOperator(schema, collations);
 
     // When:
@@ -140,7 +140,7 @@ public class SortOperatorTest {
     DataSchema schema = new DataSchema(new String[]{"ignored", "sort"}, new DataSchema.ColumnDataType[]{INT, INT});
     when(_input.nextBlock()).thenReturn(block(schema, new Object[]{1, 2}, new Object[]{2, 1}))
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
-    List<RelFieldCollation> collations = List.of(new RelFieldCollation(1, Direction.ASCENDING, NullDirection.LAST));
+    List<RelFieldCollation> collations = Arrays.asList(new RelFieldCollation(1, Direction.ASCENDING, NullDirection.LAST));
     SortOperator operator = getOperator(schema, collations);
 
     // When:
@@ -159,7 +159,7 @@ public class SortOperatorTest {
     DataSchema schema = new DataSchema(new String[]{"sort"}, new DataSchema.ColumnDataType[]{STRING});
     when(_input.nextBlock()).thenReturn(block(schema, new Object[]{"b"}, new Object[]{"a"}))
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
-    List<RelFieldCollation> collations = List.of(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.LAST));
+    List<RelFieldCollation> collations = Arrays.asList(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.LAST));
     SortOperator operator = getOperator(schema, collations);
 
     // When:
@@ -178,7 +178,7 @@ public class SortOperatorTest {
     DataSchema schema = new DataSchema(new String[]{"sort"}, new DataSchema.ColumnDataType[]{INT});
     when(_input.nextBlock()).thenReturn(block(schema, new Object[]{2}, new Object[]{1}))
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
-    List<RelFieldCollation> collations = List.of(new RelFieldCollation(0, Direction.DESCENDING, NullDirection.LAST));
+    List<RelFieldCollation> collations = Arrays.asList(new RelFieldCollation(0, Direction.DESCENDING, NullDirection.LAST));
     SortOperator operator = getOperator(schema, collations);
 
     // When:
@@ -197,7 +197,7 @@ public class SortOperatorTest {
     DataSchema schema = new DataSchema(new String[]{"sort"}, new DataSchema.ColumnDataType[]{INT});
     when(_input.nextBlock()).thenReturn(block(schema, new Object[]{2}, new Object[]{1}, new Object[]{3}))
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
-    List<RelFieldCollation> collations = List.of(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.LAST));
+    List<RelFieldCollation> collations = Arrays.asList(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.LAST));
     SortOperator operator = getOperator(schema, collations, 10, 1);
 
     // When:
@@ -218,7 +218,7 @@ public class SortOperatorTest {
     // Set input rows as sorted since input is expected to be sorted
     when(_input.nextBlock()).thenReturn(block(schema, new Object[]{1}, new Object[]{2}, new Object[]{3}))
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
-    List<RelFieldCollation> collations = List.of(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.LAST));
+    List<RelFieldCollation> collations = Arrays.asList(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.LAST));
     SortOperator operator = getOperator(schema, collations, 10, 1);
 
     // When:
@@ -237,7 +237,7 @@ public class SortOperatorTest {
     DataSchema schema = new DataSchema(new String[]{"sort"}, new DataSchema.ColumnDataType[]{INT});
     when(_input.nextBlock()).thenReturn(block(schema, new Object[]{2}, new Object[]{1}, new Object[]{3}))
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
-    List<RelFieldCollation> collations = List.of(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.LAST));
+    List<RelFieldCollation> collations = Arrays.asList(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.LAST));
     SortOperator operator = getOperator(schema, collations, 1, 1);
 
     // When:
@@ -257,7 +257,7 @@ public class SortOperatorTest {
     // Set input rows as sorted since input is expected to be sorted
     when(_input.nextBlock()).thenReturn(block(schema, new Object[]{1}, new Object[]{2}, new Object[]{3}))
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
-    List<RelFieldCollation> collations = List.of(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.LAST));
+    List<RelFieldCollation> collations = Arrays.asList(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.LAST));
     SortOperator operator = getOperator(schema, collations, 1, 1);
 
     // When:
@@ -275,9 +275,9 @@ public class SortOperatorTest {
     DataSchema schema = new DataSchema(new String[]{"sort"}, new DataSchema.ColumnDataType[]{INT});
     when(_input.nextBlock()).thenReturn(block(schema, new Object[]{2}, new Object[]{1}, new Object[]{3}))
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
-    List<RelFieldCollation> collations = List.of(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.LAST));
+    List<RelFieldCollation> collations = Arrays.asList(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.LAST));
     SortOperator operator = new SortOperator(OperatorTestUtil.getTracingContext(), _input,
-        new SortNode(-1, schema, PlanNode.NodeHint.EMPTY, List.of(), collations, -1, 0), 10, 1);
+        new SortNode(-1, schema, PlanNode.NodeHint.EMPTY, Arrays.asList(), collations, -1, 0), 10, 1);
 
     // When:
     List<Object[]> resultRows = operator.nextBlock().getContainer();
@@ -294,7 +294,7 @@ public class SortOperatorTest {
     DataSchema schema = new DataSchema(new String[]{"sort"}, new DataSchema.ColumnDataType[]{INT});
     when(_input.nextBlock()).thenReturn(block(schema, new Object[]{2}, new Object[]{1}, new Object[]{3}))
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
-    List<RelFieldCollation> collations = List.of(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.LAST));
+    List<RelFieldCollation> collations = Arrays.asList(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.LAST));
     SortOperator operator = getOperator(schema, collations, -1, 0);
 
     // When:
@@ -314,7 +314,7 @@ public class SortOperatorTest {
     DataSchema schema = new DataSchema(new String[]{"sort"}, new DataSchema.ColumnDataType[]{INT});
     when(_input.nextBlock()).thenReturn(block(schema, new Object[]{2})).thenReturn(block(schema, new Object[]{1}))
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
-    List<RelFieldCollation> collations = List.of(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.LAST));
+    List<RelFieldCollation> collations = Arrays.asList(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.LAST));
     SortOperator operator = getOperator(schema, collations);
 
     // When:
@@ -335,7 +335,7 @@ public class SortOperatorTest {
     // Set input rows as sorted since input is expected to be sorted
     when(_input.nextBlock()).thenReturn(block(schema, new Object[]{1})).thenReturn(block(schema, new Object[]{2}))
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
-    List<RelFieldCollation> collations = List.of(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.LAST));
+    List<RelFieldCollation> collations = Arrays.asList(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.LAST));
     SortOperator operator = getOperator(schema, collations);
 
     // When:
@@ -354,7 +354,7 @@ public class SortOperatorTest {
     DataSchema schema = new DataSchema(new String[]{"first", "second"}, new DataSchema.ColumnDataType[]{INT, INT});
     when(_input.nextBlock()).thenReturn(block(schema, new Object[]{1, 2}, new Object[]{1, 1}, new Object[]{1, 3}))
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
-    List<RelFieldCollation> collations = List.of(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.LAST),
+    List<RelFieldCollation> collations = Arrays.asList(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.LAST),
         new RelFieldCollation(1, Direction.ASCENDING, NullDirection.LAST));
     SortOperator operator = getOperator(schema, collations);
 
@@ -375,7 +375,7 @@ public class SortOperatorTest {
     DataSchema schema = new DataSchema(new String[]{"first", "second"}, new DataSchema.ColumnDataType[]{INT, INT});
     when(_input.nextBlock()).thenReturn(block(schema, new Object[]{1, 2}, new Object[]{1, 1}, new Object[]{1, 3}))
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
-    List<RelFieldCollation> collations = List.of(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.LAST),
+    List<RelFieldCollation> collations = Arrays.asList(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.LAST),
         new RelFieldCollation(1, Direction.DESCENDING, NullDirection.FIRST));
     SortOperator operator = getOperator(schema, collations);
 
@@ -396,7 +396,7 @@ public class SortOperatorTest {
     DataSchema schema = new DataSchema(new String[]{"sort"}, new DataSchema.ColumnDataType[]{INT});
     when(_input.nextBlock()).thenReturn(block(schema, new Object[]{2}, new Object[]{1}, new Object[]{null}))
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
-    List<RelFieldCollation> collations = List.of(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.LAST));
+    List<RelFieldCollation> collations = Arrays.asList(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.LAST));
     SortOperator operator = getOperator(schema, collations);
 
     // When:
@@ -416,7 +416,7 @@ public class SortOperatorTest {
     DataSchema schema = new DataSchema(new String[]{"sort"}, new DataSchema.ColumnDataType[]{INT});
     when(_input.nextBlock()).thenReturn(block(schema, new Object[]{2}, new Object[]{1}, new Object[]{null}))
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
-    List<RelFieldCollation> collations = List.of(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.FIRST));
+    List<RelFieldCollation> collations = Arrays.asList(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.FIRST));
     SortOperator operator = getOperator(schema, collations);
 
     // When:
@@ -437,7 +437,7 @@ public class SortOperatorTest {
     when(_input.nextBlock()).thenReturn(block(schema, new Object[]{2}, new Object[]{1}, new Object[]{null}))
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
     List<RelFieldCollation> collations =
-        List.of(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.UNSPECIFIED));
+        Arrays.asList(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.UNSPECIFIED));
     SortOperator operator = getOperator(schema, collations);
 
     // When:
@@ -457,7 +457,7 @@ public class SortOperatorTest {
     DataSchema schema = new DataSchema(new String[]{"first", "second"}, new DataSchema.ColumnDataType[]{INT, INT});
     when(_input.nextBlock()).thenReturn(block(schema, new Object[]{1, 1}, new Object[]{1, null}, new Object[]{null, 1}))
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
-    List<RelFieldCollation> collations = List.of(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.FIRST),
+    List<RelFieldCollation> collations = Arrays.asList(new RelFieldCollation(0, Direction.ASCENDING, NullDirection.FIRST),
         new RelFieldCollation(1, Direction.DESCENDING, NullDirection.LAST));
     SortOperator operator = getOperator(schema, collations);
 
@@ -474,7 +474,7 @@ public class SortOperatorTest {
 
   private SortOperator getOperator(DataSchema schema, List<RelFieldCollation> collations, int fetch, int offset) {
     return new SortOperator(OperatorTestUtil.getTracingContext(), _input,
-        new SortNode(-1, schema, PlanNode.NodeHint.EMPTY, List.of(), collations, fetch, offset));
+        new SortNode(-1, schema, PlanNode.NodeHint.EMPTY, Arrays.asList(), collations, fetch, offset));
   }
 
   private SortOperator getOperator(DataSchema schema, List<RelFieldCollation> collations) {
@@ -482,6 +482,6 @@ public class SortOperatorTest {
   }
 
   private static TransferableBlock block(DataSchema schema, Object[]... rows) {
-    return new TransferableBlock(List.of(rows), schema, DataBlock.Type.ROW);
+    return new TransferableBlock(Arrays.asList(rows), schema, DataBlock.Type.ROW);
   }
 }

@@ -117,7 +117,7 @@ public class VarianceAggregationFunctionTest extends AbstractAggregationFunction
             "6",
             "null"
         ).whenQuery("select " + functionType.getName() + "(myField) from testTable")
-        .thenResultIs("DOUBLE", String.valueOf(calculateVariance(List.of(1.0, 0.0, 2.0, 3.0, 6.0, 0.0),
+        .thenResultIs("DOUBLE", String.valueOf(calculateVariance(Arrays.asList(1.0, 0.0, 2.0, 3.0, 6.0, 0.0),
             functionType)));
   }
 
@@ -133,7 +133,7 @@ public class VarianceAggregationFunctionTest extends AbstractAggregationFunction
             "6",
             "null"
         ).whenQuery("select " + functionType.getName() + "(myField) from testTable")
-        .thenResultIs("DOUBLE", String.valueOf(calculateVariance(List.of(1.0, 2.0, 3.0, 6.0), functionType)));
+        .thenResultIs("DOUBLE", String.valueOf(calculateVariance(Arrays.asList(1.0, 2.0, 3.0, 6.0), functionType)));
   }
 
   @Test(dataProvider = "scenarios")
@@ -149,7 +149,7 @@ public class VarianceAggregationFunctionTest extends AbstractAggregationFunction
             "null"
         ).whenQuery("select 'literal', " + functionType.getName() + "(myField) from testTable group by 'literal'")
         .thenResultIs("STRING | DOUBLE", "literal | "
-            + calculateVariance(List.of(1.0, 0.0, 2.0, 3.0, 6.0, 0.0), functionType));
+            + calculateVariance(Arrays.asList(1.0, 0.0, 2.0, 3.0, 6.0, 0.0), functionType));
   }
 
   @Test(dataProvider = "scenarios")
@@ -165,7 +165,7 @@ public class VarianceAggregationFunctionTest extends AbstractAggregationFunction
             "null"
         ).whenQuery("select 'literal', " + functionType.getName() + "(myField) from testTable group by 'literal'")
         .thenResultIs("STRING | DOUBLE", "literal | "
-            + calculateVariance(List.of(1.0, 2.0, 3.0, 6.0), functionType));
+            + calculateVariance(Arrays.asList(1.0, 2.0, 3.0, 6.0), functionType));
   }
 
   @Test(dataProvider = "scenarios")
@@ -189,11 +189,11 @@ public class VarianceAggregationFunctionTest extends AbstractAggregationFunction
             new Object[]{"tag1;tag2", null}
         )
         .whenQuery("select tags, " + functionType.getName() + "(value) from testTable group by tags order by tags")
-        .thenResultIs(new Object[]{"tag1", calculateVariance(List.of(1.0, 0.0, 2.0, 3.0, 6.0, 0.0), functionType)},
-            new Object[]{"tag2", calculateVariance(List.of(1.0, 0.0, 2.0, 3.0, 6.0, 0.0), functionType)})
+        .thenResultIs(new Object[]{"tag1", calculateVariance(Arrays.asList(1.0, 0.0, 2.0, 3.0, 6.0, 0.0), functionType)},
+            new Object[]{"tag2", calculateVariance(Arrays.asList(1.0, 0.0, 2.0, 3.0, 6.0, 0.0), functionType)})
         .whenQueryWithNullHandlingEnabled("select tags, " + functionType.getName() + "(value) from testTable "
             + "group by tags order by tags")
-        .thenResultIs(new Object[]{"tag1", calculateVariance(List.of(1.0, 2.0, 3.0, 6.0), functionType)},
-            new Object[]{"tag2", calculateVariance(List.of(1.0, 2.0, 3.0, 6.0), functionType)});
+        .thenResultIs(new Object[]{"tag1", calculateVariance(Arrays.asList(1.0, 2.0, 3.0, 6.0), functionType)},
+            new Object[]{"tag2", calculateVariance(Arrays.asList(1.0, 2.0, 3.0, 6.0), functionType)});
   }
 }

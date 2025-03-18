@@ -53,9 +53,9 @@ public class MultiStageQueryThrottlerTest {
     when(_helixManager.getClusterManagmentTool()).thenReturn(_helixAdmin);
     when(_helixManager.getClusterName()).thenReturn("testCluster");
     when(_helixAdmin.getConfig(any(), any())).thenReturn(
-        Map.of(CommonConstants.Helix.CONFIG_OF_MAX_CONCURRENT_MULTI_STAGE_QUERIES, "4"));
+        Collections.singletonMap(CommonConstants.Helix.CONFIG_OF_MAX_CONCURRENT_MULTI_STAGE_QUERIES, "4"));
     when(_helixAdmin.getInstancesInCluster(eq("testCluster"))).thenReturn(
-        List.of("Broker_0", "Broker_1", "Server_0", "Server_1"));
+        Arrays.asList("Broker_0", "Broker_1", "Server_0", "Server_1"));
   }
 
   @AfterMethod
@@ -81,7 +81,7 @@ public class MultiStageQueryThrottlerTest {
       throws Exception {
     when(_helixAdmin.getConfig(any(),
         eq(Collections.singletonList(CommonConstants.Helix.CONFIG_OF_MAX_CONCURRENT_MULTI_STAGE_QUERIES)))).thenReturn(
-        Map.of(CommonConstants.Helix.CONFIG_OF_MAX_CONCURRENT_MULTI_STAGE_QUERIES, "2"));
+        Collections.singletonMap(CommonConstants.Helix.CONFIG_OF_MAX_CONCURRENT_MULTI_STAGE_QUERIES, "2"));
     _multiStageQueryThrottler = new MultiStageQueryThrottler();
     _multiStageQueryThrottler.init(_helixManager);
 
@@ -96,7 +96,7 @@ public class MultiStageQueryThrottlerTest {
   public void testDisabledThrottling()
       throws Exception {
     when(_helixAdmin.getConfig(any(), any())).thenReturn(
-        Map.of(CommonConstants.Helix.CONFIG_OF_MAX_CONCURRENT_MULTI_STAGE_QUERIES, "-1"));
+        Collections.singletonMap(CommonConstants.Helix.CONFIG_OF_MAX_CONCURRENT_MULTI_STAGE_QUERIES, "-1"));
     _multiStageQueryThrottler = new MultiStageQueryThrottler();
     _multiStageQueryThrottler.init(_helixManager);
 
@@ -121,7 +121,7 @@ public class MultiStageQueryThrottlerTest {
 
     // Increase the number of brokers
     when(_helixAdmin.getInstancesInCluster(eq("testCluster"))).thenReturn(
-        List.of("Broker_0", "Broker_1", "Broker_2", "Broker_3", "Server_0", "Server_1"));
+        Arrays.asList("Broker_0", "Broker_1", "Broker_2", "Broker_3", "Server_0", "Server_1"));
     _multiStageQueryThrottler.processClusterChange(HelixConstants.ChangeType.EXTERNAL_VIEW);
 
     // Verify that the number of permits on this broker have been reduced to account for the new brokers
@@ -148,7 +148,7 @@ public class MultiStageQueryThrottlerTest {
     Assert.assertEquals(_multiStageQueryThrottler.availablePermits(), 0);
 
     // Decrease the number of brokers
-    when(_helixAdmin.getInstancesInCluster(eq("testCluster"))).thenReturn(List.of("Broker_0", "Server_0", "Server_1"));
+    when(_helixAdmin.getInstancesInCluster(eq("testCluster"))).thenReturn(Arrays.asList("Broker_0", "Server_0", "Server_1"));
     _multiStageQueryThrottler.processClusterChange(HelixConstants.ChangeType.EXTERNAL_VIEW);
 
     // Ensure that the permits from the removed broker are added to this one.
@@ -171,7 +171,7 @@ public class MultiStageQueryThrottlerTest {
 
     // Increase the number of servers
     when(_helixAdmin.getInstancesInCluster(eq("testCluster"))).thenReturn(
-        List.of("Broker_0", "Broker_1", "Server_0", "Server_1", "Server_2"));
+        Arrays.asList("Broker_0", "Broker_1", "Server_0", "Server_1", "Server_2"));
     _multiStageQueryThrottler.processClusterChange(HelixConstants.ChangeType.EXTERNAL_VIEW);
 
     // Ensure that the permits on this broker are increased to account for the new server
@@ -193,7 +193,7 @@ public class MultiStageQueryThrottlerTest {
     Assert.assertEquals(_multiStageQueryThrottler.availablePermits(), 0);
 
     // Decrease the number of servers
-    when(_helixAdmin.getInstancesInCluster(eq("testCluster"))).thenReturn(List.of("Broker_0", "Broker_1", "Server_0"));
+    when(_helixAdmin.getInstancesInCluster(eq("testCluster"))).thenReturn(Arrays.asList("Broker_0", "Broker_1", "Server_0"));
     _multiStageQueryThrottler.processClusterChange(HelixConstants.ChangeType.EXTERNAL_VIEW);
 
     // Verify that the number of permits on this broker have been reduced to account for the removed server
@@ -222,7 +222,7 @@ public class MultiStageQueryThrottlerTest {
     // Increase the value of cluster config maxConcurrentQueries
     when(_helixAdmin.getConfig(any(),
         eq(Collections.singletonList(CommonConstants.Helix.CONFIG_OF_MAX_CONCURRENT_MULTI_STAGE_QUERIES))))
-        .thenReturn(Map.of(CommonConstants.Helix.CONFIG_OF_MAX_CONCURRENT_MULTI_STAGE_QUERIES, "8"));
+        .thenReturn(Collections.singletonMap(CommonConstants.Helix.CONFIG_OF_MAX_CONCURRENT_MULTI_STAGE_QUERIES, "8"));
     _multiStageQueryThrottler.processClusterChange(HelixConstants.ChangeType.CLUSTER_CONFIG);
 
     Assert.assertEquals(_multiStageQueryThrottler.availablePermits(), 4);
@@ -244,7 +244,7 @@ public class MultiStageQueryThrottlerTest {
     // Decrease the value of cluster config maxConcurrentQueries
     when(_helixAdmin.getConfig(any(),
         eq(Collections.singletonList(CommonConstants.Helix.CONFIG_OF_MAX_CONCURRENT_MULTI_STAGE_QUERIES)))
-    ).thenReturn(Map.of(CommonConstants.Helix.CONFIG_OF_MAX_CONCURRENT_MULTI_STAGE_QUERIES, "3"));
+    ).thenReturn(Collections.singletonMap(CommonConstants.Helix.CONFIG_OF_MAX_CONCURRENT_MULTI_STAGE_QUERIES, "3"));
     _multiStageQueryThrottler.processClusterChange(HelixConstants.ChangeType.CLUSTER_CONFIG);
 
     Assert.assertEquals(_multiStageQueryThrottler.availablePermits(), -1);
@@ -268,7 +268,7 @@ public class MultiStageQueryThrottlerTest {
     // Disable the throttling mechanism via cluster config change
     when(_helixAdmin.getConfig(any(),
         eq(Collections.singletonList(CommonConstants.Helix.CONFIG_OF_MAX_CONCURRENT_MULTI_STAGE_QUERIES)))
-    ).thenReturn(Map.of(CommonConstants.Helix.CONFIG_OF_MAX_CONCURRENT_MULTI_STAGE_QUERIES, "-1"));
+    ).thenReturn(Collections.singletonMap(CommonConstants.Helix.CONFIG_OF_MAX_CONCURRENT_MULTI_STAGE_QUERIES, "-1"));
     _multiStageQueryThrottler.processClusterChange(HelixConstants.ChangeType.CLUSTER_CONFIG);
 
     // Should not be allowed to disable the throttling mechanism if it is enabled during startup
@@ -286,7 +286,7 @@ public class MultiStageQueryThrottlerTest {
       throws Exception {
     when(_helixAdmin.getConfig(any(),
         eq(Collections.singletonList(CommonConstants.Helix.CONFIG_OF_MAX_CONCURRENT_MULTI_STAGE_QUERIES)))
-    ).thenReturn(Map.of(CommonConstants.Helix.CONFIG_OF_MAX_CONCURRENT_MULTI_STAGE_QUERIES, "-1"));
+    ).thenReturn(Collections.singletonMap(CommonConstants.Helix.CONFIG_OF_MAX_CONCURRENT_MULTI_STAGE_QUERIES, "-1"));
     _multiStageQueryThrottler = new MultiStageQueryThrottler();
     _multiStageQueryThrottler.init(_helixManager);
 
@@ -299,7 +299,7 @@ public class MultiStageQueryThrottlerTest {
     // Enable the throttling mechanism via cluster config change
     when(_helixAdmin.getConfig(any(),
         eq(Collections.singletonList(CommonConstants.Helix.CONFIG_OF_MAX_CONCURRENT_MULTI_STAGE_QUERIES)))
-    ).thenReturn(Map.of(CommonConstants.Helix.CONFIG_OF_MAX_CONCURRENT_MULTI_STAGE_QUERIES, "4"));
+    ).thenReturn(Collections.singletonMap(CommonConstants.Helix.CONFIG_OF_MAX_CONCURRENT_MULTI_STAGE_QUERIES, "4"));
     _multiStageQueryThrottler.processClusterChange(HelixConstants.ChangeType.CLUSTER_CONFIG);
 
     // Should not be allowed to enable the throttling mechanism if it is disabled during startup
@@ -313,9 +313,9 @@ public class MultiStageQueryThrottlerTest {
       throws Exception {
     when(_helixAdmin.getConfig(any(),
         eq(Collections.singletonList(CommonConstants.Helix.CONFIG_OF_MAX_CONCURRENT_MULTI_STAGE_QUERIES)))
-    ).thenReturn(Map.of(CommonConstants.Helix.CONFIG_OF_MAX_CONCURRENT_MULTI_STAGE_QUERIES, "2"));
+    ).thenReturn(Collections.singletonMap(CommonConstants.Helix.CONFIG_OF_MAX_CONCURRENT_MULTI_STAGE_QUERIES, "2"));
     when(_helixAdmin.getInstancesInCluster(eq("testCluster"))).thenReturn(
-        List.of("Broker_0", "Broker_1", "Broker_2", "Broker_3", "Server_0", "Server_1"));
+        Arrays.asList("Broker_0", "Broker_1", "Broker_2", "Broker_3", "Server_0", "Server_1"));
     _multiStageQueryThrottler = new MultiStageQueryThrottler();
     _multiStageQueryThrottler.init(_helixManager);
 

@@ -59,7 +59,7 @@ public class EmptyDistinctTable extends DistinctTable {
 
   @Override
   public List<Object[]> getRows() {
-    return List.of();
+    return Arrays.asList();
   }
 
   @Override
@@ -70,6 +70,6 @@ public class EmptyDistinctTable extends DistinctTable {
 
   @Override
   public ResultTable toResultTable() {
-    return new ResultTable(_dataSchema, List.of());
+    return new ResultTable(_dataSchema, Arrays.asList());
   }
 }

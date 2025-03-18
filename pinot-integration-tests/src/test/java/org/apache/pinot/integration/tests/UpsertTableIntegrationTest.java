@@ -223,7 +223,7 @@ public class UpsertTableIntegrationTest extends BaseClusterIntegrationTest {
 
     // TEST 1: Delete existing primary key
     // Push 2 records with deleted = true - deletes pks 100 and 102
-    List<String> deleteRecords = List.of("102,Clifford,counter-strike,102,1681254200000,true",
+    List<String> deleteRecords = Arrays.asList("102,Clifford,counter-strike,102,1681254200000,true",
         "100,Zook,counter-strike,2050,1681377200000,true");
     pushCsvIntoKafka(deleteRecords, kafkaTopicName, 0);
 
@@ -324,7 +324,7 @@ public class UpsertTableIntegrationTest extends BaseClusterIntegrationTest {
 
     Map<String, String> csvDecoderProperties = getCSVDecoderProperties(CSV_DELIMITER, CSV_SCHEMA_HEADER);
     upsertConfig.setPartialUpsertStrategies(
-        Map.of("game", UpsertConfig.Strategy.UNION, "score", UpsertConfig.Strategy.INCREMENT));
+        Collections.singletonMap("game", UpsertConfig.Strategy.UNION, "score", UpsertConfig.Strategy.INCREMENT));
     TableConfig tableConfig =
         createCSVUpsertTableConfig(tableName, kafkaTopicName, getNumKafkaPartitions(), csvDecoderProperties,
             upsertConfig, PRIMARY_KEY_COL);
@@ -332,7 +332,7 @@ public class UpsertTableIntegrationTest extends BaseClusterIntegrationTest {
 
     // TEST 1: Delete existing primary key
     // Push 2 records with deleted = true - deletes pks 100 and 102
-    List<String> deleteRecords = List.of("102,Clifford,counter-strike,102,1681054200000,true",
+    List<String> deleteRecords = Arrays.asList("102,Clifford,counter-strike,102,1681054200000,true",
         "100,Zook,counter-strike,2050,1681377200000,true");
     pushCsvIntoKafka(deleteRecords, kafkaTopicName, 0);
 
@@ -533,7 +533,7 @@ public class UpsertTableIntegrationTest extends BaseClusterIntegrationTest {
     waitForNumQueriedSegmentsToConverge(tableName, 10_000L, 3);
 
     // Push data to delete 2 rows
-    List<String> deleteRecords = List.of("102,Clifford,counter-strike,102,1681254200000,true",
+    List<String> deleteRecords = Arrays.asList("102,Clifford,counter-strike,102,1681254200000,true",
         "100,Zook,counter-strike,2050,1681377200000,true");
     pushCsvIntoKafka(deleteRecords, kafkaTopicName, 0);
     waitForAllDocsLoaded(tableName, 600_000L, 1002);

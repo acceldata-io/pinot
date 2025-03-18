@@ -94,12 +94,12 @@ public class JsonUnnestIngestionFromAvroQueriesTest extends BaseQueriesTest {
   static {
     IngestionConfig ingestionConfig = new IngestionConfig();
     ingestionConfig.setTransformConfigs(
-        List.of(new TransformConfig("eventTimeColumn", "eventTimeColumn.seconds * 1000"),
+        Arrays.asList(new TransformConfig("eventTimeColumn", "eventTimeColumn.seconds * 1000"),
             new TransformConfig("eventTimeColumn_10m", "round(eventTimeColumn, 60000)")));
-    ingestionConfig.setComplexTypeConfig(new ComplexTypeConfig(List.of(JSON_COLUMN), null, null, null));
+    ingestionConfig.setComplexTypeConfig(new ComplexTypeConfig(Arrays.asList(JSON_COLUMN), null, null, null));
     TABLE_CONFIG =
         new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME).setIngestionConfig(ingestionConfig)
-            .setJsonIndexColumns(List.of(JSON_COLUMN)).build();
+            .setJsonIndexColumns(Arrays.asList(JSON_COLUMN)).build();
   }
 
   private IndexSegment _indexSegment;
@@ -164,11 +164,11 @@ public class JsonUnnestIngestionFromAvroQueriesTest extends BaseQueriesTest {
         createTableRecord(1, "daffy duck", Arrays.asList(
                 new GenericRecordBuilder(createJsonRecordSchema())
                     .set("timestamp", 1719390721)
-                    .set("data", Map.of("a", "1", "b", "2"))
+                    .set("data", Collections.singletonMap("a", "1", "b", "2"))
                     .build(),
                 new GenericRecordBuilder(createJsonRecordSchema())
                     .set("timestamp", 1719390722)
-                    .set("data", Map.of("a", "2", "b", "4"))
+                    .set("data", Collections.singletonMap("a", "2", "b", "4"))
                     .build()
             ),
             new GenericRecordBuilder(createEventTimeRecordSchema())
@@ -180,11 +180,11 @@ public class JsonUnnestIngestionFromAvroQueriesTest extends BaseQueriesTest {
         createTableRecord(2, "mickey mouse", Arrays.asList(
                 new GenericRecordBuilder(createJsonRecordSchema())
                     .set("timestamp", 1719390722)
-                    .set("data", Map.of("a", "2", "b", "4"))
+                    .set("data", Collections.singletonMap("a", "2", "b", "4"))
                     .build(),
                 new GenericRecordBuilder(createJsonRecordSchema())
                     .set("timestamp", 1719390723)
-                    .set("data", Map.of("a", "3", "b", "6"))
+                    .set("data", Collections.singletonMap("a", "3", "b", "6"))
                     .build()
             ),
             new GenericRecordBuilder(createEventTimeRecordSchema())
@@ -195,11 +195,11 @@ public class JsonUnnestIngestionFromAvroQueriesTest extends BaseQueriesTest {
         createTableRecord(3, "donald duck", Arrays.asList(
                 new GenericRecordBuilder(createJsonRecordSchema())
                     .set("timestamp", 1719390723)
-                    .set("data", Map.of("a", "3", "b", "6"))
+                    .set("data", Collections.singletonMap("a", "3", "b", "6"))
                     .build(),
                 new GenericRecordBuilder(createJsonRecordSchema())
                     .set("timestamp", 1719390724)
-                    .set("data", Map.of("a", "4", "b", "8"))
+                    .set("data", Collections.singletonMap("a", "4", "b", "8"))
                     .build()
             ),
             new GenericRecordBuilder(createEventTimeRecordSchema())
@@ -210,11 +210,11 @@ public class JsonUnnestIngestionFromAvroQueriesTest extends BaseQueriesTest {
         createTableRecord(4, "scrooge mcduck", Arrays.asList(
                 new GenericRecordBuilder(createJsonRecordSchema())
                     .set("timestamp", 1719390724)
-                    .set("data", Map.of("a", "4", "b", "8"))
+                    .set("data", Collections.singletonMap("a", "4", "b", "8"))
                     .build(),
                 new GenericRecordBuilder(createJsonRecordSchema())
                     .set("timestamp", 1719390725)
-                    .set("data", Map.of("a", "5", "b", "10"))
+                    .set("data", Collections.singletonMap("a", "5", "b", "10"))
                     .build()
             ),
             new GenericRecordBuilder(createEventTimeRecordSchema())
@@ -225,11 +225,11 @@ public class JsonUnnestIngestionFromAvroQueriesTest extends BaseQueriesTest {
     inputRecords.add(createTableRecord(5, "minney mouse", Arrays.asList(
             new GenericRecordBuilder(createJsonRecordSchema())
                 .set("timestamp", 1719390725)
-                .set("data", Map.of("a", "5", "b", "10"))
+                .set("data", Collections.singletonMap("a", "5", "b", "10"))
                 .build(),
             new GenericRecordBuilder(createJsonRecordSchema())
                 .set("timestamp", 1719390726)
-                .set("data", Map.of("a", "6", "b", "12"))
+                .set("data", Collections.singletonMap("a", "6", "b", "12"))
                 .build()
         ),
         new GenericRecordBuilder(createEventTimeRecordSchema())
@@ -241,11 +241,11 @@ public class JsonUnnestIngestionFromAvroQueriesTest extends BaseQueriesTest {
         createTableRecord(6, "pluto", Arrays.asList(
                 new GenericRecordBuilder(createJsonRecordSchema())
                     .set("timestamp", 1719390726)
-                    .set("data", Map.of("a", "6", "b", "12"))
+                    .set("data", Collections.singletonMap("a", "6", "b", "12"))
                     .build(),
                 new GenericRecordBuilder(createJsonRecordSchema())
                     .set("timestamp", 1719390727)
-                    .set("data", Map.of("a", "7", "b", "14"))
+                    .set("data", Collections.singletonMap("a", "7", "b", "14"))
                     .build()
             ),
             new GenericRecordBuilder(createEventTimeRecordSchema())
@@ -257,11 +257,11 @@ public class JsonUnnestIngestionFromAvroQueriesTest extends BaseQueriesTest {
         createTableRecord(7, "scooby doo", Arrays.asList(
                 new GenericRecordBuilder(createJsonRecordSchema())
                     .set("timestamp", 1719390727)
-                    .set("data", Map.of("a", "7", "b", "14"))
+                    .set("data", Collections.singletonMap("a", "7", "b", "14"))
                     .build(),
                 new GenericRecordBuilder(createJsonRecordSchema())
                     .set("timestamp", 1719390728)
-                    .set("data", Map.of("a", "8", "b", "16"))
+                    .set("data", Collections.singletonMap("a", "8", "b", "16"))
                     .build()
             ),
             new GenericRecordBuilder(createEventTimeRecordSchema())
@@ -312,7 +312,7 @@ public class JsonUnnestIngestionFromAvroQueriesTest extends BaseQueriesTest {
     ImmutableSegment segment =
         ImmutableSegmentLoader.load(new File(INDEX_DIR, SEGMENT_NAME), indexLoadingConfig);
     _indexSegment = segment;
-    _indexSegments = List.of(segment, segment);
+    _indexSegments = Arrays.asList(segment, segment);
   }
 
   @Test

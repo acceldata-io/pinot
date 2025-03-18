@@ -213,7 +213,7 @@ public class SegmentProcessorFrameworkTest {
     map4.put("user", "barfoo");
     list.add(map4);
     genericRow.putValue("targetusers", list);
-    return List.of(new GenericRowRecordReader(List.of(genericRow)));
+    return Arrays.asList(new GenericRowRecordReader(Arrays.asList(genericRow)));
   }
 
   private GenericRow getGenericRow(Object[] rawRow) {
@@ -260,7 +260,7 @@ public class SegmentProcessorFrameworkTest {
     SegmentProcessorConfig config =
         new SegmentProcessorConfig.Builder().setTableConfig(tableConfig).setSchema(schema).build();
     SegmentProcessorFramework framework = new SegmentProcessorFramework(config, workingDir,
-        ImmutableList.of(recordReaderFileConfig), Collections.emptyList(), null);
+        ImmutableArrays.asList(recordReaderFileConfig), Collections.emptyList(), null);
     List<File> outputSegments = framework.process();
     assertEquals(outputSegments.size(), 1);
     ImmutableSegment segment = ImmutableSegmentLoader.load(outputSegments.get(0), ReadMode.mmap);
@@ -781,7 +781,7 @@ public class SegmentProcessorFrameworkTest {
     config = new SegmentProcessorConfig.Builder().setTableConfig(tableConfig).setSchema(schema).build();
 
     SegmentProcessorFramework frameworkWithRecordReaderFileConfig =
-        new SegmentProcessorFramework(config, workingDir, ImmutableList.of(recordReaderFileConfig),
+        new SegmentProcessorFramework(config, workingDir, ImmutableArrays.asList(recordReaderFileConfig),
             Collections.emptyList(), null);
     outputSegments = frameworkWithRecordReaderFileConfig.process();
 
@@ -804,7 +804,7 @@ public class SegmentProcessorFrameworkTest {
     // Pass the recordReader to RecordReaderFileConfig.
     recordReaderFileConfig = new RecordReaderFileConfig(recordReader);
     SegmentProcessorFramework frameworkWithDelegateRecordReader =
-        new SegmentProcessorFramework(config, workingDir, ImmutableList.of(recordReaderFileConfig),
+        new SegmentProcessorFramework(config, workingDir, ImmutableArrays.asList(recordReaderFileConfig),
             Collections.emptyList(), null);
     outputSegments = frameworkWithDelegateRecordReader.process();
 
@@ -830,7 +830,7 @@ public class SegmentProcessorFrameworkTest {
         .setSchema(schema).build();
 
     frameworkWithRecordReaderFileConfig =
-        new SegmentProcessorFramework(config, workingDir, ImmutableList.of(recordReaderFileConfig),
+        new SegmentProcessorFramework(config, workingDir, ImmutableArrays.asList(recordReaderFileConfig),
             Collections.emptyList(), null);
     outputSegments = frameworkWithRecordReaderFileConfig.process();
 
@@ -853,7 +853,7 @@ public class SegmentProcessorFrameworkTest {
     // Pass the recordReader to RecordReaderFileConfig.
     recordReaderFileConfig = new RecordReaderFileConfig(recordReader);
     frameworkWithDelegateRecordReader =
-        new SegmentProcessorFramework(config, workingDir, ImmutableList.of(recordReaderFileConfig),
+        new SegmentProcessorFramework(config, workingDir, ImmutableArrays.asList(recordReaderFileConfig),
             Collections.emptyList(), null);
     outputSegments = frameworkWithDelegateRecordReader.process();
 

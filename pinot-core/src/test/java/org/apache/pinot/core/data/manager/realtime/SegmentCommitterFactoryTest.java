@@ -42,7 +42,7 @@ import org.testng.annotations.Test;
 public class SegmentCommitterFactoryTest {
 
   private Map<String, String> getMinimumStreamConfigMap() {
-    return ImmutableMap.of(
+    return ImmutableCollections.singletonMap(
         "streamType", "kafka",
         "stream.kafka.consumer.type", "simple",
         "stream.kafka.topic.name", "ignore",

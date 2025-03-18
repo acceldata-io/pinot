@@ -307,7 +307,7 @@ public class TablesResource {
     Map<Integer, Map<String, Long>> upsertPartitionToServerPrimaryKeyCountMap = new HashMap<>();
     upsertPartitionToPrimaryKeyCountMap.forEach(
         (partition, primaryKeyCount) -> upsertPartitionToServerPrimaryKeyCountMap.put(partition,
-            Map.of(instanceDataManager.getInstanceId(), primaryKeyCount)));
+            Collections.singletonMap(instanceDataManager.getInstanceId(), primaryKeyCount)));
 
     TableMetadataInfo tableMetadataInfo =
         new TableMetadataInfo(tableDataManager.getTableName(), totalSegmentSizeBytes, segmentDataManagers.size(),

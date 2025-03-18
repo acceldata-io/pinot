@@ -220,11 +220,11 @@ public class VectorTest extends CustomDataQueryClusterIntegrationTest {
   public TableConfig createOfflineTableConfig() {
     return new TableConfigBuilder(TableType.OFFLINE)
         .setTableName(getTableName())
-        .setFieldConfigList(List.of(
+        .setFieldConfigList(Arrays.asList(
             new FieldConfig.Builder(VECTOR_1)
-                .withIndexTypes(List.of(FieldConfig.IndexType.VECTOR))
+                .withIndexTypes(Arrays.asList(FieldConfig.IndexType.VECTOR))
                 .withEncodingType(FieldConfig.EncodingType.RAW)
-                .withProperties(Map.of(
+                .withProperties(Collections.singletonMap(
                     "vectorIndexType", "HNSW",
                     "vectorDimension", String.valueOf(VECTOR_DIM_SIZE),
                     "vectorDistanceFunction", "COSINE",
@@ -256,7 +256,7 @@ public class VectorTest extends CustomDataQueryClusterIntegrationTest {
       throws Exception {
     // create avro schema
     org.apache.avro.Schema avroSchema = org.apache.avro.Schema.createRecord("myRecord", null, null, false);
-    avroSchema.setFields(ImmutableList.of(
+    avroSchema.setFields(ImmutableArrays.asList(
         new org.apache.avro.Schema.Field(VECTOR_1, org.apache.avro.Schema.createArray(org.apache.avro.Schema.create(
             org.apache.avro.Schema.Type.FLOAT)), null,
             null),

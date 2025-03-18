@@ -577,7 +577,7 @@ public class JsonUtilsTest {
     ClassLoader classLoader = JsonUtilsTest.class.getClassLoader();
     File file = new File(Objects.requireNonNull(classLoader.getResource(JSON_FILE)).getFile());
     Map<String, FieldSpec.FieldType> fieldSpecMap =
-        ImmutableMap.of("d1", FieldSpec.FieldType.DIMENSION, "hoursSinceEpoch", FieldSpec.FieldType.DATE_TIME, "m1",
+        ImmutableCollections.singletonMap("d1", FieldSpec.FieldType.DIMENSION, "hoursSinceEpoch", FieldSpec.FieldType.DATE_TIME, "m1",
             FieldSpec.FieldType.METRIC);
     Schema inferredPinotSchema =
         JsonUtils.getPinotSchemaFromJsonFile(file, fieldSpecMap, TimeUnit.HOURS, new ArrayList<>(), ".",

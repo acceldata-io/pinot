@@ -18,6 +18,7 @@
  */
 package org.apache.pinot.core.query.aggregation.function;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.pinot.common.request.Literal;
@@ -32,32 +33,32 @@ public class DistinctCountCPCSketchAggregationFunctionTest {
   @Test
   public void testCanUseStarTreeDefaultLgK() {
     DistinctCountCPCSketchAggregationFunction function =
-        new DistinctCountCPCSketchAggregationFunction(List.of(ExpressionContext.forIdentifier("col")));
+        new DistinctCountCPCSketchAggregationFunction(Arrays.asList(ExpressionContext.forIdentifier("col")));
 
-    Assert.assertTrue(function.canUseStarTree(Map.of()));
-    Assert.assertTrue(function.canUseStarTree(Map.of(Constants.CPCSKETCH_LGK_KEY, "12")));
-    Assert.assertTrue(function.canUseStarTree(Map.of(Constants.CPCSKETCH_LGK_KEY, 12)));
-    Assert.assertFalse(function.canUseStarTree(Map.of(Constants.CPCSKETCH_LGK_KEY, 11)));
+    Assert.assertTrue(function.canUseStarTree(new HashMap<>()));
+    Assert.assertTrue(function.canUseStarTree(Collections.singletonMap(Constants.CPCSKETCH_LGK_KEY, "12")));
+    Assert.assertTrue(function.canUseStarTree(Collections.singletonMap(Constants.CPCSKETCH_LGK_KEY, 12)));
+    Assert.assertFalse(function.canUseStarTree(Collections.singletonMap(Constants.CPCSKETCH_LGK_KEY, 11)));
 
     function = new DistinctCountCPCSketchAggregationFunction(
-        List.of(ExpressionContext.forIdentifier("col"), ExpressionContext.forLiteral(Literal.intValue(12))));
+        Arrays.asList(ExpressionContext.forIdentifier("col"), ExpressionContext.forLiteral(Literal.intValue(12))));
 
-    Assert.assertTrue(function.canUseStarTree(Map.of()));
-    Assert.assertTrue(function.canUseStarTree(Map.of(Constants.CPCSKETCH_LGK_KEY, "12")));
-    Assert.assertTrue(function.canUseStarTree(Map.of(Constants.CPCSKETCH_LGK_KEY, 12)));
-    Assert.assertFalse(function.canUseStarTree(Map.of(Constants.CPCSKETCH_LGK_KEY, 11)));
+    Assert.assertTrue(function.canUseStarTree(new HashMap<>()));
+    Assert.assertTrue(function.canUseStarTree(Collections.singletonMap(Constants.CPCSKETCH_LGK_KEY, "12")));
+    Assert.assertTrue(function.canUseStarTree(Collections.singletonMap(Constants.CPCSKETCH_LGK_KEY, 12)));
+    Assert.assertFalse(function.canUseStarTree(Collections.singletonMap(Constants.CPCSKETCH_LGK_KEY, 11)));
   }
 
   @Test
   public void testCanUseCustomLgK() {
     DistinctCountCPCSketchAggregationFunction function = new DistinctCountCPCSketchAggregationFunction(
-        List.of(ExpressionContext.forIdentifier("col"),
+        Arrays.asList(ExpressionContext.forIdentifier("col"),
             ExpressionContext.forLiteral(Literal.stringValue("nominalEntries=8192"))));
 
     // Default lgK = 12 / K=4096
-    Assert.assertFalse(function.canUseStarTree(Map.of()));
-    Assert.assertTrue(function.canUseStarTree(Map.of(Constants.CPCSKETCH_LGK_KEY, "14")));
-    Assert.assertTrue(function.canUseStarTree(Map.of(Constants.CPCSKETCH_LGK_KEY, 13)));
-    Assert.assertTrue(function.canUseStarTree(Map.of(Constants.CPCSKETCH_LGK_KEY, "13")));
+    Assert.assertFalse(function.canUseStarTree(new HashMap<>()));
+    Assert.assertTrue(function.canUseStarTree(Collections.singletonMap(Constants.CPCSKETCH_LGK_KEY, "14")));
+    Assert.assertTrue(function.canUseStarTree(Collections.singletonMap(Constants.CPCSKETCH_LGK_KEY, 13)));
+    Assert.assertTrue(function.canUseStarTree(Collections.singletonMap(Constants.CPCSKETCH_LGK_KEY, "13")));
   }
 }

@@ -169,7 +169,7 @@ public class CpcSketchTest extends CustomDataQueryClusterIntegrationTest {
       throws Exception {
     // create avro schema
     org.apache.avro.Schema avroSchema = org.apache.avro.Schema.createRecord("myRecord", null, null, false);
-    avroSchema.setFields(ImmutableList.of(
+    avroSchema.setFields(ImmutableArrays.asList(
         new org.apache.avro.Schema.Field(ID, org.apache.avro.Schema.create(org.apache.avro.Schema.Type.INT), null,
             null), new org.apache.avro.Schema.Field(MET_CPC_SKETCH_BYTES,
             org.apache.avro.Schema.create(org.apache.avro.Schema.Type.BYTES), null, null)));

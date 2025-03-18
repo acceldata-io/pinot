@@ -154,24 +154,24 @@ public class TextSearchQueriesTest extends BaseQueriesTest {
   private static List<FieldConfig> createFieldConfigs() {
     List<FieldConfig> fieldConfigs = new ArrayList<>();
     fieldConfigs.add(new FieldConfig(QUERY_LOG_TEXT_COL_NAME, FieldConfig.EncodingType.DICTIONARY,
-        List.of(FieldConfig.IndexType.TEXT), null, null));
+        Arrays.asList(FieldConfig.IndexType.TEXT), null, null));
     fieldConfigs.add(
-        new FieldConfig(SKILLS_TEXT_COL_NAME, FieldConfig.EncodingType.DICTIONARY, List.of(FieldConfig.IndexType.TEXT),
-            null, Map.of(FieldConfig.TEXT_INDEX_STOP_WORD_INCLUDE_KEY, "coordinator",
+        new FieldConfig(SKILLS_TEXT_COL_NAME, FieldConfig.EncodingType.DICTIONARY, Arrays.asList(FieldConfig.IndexType.TEXT),
+            null, Collections.singletonMap(FieldConfig.TEXT_INDEX_STOP_WORD_INCLUDE_KEY, "coordinator",
             FieldConfig.TEXT_INDEX_STOP_WORD_EXCLUDE_KEY, "it, those",
             FieldConfig.TEXT_INDEX_ENABLE_PREFIX_SUFFIX_PHRASE_QUERIES, "true")));
     fieldConfigs.add(new FieldConfig(SKILLS_TEXT_COL_DICT_NAME, FieldConfig.EncodingType.DICTIONARY,
-        List.of(FieldConfig.IndexType.TEXT), null, Map.of(FieldConfig.TEXT_INDEX_STOP_WORD_EXCLUDE_KEY, "")));
+        Arrays.asList(FieldConfig.IndexType.TEXT), null, Collections.singletonMap(FieldConfig.TEXT_INDEX_STOP_WORD_EXCLUDE_KEY, "")));
     fieldConfigs.add(new FieldConfig(SKILLS_TEXT_COL_MULTI_TERM_NAME, FieldConfig.EncodingType.DICTIONARY,
-        List.of(FieldConfig.IndexType.TEXT), null,
-        Map.of(FieldConfig.TEXT_INDEX_USE_AND_FOR_MULTI_TERM_QUERIES, "true")));
+        Arrays.asList(FieldConfig.IndexType.TEXT), null,
+        Collections.singletonMap(FieldConfig.TEXT_INDEX_USE_AND_FOR_MULTI_TERM_QUERIES, "true")));
     fieldConfigs.add(new FieldConfig(SKILLS_TEXT_NO_RAW_NAME, FieldConfig.EncodingType.DICTIONARY,
-        List.of(FieldConfig.IndexType.TEXT), null,
-        Map.of(FieldConfig.TEXT_INDEX_NO_RAW_DATA, "true", FieldConfig.TEXT_INDEX_RAW_VALUE, "ILoveCoding")));
+        Arrays.asList(FieldConfig.IndexType.TEXT), null,
+        Collections.singletonMap(FieldConfig.TEXT_INDEX_NO_RAW_DATA, "true", FieldConfig.TEXT_INDEX_RAW_VALUE, "ILoveCoding")));
     fieldConfigs.add(new FieldConfig(SKILLS_TEXT_MV_COL_NAME, FieldConfig.EncodingType.DICTIONARY,
-        List.of(FieldConfig.IndexType.TEXT), null, null));
+        Arrays.asList(FieldConfig.IndexType.TEXT), null, null));
     fieldConfigs.add(new FieldConfig(SKILLS_TEXT_MV_COL_DICT_NAME, FieldConfig.EncodingType.DICTIONARY,
-        List.of(FieldConfig.IndexType.TEXT), null, null));
+        Arrays.asList(FieldConfig.IndexType.TEXT), null, null));
     return fieldConfigs;
   }
 

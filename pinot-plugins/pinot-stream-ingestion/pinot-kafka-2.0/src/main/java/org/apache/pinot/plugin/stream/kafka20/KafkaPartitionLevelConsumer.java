@@ -117,7 +117,7 @@ public class KafkaPartitionLevelConsumer extends KafkaPartitionLevelConnectionHa
         }
         builder.setHeaders(headerGenericRow);
       }
-      builder.setMetadata(Map.of(KafkaStreamMessageMetadata.RECORD_TIMESTAMP_KEY, String.valueOf(timestamp),
+      builder.setMetadata(Collections.singletonMap(KafkaStreamMessageMetadata.RECORD_TIMESTAMP_KEY, String.valueOf(timestamp),
           KafkaStreamMessageMetadata.METADATA_OFFSET_KEY, String.valueOf(offset),
           KafkaStreamMessageMetadata.METADATA_PARTITION_KEY, String.valueOf(record.partition())));
     }

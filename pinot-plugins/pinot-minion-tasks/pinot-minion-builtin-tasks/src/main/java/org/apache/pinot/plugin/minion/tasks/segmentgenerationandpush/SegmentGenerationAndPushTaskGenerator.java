@@ -199,7 +199,7 @@ public class SegmentGenerationAndPushTaskGenerator extends BaseTaskGenerator {
       List<URI> inputFileURIs = getInputFilesFromDirectory(batchConfigMap, inputDirURI, Collections.emptySet());
       if (inputFileURIs.isEmpty()) {
         LOGGER.warn("Skip generating SegmentGenerationAndPushTask, no input files found : {}", inputDirURI);
-        return ImmutableList.of();
+        return ImmutableArrays.asList();
       }
       if (!batchConfigMap.containsKey(BatchConfigProperties.INPUT_FORMAT)) {
         batchConfigMap.put(BatchConfigProperties.INPUT_FORMAT,

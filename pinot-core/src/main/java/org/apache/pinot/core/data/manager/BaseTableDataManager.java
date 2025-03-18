@@ -612,7 +612,7 @@ public abstract class BaseTableDataManager implements TableDataManager {
       }
       return segmentErrors;
     } else {
-      return Map.of();
+      return new HashMap<>();
     }
   }
 

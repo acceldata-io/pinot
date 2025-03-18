@@ -172,7 +172,7 @@ public class IndexLoadingConfigTest {
     //@formatter:on
     FieldConfig col1Cfg = JsonUtils.stringToObject(col1CfgStr, FieldConfig.class);
     TableConfig tableConfig =
-        new TableConfigBuilder(TableType.OFFLINE).setTableName(TABLE_NAME).setFieldConfigList(List.of(col1Cfg)).build();
+        new TableConfigBuilder(TableType.OFFLINE).setTableName(TABLE_NAME).setFieldConfigList(Arrays.asList(col1Cfg)).build();
     Schema schema =
         new Schema.SchemaBuilder().setSchemaName(TABLE_NAME).addSingleValueDimension("col1", FieldSpec.DataType.INT)
             .build();
@@ -205,7 +205,7 @@ public class IndexLoadingConfigTest {
     //@formatter:on
     col1Cfg = JsonUtils.stringToObject(col1CfgStr, FieldConfig.class);
     tableConfig =
-        new TableConfigBuilder(TableType.OFFLINE).setTableName(TABLE_NAME).setFieldConfigList(List.of(col1Cfg)).build();
+        new TableConfigBuilder(TableType.OFFLINE).setTableName(TABLE_NAME).setFieldConfigList(Arrays.asList(col1Cfg)).build();
     schema =
         new Schema.SchemaBuilder().setSchemaName(TABLE_NAME).addSingleValueDimension("col1", FieldSpec.DataType.INT)
             .build();
@@ -234,7 +234,7 @@ public class IndexLoadingConfigTest {
     //@formatter:on
     col1Cfg = JsonUtils.stringToObject(col1CfgStr, FieldConfig.class);
     tableConfig =
-        new TableConfigBuilder(TableType.OFFLINE).setTableName(TABLE_NAME).setFieldConfigList(List.of(col1Cfg)).build();
+        new TableConfigBuilder(TableType.OFFLINE).setTableName(TABLE_NAME).setFieldConfigList(Arrays.asList(col1Cfg)).build();
     indexLoadingConfig = new IndexLoadingConfig(tableConfig, schema);
     indexConfigs = indexLoadingConfig.getFieldIndexConfig("col1");
     assertNotNull(indexConfigs);

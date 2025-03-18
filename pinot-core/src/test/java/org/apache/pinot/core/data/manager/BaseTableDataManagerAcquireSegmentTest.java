@@ -172,7 +172,7 @@ public class BaseTableDataManagerAcquireSegmentTest {
     // If a caller tries to acquire the deleted segment using acquireSegments, it will be returned in
     // notAcquiredSegments. The isSegmentDeletedRecently method should return true.
     List<String> notAcquiredSegments = new ArrayList<>();
-    tableDataManager.acquireSegments(ImmutableList.of(segmentName), notAcquiredSegments);
+    tableDataManager.acquireSegments(ImmutableArrays.asList(segmentName), notAcquiredSegments);
     Assert.assertEquals(notAcquiredSegments.size(), 1);
     Assert.assertTrue(tableDataManager.isSegmentDeletedRecently(segmentName));
 

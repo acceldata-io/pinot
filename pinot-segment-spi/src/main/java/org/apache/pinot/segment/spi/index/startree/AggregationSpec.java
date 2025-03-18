@@ -30,7 +30,7 @@ import org.apache.pinot.spi.config.table.StarTreeAggregationConfig;
 
 public class AggregationSpec {
   public static final CompressionCodec DEFAULT_COMPRESSION_CODEC = CompressionCodec.PASS_THROUGH;
-  public static final AggregationSpec DEFAULT = new AggregationSpec(null, null, null, null, null, Map.of());
+  public static final AggregationSpec DEFAULT = new AggregationSpec(null, null, null, null, null, new HashMap<>());
 
   private final CompressionCodec _compressionCodec;
   private final boolean _deriveNumDocsPerChunk;
@@ -55,7 +55,7 @@ public class AggregationSpec {
         : ForwardIndexConfig.getDefaultTargetMaxChunkSizeBytes();
     _targetDocsPerChunk =
         targetDocsPerChunk != null ? targetDocsPerChunk : ForwardIndexConfig.getDefaultTargetDocsPerChunk();
-    _functionParameters = functionParameters == null ? Map.of() : functionParameters;
+    _functionParameters = functionParameters == null ? new HashMap<>() : functionParameters;
   }
 
   public CompressionCodec getCompressionCodec() {

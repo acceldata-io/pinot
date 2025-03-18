@@ -92,10 +92,10 @@ public class SchemaInfoTest {
             .addDateTimeField("dt1", FieldSpec.DataType.LONG, "1:HOURS:EPOCH", "1:HOURS")
             .addDateTimeField("dt2", FieldSpec.DataType.LONG, "1:HOURS:EPOCH", "1:HOURS").addMetricField("metric", INT)
             .addComplex("intMap", FieldSpec.DataType.MAP,
-                Map.of("key", new DimensionFieldSpec("key", FieldSpec.DataType.STRING, true), "value",
+                Collections.singletonMap("key", new DimensionFieldSpec("key", FieldSpec.DataType.STRING, true), "value",
                     new DimensionFieldSpec("value", FieldSpec.DataType.INT, true)))
             .addComplex("stringMap", FieldSpec.DataType.MAP,
-                Map.of("key", new DimensionFieldSpec("key", FieldSpec.DataType.STRING, true), "value",
+                Collections.singletonMap("key", new DimensionFieldSpec("key", FieldSpec.DataType.STRING, true), "value",
                     new DimensionFieldSpec("value", FieldSpec.DataType.STRING, true))).build();
     SchemaInfo schemaInfo = new SchemaInfo(schemaMock);
     List<SchemaInfo> schemaInfoList = new ArrayList<>();

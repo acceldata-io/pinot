@@ -236,7 +236,7 @@ public class PinotSegmentUploadDownloadRestletResourceTest {
 
     File allSegmentsMetadataFile = new File(segmentDir, "all_segments_metadata");
     FileUtils.touch(allSegmentsMetadataFile);
-    List<String> lines = List.of("mySegmentName", "/path/to/segment/download/uri");
+    List<String> lines = Arrays.asList("mySegmentName", "/path/to/segment/download/uri");
     FileUtils.writeLines(allSegmentsMetadataFile, lines);
 
     File allSegmentsMetadataTarFile = new File(segmentDir, "allSegments.tar.gz");
@@ -254,7 +254,7 @@ public class PinotSegmentUploadDownloadRestletResourceTest {
   public void testValidateMultiPartForBatchSegmentUpload() {
     // setup
     FileDataBodyPart bodyPart = new FileDataBodyPart("allSegments.tar.gz", new File(_tempDir, "dummyFile"));
-    List<BodyPart> bodyParts = List.of(bodyPart);
+    List<BodyPart> bodyParts = Arrays.asList(bodyPart);
 
     // validate – should not throw exception
     PinotSegmentUploadDownloadRestletResource.validateMultiPartForBatchSegmentUpload(bodyParts);
@@ -272,8 +272,8 @@ public class PinotSegmentUploadDownloadRestletResourceTest {
     FormDataBodyPart mockBodyPart = mock(FormDataBodyPart.class);
     when(mockBodyPart.getValueAs(InputStream.class)).thenReturn(mockInputStream);
 
-    Map<String, List<FormDataBodyPart>> map = Map.of(
-        "test", new ArrayList<>(List.of(mockBodyPart))
+    Map<String, List<FormDataBodyPart>> map = Collections.singletonMap(
+        "test", new ArrayList<>(Arrays.asList(mockBodyPart))
     );
     when(mockFormDataMultiPart.getFields()).thenReturn(map);
 

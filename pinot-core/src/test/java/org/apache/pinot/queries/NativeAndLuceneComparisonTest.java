@@ -151,13 +151,13 @@ public class NativeAndLuceneComparisonTest extends BaseQueriesTest {
   private void buildLuceneSegment()
       throws Exception {
     List<GenericRow> rows = createTestData(NUM_ROWS);
-    List<FieldConfig> fieldConfigs = List.of(
+    List<FieldConfig> fieldConfigs = Arrays.asList(
         new FieldConfig(QUOTES_COL_LUCENE, FieldConfig.EncodingType.DICTIONARY, FieldConfig.IndexType.TEXT, null, null),
         new FieldConfig(QUOTES_COL_LUCENE_MV, FieldConfig.EncodingType.DICTIONARY, FieldConfig.IndexType.TEXT, null,
             null));
 
     TableConfig tableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(TABLE_NAME)
-        .setInvertedIndexColumns(List.of(QUOTES_COL_LUCENE, QUOTES_COL_LUCENE_MV))
+        .setInvertedIndexColumns(Arrays.asList(QUOTES_COL_LUCENE, QUOTES_COL_LUCENE_MV))
         .setFieldConfigList(fieldConfigs).build();
     Schema schema = new Schema.SchemaBuilder().setSchemaName(TABLE_NAME)
         .addSingleValueDimension(QUOTES_COL_LUCENE, FieldSpec.DataType.STRING)
@@ -177,14 +177,14 @@ public class NativeAndLuceneComparisonTest extends BaseQueriesTest {
   private void buildNativeTextIndexSegment()
       throws Exception {
     List<GenericRow> rows = createTestData(NUM_ROWS);
-    List<FieldConfig> fieldConfigs = List.of(
+    List<FieldConfig> fieldConfigs = Arrays.asList(
         new FieldConfig(QUOTES_COL_NATIVE, FieldConfig.EncodingType.DICTIONARY, FieldConfig.IndexType.TEXT, null,
-            Map.of(FieldConfig.TEXT_FST_TYPE, FieldConfig.TEXT_NATIVE_FST_LITERAL)),
+            Collections.singletonMap(FieldConfig.TEXT_FST_TYPE, FieldConfig.TEXT_NATIVE_FST_LITERAL)),
         new FieldConfig(QUOTES_COL_NATIVE_MV, FieldConfig.EncodingType.DICTIONARY, FieldConfig.IndexType.TEXT, null,
-            Map.of(FieldConfig.TEXT_FST_TYPE, FieldConfig.TEXT_NATIVE_FST_LITERAL)));
+            Collections.singletonMap(FieldConfig.TEXT_FST_TYPE, FieldConfig.TEXT_NATIVE_FST_LITERAL)));
 
     TableConfig tableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(TABLE_NAME)
-        .setInvertedIndexColumns(List.of(QUOTES_COL_NATIVE, QUOTES_COL_NATIVE_MV))
+        .setInvertedIndexColumns(Arrays.asList(QUOTES_COL_NATIVE, QUOTES_COL_NATIVE_MV))
         .setFieldConfigList(fieldConfigs).build();
     tableConfig.getIndexingConfig().setFSTIndexType(FSTType.NATIVE);
     Schema schema = new Schema.SchemaBuilder().setSchemaName(TABLE_NAME)
@@ -204,12 +204,12 @@ public class NativeAndLuceneComparisonTest extends BaseQueriesTest {
 
   private ImmutableSegment loadLuceneSegment()
       throws Exception {
-    List<FieldConfig> fieldConfigs = List.of(
+    List<FieldConfig> fieldConfigs = Arrays.asList(
         new FieldConfig(QUOTES_COL_LUCENE, FieldConfig.EncodingType.DICTIONARY, FieldConfig.IndexType.TEXT, null, null),
         new FieldConfig(QUOTES_COL_LUCENE_MV, FieldConfig.EncodingType.DICTIONARY, FieldConfig.IndexType.TEXT, null,
             null));
     TableConfig tableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(TABLE_NAME)
-        .setInvertedIndexColumns(List.of(QUOTES_COL_LUCENE, QUOTES_COL_LUCENE_MV))
+        .setInvertedIndexColumns(Arrays.asList(QUOTES_COL_LUCENE, QUOTES_COL_LUCENE_MV))
         .setFieldConfigList(fieldConfigs).build();
     Schema schema = new Schema.SchemaBuilder().setSchemaName(TABLE_NAME)
         .addSingleValueDimension(QUOTES_COL_LUCENE, FieldSpec.DataType.STRING)
@@ -220,13 +220,13 @@ public class NativeAndLuceneComparisonTest extends BaseQueriesTest {
 
   private ImmutableSegment loadNativeIndexSegment()
       throws Exception {
-    List<FieldConfig> fieldConfigs = List.of(
+    List<FieldConfig> fieldConfigs = Arrays.asList(
         new FieldConfig(QUOTES_COL_NATIVE, FieldConfig.EncodingType.DICTIONARY, FieldConfig.IndexType.TEXT, null,
-            Map.of(FieldConfig.TEXT_FST_TYPE, FieldConfig.TEXT_NATIVE_FST_LITERAL)),
+            Collections.singletonMap(FieldConfig.TEXT_FST_TYPE, FieldConfig.TEXT_NATIVE_FST_LITERAL)),
         new FieldConfig(QUOTES_COL_NATIVE_MV, FieldConfig.EncodingType.DICTIONARY, FieldConfig.IndexType.TEXT, null,
-            Map.of(FieldConfig.TEXT_FST_TYPE, FieldConfig.TEXT_NATIVE_FST_LITERAL)));
+            Collections.singletonMap(FieldConfig.TEXT_FST_TYPE, FieldConfig.TEXT_NATIVE_FST_LITERAL)));
     TableConfig tableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(TABLE_NAME)
-        .setInvertedIndexColumns(List.of(QUOTES_COL_NATIVE, QUOTES_COL_NATIVE_MV)).setFieldConfigList(fieldConfigs)
+        .setInvertedIndexColumns(Arrays.asList(QUOTES_COL_NATIVE, QUOTES_COL_NATIVE_MV)).setFieldConfigList(fieldConfigs)
         .build();
     Schema schema = new Schema.SchemaBuilder().setSchemaName(TABLE_NAME)
         .addSingleValueDimension(QUOTES_COL_NATIVE, FieldSpec.DataType.STRING)
@@ -237,14 +237,14 @@ public class NativeAndLuceneComparisonTest extends BaseQueriesTest {
 
   private void testSelectionResults(String nativeQuery, String luceneQuery) {
     _indexSegment = _nativeIndexSegment;
-    _indexSegments = List.of(_nativeIndexSegment);
+    _indexSegments = Arrays.asList(_nativeIndexSegment);
     Operator<SelectionResultsBlock> operator = getOperator(nativeQuery);
     SelectionResultsBlock operatorResult = operator.nextBlock();
     List<Object[]> resultset = (List<Object[]>) operatorResult.getRows();
     Assert.assertNotNull(resultset);
 
     _indexSegment = _luceneSegment;
-    _indexSegments = List.of(_luceneSegment);
+    _indexSegments = Arrays.asList(_luceneSegment);
     operator = getOperator(luceneQuery);
     operatorResult = operator.nextBlock();
     List<Object[]> resultset2 = (List<Object[]>) operatorResult.getRows();

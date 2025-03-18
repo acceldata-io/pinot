@@ -131,13 +131,13 @@ public class ExplainPlanQueriesTest extends BaseQueriesTest {
       .build();
 
   private static final TableConfig TABLE_CONFIG = new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME)
-      .setNoDictionaryColumns(List.of(COL1_RAW, MV_COL1_RAW))
+      .setNoDictionaryColumns(Arrays.asList(COL1_RAW, MV_COL1_RAW))
       .setSortedColumn(COL1_SORTED_INDEX)
-      .setInvertedIndexColumns(List.of(COL1_INVERTED_INDEX, COL2_INVERTED_INDEX, COL3_INVERTED_INDEX))
-      .setRangeIndexColumns(List.of(COL1_RANGE_INDEX, COL2_RANGE_INDEX, COL3_RANGE_INDEX))
-      .setJsonIndexColumns(List.of(COL1_JSON_INDEX))
-      .setFieldConfigList(List.of(
-          new FieldConfig(COL1_TEXT_INDEX, FieldConfig.EncodingType.DICTIONARY, List.of(FieldConfig.IndexType.TEXT),
+      .setInvertedIndexColumns(Arrays.asList(COL1_INVERTED_INDEX, COL2_INVERTED_INDEX, COL3_INVERTED_INDEX))
+      .setRangeIndexColumns(Arrays.asList(COL1_RANGE_INDEX, COL2_RANGE_INDEX, COL3_RANGE_INDEX))
+      .setJsonIndexColumns(Arrays.asList(COL1_JSON_INDEX))
+      .setFieldConfigList(Arrays.asList(
+          new FieldConfig(COL1_TEXT_INDEX, FieldConfig.EncodingType.DICTIONARY, Arrays.asList(FieldConfig.IndexType.TEXT),
               null, null)))
       .build();
 
@@ -272,7 +272,7 @@ public class ExplainPlanQueriesTest extends BaseQueriesTest {
     ImmutableSegment immutableSegment4 = createImmutableSegment(records4, SEGMENT_NAME_4);
 
     _indexSegment = immutableSegment1;
-    _indexSegments = List.of(immutableSegment1, immutableSegment2, immutableSegment3, immutableSegment4);
+    _indexSegments = Arrays.asList(immutableSegment1, immutableSegment2, immutableSegment3, immutableSegment4);
 
     // Mock the instance data manager
     InstanceDataManagerConfig instanceDataManagerConfig = mock(InstanceDataManagerConfig.class);
@@ -301,7 +301,7 @@ public class ExplainPlanQueriesTest extends BaseQueriesTest {
 
     // Create the BrokerReduceService
     _brokerReduceService =
-        new BrokerReduceService(new PinotConfiguration(Map.of(Broker.CONFIG_OF_MAX_REDUCE_THREADS_PER_QUERY, 2)));
+        new BrokerReduceService(new PinotConfiguration(Collections.singletonMap(Broker.CONFIG_OF_MAX_REDUCE_THREADS_PER_QUERY, 2)));
   }
 
   private ResultTable getPrefetchEnabledResulTable(ResultTable resultTable) {

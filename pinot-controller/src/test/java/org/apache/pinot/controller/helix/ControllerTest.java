@@ -431,7 +431,7 @@ public class ControllerTest {
     HelixConfigScope configScope = new HelixConfigScopeBuilder(HelixConfigScope.ConfigScopeProperty.PARTICIPANT,
         getHelixClusterName()).forParticipant(instanceId).build();
     int adminPort = NetUtils.findOpenPort(_nextServerPort);
-    helixAdmin.setConfig(configScope, Map.of(Helix.Instance.ADMIN_PORT_KEY, Integer.toString(adminPort)));
+    helixAdmin.setConfig(configScope, Collections.singletonMap(Helix.Instance.ADMIN_PORT_KEY, Integer.toString(adminPort)));
     _nextServerPort = adminPort + 1;
     _fakeInstanceHelixManagers.add(helixManager);
   }
@@ -452,7 +452,7 @@ public class ControllerTest {
     HelixConfigScope configScope = new HelixConfigScopeBuilder(HelixConfigScope.ConfigScopeProperty.PARTICIPANT,
         getHelixClusterName()).forParticipant(instanceId).build();
     int adminPort = NetUtils.findOpenPort(_nextServerPort);
-    helixAdmin.setConfig(configScope, Map.of(Helix.Instance.ADMIN_PORT_KEY, Integer.toString(adminPort)));
+    helixAdmin.setConfig(configScope, Collections.singletonMap(Helix.Instance.ADMIN_PORT_KEY, Integer.toString(adminPort)));
     _nextServerPort = adminPort + 1;
     _fakeInstanceHelixManagers.add(helixManager);
   }

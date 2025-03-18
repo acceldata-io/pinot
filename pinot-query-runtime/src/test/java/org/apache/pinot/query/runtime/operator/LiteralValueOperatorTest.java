@@ -58,10 +58,10 @@ public class LiteralValueOperatorTest {
     // Given:
     DataSchema schema = new DataSchema(new String[]{"sLiteral", "iLiteral"},
         new ColumnDataType[]{ColumnDataType.STRING, ColumnDataType.INT});
-    List<List<RexExpression.Literal>> literalRows = List.of(
-        List.of(new RexExpression.Literal(ColumnDataType.STRING, "foo"),
+    List<List<RexExpression.Literal>> literalRows = Arrays.asList(
+        Arrays.asList(new RexExpression.Literal(ColumnDataType.STRING, "foo"),
             new RexExpression.Literal(ColumnDataType.INT, 1)),
-        List.of(new RexExpression.Literal(ColumnDataType.STRING, ""),
+        Arrays.asList(new RexExpression.Literal(ColumnDataType.STRING, ""),
             new RexExpression.Literal(ColumnDataType.INT, 2)));
     LiteralValueOperator operator = getOperator(schema, literalRows);
 
@@ -79,7 +79,7 @@ public class LiteralValueOperatorTest {
   public void shouldHandleEmptyLiteralRows() {
     // Given:
     LiteralValueOperator operator =
-        getOperator(new DataSchema(new String[0], new ColumnDataType[0]), List.of(List.of()));
+        getOperator(new DataSchema(new String[0], new ColumnDataType[0]), Arrays.asList(Arrays.asList()));
 
     // When:
     List<Object[]> resultRows = operator.nextBlock().getContainer();
@@ -92,6 +92,6 @@ public class LiteralValueOperatorTest {
 
   private static LiteralValueOperator getOperator(DataSchema schema, List<List<RexExpression.Literal>> literalRows) {
     return new LiteralValueOperator(OperatorTestUtil.getTracingContext(),
-        new ValueNode(-1, schema, PlanNode.NodeHint.EMPTY, List.of(), literalRows));
+        new ValueNode(-1, schema, PlanNode.NodeHint.EMPTY, Arrays.asList(), literalRows));
   }
 }

@@ -101,7 +101,7 @@ public abstract class CustomDataQueryClusterIntegrationTest extends BaseClusterI
       addTableConfig(tableConfig);
 
       // Push data into Kafka
-      pushAvroIntoKafka(List.of(avroFile));
+      pushAvroIntoKafka(Arrays.asList(avroFile));
     } else {
       // create offline table
       TableConfig tableConfig = createOfflineTableConfig();
@@ -186,22 +186,22 @@ public abstract class CustomDataQueryClusterIntegrationTest extends BaseClusterI
 
   @Nullable
   protected List<String> getInvertedIndexColumns() {
-    return List.of();
+    return Arrays.asList();
   }
 
   @Nullable
   protected List<String> getNoDictionaryColumns() {
-    return List.of();
+    return Arrays.asList();
   }
 
   @Nullable
   protected List<String> getRangeIndexColumns() {
-    return List.of();
+    return Arrays.asList();
   }
 
   @Nullable
   protected List<String> getBloomFilterColumns() {
-    return List.of();
+    return Arrays.asList();
   }
 
   @Override

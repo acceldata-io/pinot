@@ -66,7 +66,7 @@ public class QueryServerEnclosure {
   private final QueryRunner _queryRunner;
 
   public QueryServerEnclosure(MockInstanceDataManagerFactory factory) {
-    this(factory, Map.of());
+    this(factory, new HashMap<>());
   }
 
   public QueryServerEnclosure(MockInstanceDataManagerFactory factory, Map<String, Object> config) {

@@ -79,7 +79,7 @@ public class SegmentGenerationWithBytesTypeTest {
       .build();
   //@formatter:on
   private static final TableConfig TABLE_CONFIG = new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME)
-      .setNoDictionaryColumns(List.of(FIXED_BYTES_NO_DICT_COLUMN)).build();
+      .setNoDictionaryColumns(Arrays.asList(FIXED_BYTES_NO_DICT_COLUMN)).build();
   private static final Random RANDOM = new Random();
 
   private List<GenericRow> _rows;

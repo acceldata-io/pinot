@@ -62,7 +62,7 @@ public interface PlanNode {
   PlanNode withInputs(List<PlanNode> inputs);
 
   class NodeHint {
-    public static final NodeHint EMPTY = new NodeHint(Map.of());
+    public static final NodeHint EMPTY = new NodeHint(new HashMap<>());
 
     private final Map<String, Map<String, String>> _hintOptions;
 
@@ -74,10 +74,10 @@ public interface PlanNode {
       int numHints = relHints.size();
       Map<String, Map<String, String>> hintOptions;
       if (numHints == 0) {
-        hintOptions = Map.of();
+        hintOptions = new HashMap<>();
       } else if (numHints == 1) {
         RelHint relHint = relHints.get(0);
-        hintOptions = Map.of(relHint.hintName, relHint.kvOptions);
+        hintOptions = Collections.singletonMap(relHint.hintName, relHint.kvOptions);
       } else {
         hintOptions = Maps.newHashMapWithExpectedSize(numHints);
         for (RelHint relHint : relHints) {

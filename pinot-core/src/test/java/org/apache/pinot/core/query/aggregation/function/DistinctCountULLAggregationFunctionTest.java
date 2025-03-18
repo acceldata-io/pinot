@@ -32,30 +32,30 @@ public class DistinctCountULLAggregationFunctionTest {
   @Test
   public void testCanUseStarTreeDefaultP() {
     DistinctCountULLAggregationFunction function = new DistinctCountULLAggregationFunction(
-        List.of(ExpressionContext.forIdentifier("col")));
+        Arrays.asList(ExpressionContext.forIdentifier("col")));
 
-    Assert.assertTrue(function.canUseStarTree(Map.of()));
-    Assert.assertTrue(function.canUseStarTree(Map.of(Constants.HLLPLUS_ULL_P_KEY, "12")));
-    Assert.assertTrue(function.canUseStarTree(Map.of(Constants.HLLPLUS_ULL_P_KEY, 12)));
-    Assert.assertFalse(function.canUseStarTree(Map.of(Constants.HLLPLUS_ULL_P_KEY, 16)));
+    Assert.assertTrue(function.canUseStarTree(new HashMap<>()));
+    Assert.assertTrue(function.canUseStarTree(Collections.singletonMap(Constants.HLLPLUS_ULL_P_KEY, "12")));
+    Assert.assertTrue(function.canUseStarTree(Collections.singletonMap(Constants.HLLPLUS_ULL_P_KEY, 12)));
+    Assert.assertFalse(function.canUseStarTree(Collections.singletonMap(Constants.HLLPLUS_ULL_P_KEY, 16)));
 
-    function = new DistinctCountULLAggregationFunction(List.of(ExpressionContext.forIdentifier("col"),
+    function = new DistinctCountULLAggregationFunction(Arrays.asList(ExpressionContext.forIdentifier("col"),
         ExpressionContext.forLiteral(Literal.intValue(12))));
 
-    Assert.assertTrue(function.canUseStarTree(Map.of()));
-    Assert.assertTrue(function.canUseStarTree(Map.of(Constants.HLLPLUS_ULL_P_KEY, "12")));
-    Assert.assertTrue(function.canUseStarTree(Map.of(Constants.HLLPLUS_ULL_P_KEY, 12)));
-    Assert.assertFalse(function.canUseStarTree(Map.of(Constants.HLLPLUS_ULL_P_KEY, "16")));
+    Assert.assertTrue(function.canUseStarTree(new HashMap<>()));
+    Assert.assertTrue(function.canUseStarTree(Collections.singletonMap(Constants.HLLPLUS_ULL_P_KEY, "12")));
+    Assert.assertTrue(function.canUseStarTree(Collections.singletonMap(Constants.HLLPLUS_ULL_P_KEY, 12)));
+    Assert.assertFalse(function.canUseStarTree(Collections.singletonMap(Constants.HLLPLUS_ULL_P_KEY, "16")));
   }
 
   @Test
   public void testCanUseStarTreeCustomP() {
     DistinctCountULLAggregationFunction function = new DistinctCountULLAggregationFunction(
-        List.of(ExpressionContext.forIdentifier("col"), ExpressionContext.forLiteral(Literal.stringValue("16"))));
+        Arrays.asList(ExpressionContext.forIdentifier("col"), ExpressionContext.forLiteral(Literal.stringValue("16"))));
 
-    Assert.assertFalse(function.canUseStarTree(Map.of()));
-    Assert.assertFalse(function.canUseStarTree(Map.of(Constants.HLLPLUS_ULL_P_KEY, "12")));
-    Assert.assertTrue(function.canUseStarTree(Map.of(Constants.HLLPLUS_ULL_P_KEY, 16)));
-    Assert.assertTrue(function.canUseStarTree(Map.of(Constants.HLLPLUS_ULL_P_KEY, "16")));
+    Assert.assertFalse(function.canUseStarTree(new HashMap<>()));
+    Assert.assertFalse(function.canUseStarTree(Collections.singletonMap(Constants.HLLPLUS_ULL_P_KEY, "12")));
+    Assert.assertTrue(function.canUseStarTree(Collections.singletonMap(Constants.HLLPLUS_ULL_P_KEY, 16)));
+    Assert.assertTrue(function.canUseStarTree(Collections.singletonMap(Constants.HLLPLUS_ULL_P_KEY, "16")));
   }
 }

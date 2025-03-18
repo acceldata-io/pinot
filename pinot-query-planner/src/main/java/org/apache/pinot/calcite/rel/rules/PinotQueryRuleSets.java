@@ -34,7 +34,7 @@ public class PinotQueryRuleSets {
   }
 
   //@formatter:off
-  public static final List<RelOptRule> BASIC_RULES = List.of(
+  public static final List<RelOptRule> BASIC_RULES = Arrays.asList(
       // push a filter into a join
       PinotFilterIntoJoinRule.INSTANCE,
       // push filter through an aggregation
@@ -96,7 +96,7 @@ public class PinotQueryRuleSets {
 
   // Filter pushdown rules run using a RuleCollection since we want to push down a filter as much as possible in a
   // single HepInstruction.
-  public static final List<RelOptRule> FILTER_PUSHDOWN_RULES = List.of(
+  public static final List<RelOptRule> FILTER_PUSHDOWN_RULES = Arrays.asList(
       CoreRules.FILTER_INTO_JOIN,
       CoreRules.FILTER_AGGREGATE_TRANSPOSE,
       CoreRules.FILTER_SET_OP_TRANSPOSE,
@@ -105,14 +105,14 @@ public class PinotQueryRuleSets {
 
   // Project pushdown rules run using a RuleCollection since we want to push down a project as much as possible in a
   // single HepInstruction.
-  public static final List<RelOptRule> PROJECT_PUSHDOWN_RULES = List.of(
+  public static final List<RelOptRule> PROJECT_PUSHDOWN_RULES = Arrays.asList(
       CoreRules.PROJECT_FILTER_TRANSPOSE,
       PinotProjectJoinTransposeRule.INSTANCE,
       CoreRules.PROJECT_MERGE
   );
 
   // The pruner rules run top-down to ensure Calcite restarts from root node after applying a transformation.
-  public static final List<RelOptRule> PRUNE_RULES = List.of(
+  public static final List<RelOptRule> PRUNE_RULES = Arrays.asList(
       CoreRules.AGGREGATE_PROJECT_MERGE,
       CoreRules.PROJECT_MERGE,
       CoreRules.FILTER_MERGE,
@@ -128,7 +128,7 @@ public class PinotQueryRuleSets {
   );
 
   // Pinot specific rules that should be run AFTER all other rules
-  public static final List<RelOptRule> PINOT_POST_RULES = List.of(
+  public static final List<RelOptRule> PINOT_POST_RULES = Arrays.asList(
       // TODO: Merge the following 2 rules into a single rule
       // add an extra exchange for sort
       PinotSortExchangeNodeInsertRule.INSTANCE,

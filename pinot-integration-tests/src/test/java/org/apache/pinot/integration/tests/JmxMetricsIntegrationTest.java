@@ -82,11 +82,11 @@ public class JmxMetricsIntegrationTest extends BaseClusterIntegrationTestSet {
   @Test
   public void testMultiStageMigrationMetric() throws Exception {
     ObjectName multiStageMigrationMetric = new ObjectName(PINOT_JMX_METRICS_DOMAIN,
-        new Hashtable<>(Map.of("type", BROKER_METRICS_TYPE,
+        new Hashtable<>(Collections.singletonMap("type", BROKER_METRICS_TYPE,
             "name", "\"pinot.broker.singleStageQueriesInvalidMultiStage\"")));
 
     ObjectName queriesGlobalMetric = new ObjectName(PINOT_JMX_METRICS_DOMAIN,
-        new Hashtable<>(Map.of("type", BROKER_METRICS_TYPE,
+        new Hashtable<>(Collections.singletonMap("type", BROKER_METRICS_TYPE,
             "name", "\"pinot.broker.queriesGlobal\"")));
 
     // Some queries are run during setup to ensure that all the docs are loaded

@@ -89,7 +89,7 @@ public abstract class BaseQueriesTest {
   protected abstract List<IndexSegment> getIndexSegments();
 
   protected List<List<IndexSegment>> getDistinctInstances() {
-    return List.of(getIndexSegments());
+    return Arrays.asList(getIndexSegments());
   }
 
   /**
@@ -255,7 +255,7 @@ public abstract class BaseQueriesTest {
   protected BrokerResponseNative reduceOnDataTable(BrokerRequest brokerRequest, BrokerRequest serverBrokerRequest,
       Map<ServerRoutingInstance, DataTable> dataTableMap) {
     BrokerReduceService brokerReduceService =
-        new BrokerReduceService(new PinotConfiguration(Map.of(Broker.CONFIG_OF_MAX_REDUCE_THREADS_PER_QUERY, 2)));
+        new BrokerReduceService(new PinotConfiguration(Collections.singletonMap(Broker.CONFIG_OF_MAX_REDUCE_THREADS_PER_QUERY, 2)));
     BrokerResponseNative brokerResponse =
         brokerReduceService.reduceOnDataTable(brokerRequest, serverBrokerRequest, dataTableMap,
             Broker.DEFAULT_BROKER_TIMEOUT_MS, BROKER_METRICS);

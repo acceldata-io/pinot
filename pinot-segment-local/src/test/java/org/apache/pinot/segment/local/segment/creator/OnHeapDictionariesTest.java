@@ -78,7 +78,7 @@ public class OnHeapDictionariesTest {
     Schema schema = buildSchema();
 
     TableConfig tableConfig = new TableConfigBuilder(TableType.OFFLINE).setOnHeapDictionaryColumns(
-        List.of(INT_COLUMN, LONG_COLUMN, FLOAT_COLUMN, DOUBLE_COLUMN, STRING_COLUMN)).setTableName("test").build();
+        Arrays.asList(INT_COLUMN, LONG_COLUMN, FLOAT_COLUMN, DOUBLE_COLUMN, STRING_COLUMN)).setTableName("test").build();
     buildSegment(SEGMENT_DIR_NAME, SEGMENT_NAME, tableConfig, schema);
 
     IndexLoadingConfig loadingConfig = new IndexLoadingConfig(tableConfig, schema);

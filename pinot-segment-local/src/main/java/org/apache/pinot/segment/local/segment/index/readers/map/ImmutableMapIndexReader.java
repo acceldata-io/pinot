@@ -89,7 +89,7 @@ public class ImmutableMapIndexReader implements MapIndexReader<ForwardIndexReade
   public Map<IndexType, IndexReader> getKeyIndexes(String key) {
     IndexReader fwdIdx = getKeyReader(key, StandardIndexes.forward());
     if (fwdIdx != null) {
-      return Map.of(StandardIndexes.forward(), getKeyReader(key, StandardIndexes.forward()));
+      return Collections.singletonMap(StandardIndexes.forward(), getKeyReader(key, StandardIndexes.forward()));
     } else {
       return null;
     }
@@ -177,7 +177,7 @@ public class ImmutableMapIndexReader implements MapIndexReader<ForwardIndexReade
 
       @Override
       public Map<IndexType<?, ?, ?>, Long> getIndexSizeMap() {
-        return Map.of();
+        return new HashMap<>();
       }
 
       @Override

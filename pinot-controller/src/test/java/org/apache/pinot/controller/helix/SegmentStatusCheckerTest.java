@@ -108,7 +108,7 @@ public class SegmentStatusCheckerTest {
 
     PinotHelixResourceManager resourceManager = mock(PinotHelixResourceManager.class);
     when(resourceManager.getHelixInstanceConfig(any())).thenReturn(newQuerableInstanceConfig("any"));
-    when(resourceManager.getAllTables()).thenReturn(List.of(OFFLINE_TABLE_NAME));
+    when(resourceManager.getAllTables()).thenReturn(Arrays.asList(OFFLINE_TABLE_NAME));
     when(resourceManager.getTableConfig(OFFLINE_TABLE_NAME)).thenReturn(tableConfig);
     when(resourceManager.getTableIdealState(OFFLINE_TABLE_NAME)).thenReturn(idealState);
     when(resourceManager.getTableExternalView(OFFLINE_TABLE_NAME)).thenReturn(externalView);
@@ -121,9 +121,9 @@ public class SegmentStatusCheckerTest {
     // myTable_1 and myTable_4 will be skipped for the metrics.
     SegmentLineage segmentLineage = new SegmentLineage(OFFLINE_TABLE_NAME);
     segmentLineage.addLineageEntry(SegmentLineageUtils.generateLineageEntryId(),
-        new LineageEntry(List.of("myTable_1"), List.of("myTable_3"), LineageEntryState.COMPLETED, 11111L));
+        new LineageEntry(Arrays.asList("myTable_1"), Arrays.asList("myTable_3"), LineageEntryState.COMPLETED, 11111L));
     segmentLineage.addLineageEntry(SegmentLineageUtils.generateLineageEntryId(),
-        new LineageEntry(List.of("myTable_3"), List.of("myTable_4"), LineageEntryState.IN_PROGRESS, 11111L));
+        new LineageEntry(Arrays.asList("myTable_3"), Arrays.asList("myTable_4"), LineageEntryState.IN_PROGRESS, 11111L));
     when(
         propertyStore.get(eq("/SEGMENT_LINEAGE/" + OFFLINE_TABLE_NAME), any(), eq(AccessOption.PERSISTENT))).thenReturn(
         segmentLineage.toZNRecord());
@@ -220,7 +220,7 @@ public class SegmentStatusCheckerTest {
     PinotHelixResourceManager resourceManager = mock(PinotHelixResourceManager.class);
     when(resourceManager.getHelixInstanceConfig(any())).thenReturn(newQuerableInstanceConfig("any"));
     when(resourceManager.getTableConfig(REALTIME_TABLE_NAME)).thenReturn(tableConfig);
-    when(resourceManager.getAllTables()).thenReturn(List.of(REALTIME_TABLE_NAME));
+    when(resourceManager.getAllTables()).thenReturn(Arrays.asList(REALTIME_TABLE_NAME));
     when(resourceManager.getTableIdealState(REALTIME_TABLE_NAME)).thenReturn(idealState);
     when(resourceManager.getTableExternalView(REALTIME_TABLE_NAME)).thenReturn(externalView);
     SegmentZKMetadata committedSegmentZKMetadata = mockCommittedSegmentZKMetadata();
@@ -286,7 +286,7 @@ public class SegmentStatusCheckerTest {
     PinotHelixResourceManager resourceManager = mock(PinotHelixResourceManager.class);
     when(resourceManager.getHelixInstanceConfig(any())).thenReturn(newQuerableInstanceConfig("any"));
     when(resourceManager.getTableConfig(REALTIME_TABLE_NAME)).thenReturn(tableConfig);
-    when(resourceManager.getAllTables()).thenReturn(List.of(REALTIME_TABLE_NAME));
+    when(resourceManager.getAllTables()).thenReturn(Arrays.asList(REALTIME_TABLE_NAME));
     when(resourceManager.getTableIdealState(REALTIME_TABLE_NAME)).thenReturn(idealState);
     when(resourceManager.getTableExternalView(REALTIME_TABLE_NAME)).thenReturn(externalView);
     SegmentZKMetadata committedSegmentZKMetadata = mockCommittedSegmentZKMetadata();
@@ -359,7 +359,7 @@ public class SegmentStatusCheckerTest {
     when(resourceManager.getHelixInstanceConfig("Server_pinot4")).
         thenReturn(newQuerableInstanceConfig("Server_pinot4"));
     when(resourceManager.getTableConfig(REALTIME_TABLE_NAME)).thenReturn(tableConfig);
-    when(resourceManager.getAllTables()).thenReturn(List.of(REALTIME_TABLE_NAME));
+    when(resourceManager.getAllTables()).thenReturn(Arrays.asList(REALTIME_TABLE_NAME));
     when(resourceManager.getTableIdealState(REALTIME_TABLE_NAME)).thenReturn(idealState);
     when(resourceManager.getTableExternalView(REALTIME_TABLE_NAME)).thenReturn(externalView);
     SegmentZKMetadata committedSegmentZKMetadata = mockCommittedSegmentZKMetadata();
@@ -445,7 +445,7 @@ public class SegmentStatusCheckerTest {
     PinotHelixResourceManager resourceManager = mock(PinotHelixResourceManager.class);
     when(resourceManager.getHelixInstanceConfig(any())).thenReturn(newQuerableInstanceConfig("any"));
     when(resourceManager.getTableConfig(REALTIME_TABLE_NAME)).thenReturn(tableConfig);
-    when(resourceManager.getAllTables()).thenReturn(List.of(REALTIME_TABLE_NAME));
+    when(resourceManager.getAllTables()).thenReturn(Arrays.asList(REALTIME_TABLE_NAME));
     when(resourceManager.getTableIdealState(REALTIME_TABLE_NAME)).thenReturn(idealState);
     when(resourceManager.getTableExternalView(REALTIME_TABLE_NAME)).thenReturn(externalView);
     SegmentZKMetadata committedSegmentZKMetadata = mockCommittedSegmentZKMetadata();
@@ -467,7 +467,7 @@ public class SegmentStatusCheckerTest {
   }
 
   private Map<String, String> getStreamConfigMap() {
-    return Map.of("streamType", "kafka", "stream.kafka.consumer.type", "simple", "stream.kafka.topic.name", "test",
+    return Collections.singletonMap("streamType", "kafka", "stream.kafka.consumer.type", "simple", "stream.kafka.topic.name", "test",
         "stream.kafka.decoder.class.name", "org.apache.pinot.plugin.stream.kafka.KafkaAvroMessageDecoder",
         "stream.kafka.consumer.factory.class.name",
         "org.apache.pinot.core.realtime.impl.fakestream.FakeStreamConsumerFactory");
@@ -511,7 +511,7 @@ public class SegmentStatusCheckerTest {
 
     PinotHelixResourceManager resourceManager = mock(PinotHelixResourceManager.class);
     when(resourceManager.getHelixInstanceConfig(any())).thenReturn(newQuerableInstanceConfig("any"));
-    when(resourceManager.getAllTables()).thenReturn(List.of(OFFLINE_TABLE_NAME));
+    when(resourceManager.getAllTables()).thenReturn(Arrays.asList(OFFLINE_TABLE_NAME));
     when(resourceManager.getTableIdealState(OFFLINE_TABLE_NAME)).thenReturn(idealState);
     when(resourceManager.getTableExternalView(OFFLINE_TABLE_NAME)).thenReturn(externalView);
     SegmentZKMetadata segmentZKMetadata = mockPushedSegmentZKMetadata(1234, 11111L);
@@ -537,7 +537,7 @@ public class SegmentStatusCheckerTest {
     idealState.setRebalanceMode(IdealState.RebalanceMode.CUSTOMIZED);
 
     PinotHelixResourceManager resourceManager = mock(PinotHelixResourceManager.class);
-    when(resourceManager.getAllTables()).thenReturn(List.of(OFFLINE_TABLE_NAME));
+    when(resourceManager.getAllTables()).thenReturn(Arrays.asList(OFFLINE_TABLE_NAME));
     when(resourceManager.getTableIdealState(OFFLINE_TABLE_NAME)).thenReturn(idealState);
     SegmentZKMetadata segmentZKMetadata = mockPushedSegmentZKMetadata(1234, 11111L);
     when(resourceManager.getSegmentZKMetadata(eq(OFFLINE_TABLE_NAME), anyString())).thenReturn(segmentZKMetadata);
@@ -552,7 +552,7 @@ public class SegmentStatusCheckerTest {
   @Test
   public void missingIdealTest() {
     PinotHelixResourceManager resourceManager = mock(PinotHelixResourceManager.class);
-    when(resourceManager.getAllTables()).thenReturn(List.of(OFFLINE_TABLE_NAME));
+    when(resourceManager.getAllTables()).thenReturn(Arrays.asList(OFFLINE_TABLE_NAME));
 
     runSegmentStatusChecker(resourceManager, 0);
     verifyControllerMetricsNotExist();
@@ -602,7 +602,7 @@ public class SegmentStatusCheckerTest {
 
     PinotHelixResourceManager resourceManager = mock(PinotHelixResourceManager.class);
     when(resourceManager.getHelixInstanceConfig(any())).thenReturn(newQuerableInstanceConfig("any"));
-    when(resourceManager.getAllTables()).thenReturn(List.of(OFFLINE_TABLE_NAME));
+    when(resourceManager.getAllTables()).thenReturn(Arrays.asList(OFFLINE_TABLE_NAME));
     when(resourceManager.getTableIdealState(OFFLINE_TABLE_NAME)).thenReturn(idealState);
     when(resourceManager.getTableExternalView(OFFLINE_TABLE_NAME)).thenReturn(externalView);
     SegmentZKMetadata segmentZKMetadata01 = mockPushedSegmentZKMetadata(1234, 11111L);
@@ -627,7 +627,7 @@ public class SegmentStatusCheckerTest {
     idealState.setRebalanceMode(IdealState.RebalanceMode.CUSTOMIZED);
 
     PinotHelixResourceManager resourceManager = mock(PinotHelixResourceManager.class);
-    when(resourceManager.getAllTables()).thenReturn(List.of(REALTIME_TABLE_NAME));
+    when(resourceManager.getAllTables()).thenReturn(Arrays.asList(REALTIME_TABLE_NAME));
     when(resourceManager.getTableIdealState(REALTIME_TABLE_NAME)).thenReturn(idealState);
     SegmentZKMetadata updatedSegmentZKMetadata = mockPushedSegmentZKMetadata(1234, System.currentTimeMillis());
     when(resourceManager.getSegmentZKMetadata(REALTIME_TABLE_NAME, "myTable_0")).thenReturn(updatedSegmentZKMetadata);
@@ -651,7 +651,7 @@ public class SegmentStatusCheckerTest {
     idealState.setRebalanceMode(IdealState.RebalanceMode.CUSTOMIZED);
 
     PinotHelixResourceManager resourceManager = mock(PinotHelixResourceManager.class);
-    when(resourceManager.getAllTables()).thenReturn(List.of(REALTIME_TABLE_NAME));
+    when(resourceManager.getAllTables()).thenReturn(Arrays.asList(REALTIME_TABLE_NAME));
     when(resourceManager.getTableIdealState(REALTIME_TABLE_NAME)).thenReturn(idealState);
     when(resourceManager.getTableExternalView(REALTIME_TABLE_NAME)).thenReturn(null);
     SegmentZKMetadata segmentZKMetadata = mockConsumingSegmentZKMetadata(11111L);
@@ -672,7 +672,7 @@ public class SegmentStatusCheckerTest {
     idealState.setRebalanceMode(IdealState.RebalanceMode.CUSTOMIZED);
 
     PinotHelixResourceManager resourceManager = mock(PinotHelixResourceManager.class);
-    when(resourceManager.getAllTables()).thenReturn(List.of(OFFLINE_TABLE_NAME));
+    when(resourceManager.getAllTables()).thenReturn(Arrays.asList(OFFLINE_TABLE_NAME));
     when(resourceManager.getTableIdealState(OFFLINE_TABLE_NAME)).thenReturn(idealState);
 
     ZkHelixPropertyStore<ZNRecord> propertyStore = mock(ZkHelixPropertyStore.class);
@@ -694,7 +694,7 @@ public class SegmentStatusCheckerTest {
     idealState.setRebalanceMode(IdealState.RebalanceMode.CUSTOMIZED);
 
     PinotHelixResourceManager resourceManager = mock(PinotHelixResourceManager.class);
-    when(resourceManager.getAllTables()).thenReturn(List.of(OFFLINE_TABLE_NAME));
+    when(resourceManager.getAllTables()).thenReturn(Arrays.asList(OFFLINE_TABLE_NAME));
     when(resourceManager.getTableIdealState(OFFLINE_TABLE_NAME)).thenReturn(idealState);
 
     runSegmentStatusChecker(resourceManager, 0);
@@ -716,7 +716,7 @@ public class SegmentStatusCheckerTest {
     idealState.setRebalanceMode(IdealState.RebalanceMode.CUSTOMIZED);
 
     PinotHelixResourceManager resourceManager = mock(PinotHelixResourceManager.class);
-    when(resourceManager.getAllTables()).thenReturn(List.of(OFFLINE_TABLE_NAME));
+    when(resourceManager.getAllTables()).thenReturn(Arrays.asList(OFFLINE_TABLE_NAME));
     when(resourceManager.getTableIdealState(OFFLINE_TABLE_NAME)).thenReturn(idealState);
 
     runSegmentStatusChecker(resourceManager, 0);
@@ -745,7 +745,7 @@ public class SegmentStatusCheckerTest {
 
     PinotHelixResourceManager resourceManager = mock(PinotHelixResourceManager.class);
     when(resourceManager.getHelixInstanceConfig(any())).thenReturn(newQuerableInstanceConfig("any"));
-    when(resourceManager.getAllTables()).thenReturn(List.of(OFFLINE_TABLE_NAME));
+    when(resourceManager.getAllTables()).thenReturn(Arrays.asList(OFFLINE_TABLE_NAME));
     when(resourceManager.getTableConfig(OFFLINE_TABLE_NAME)).thenReturn(tableConfig);
     when(resourceManager.getTableIdealState(OFFLINE_TABLE_NAME)).thenReturn(idealState);
     when(resourceManager.getTableExternalView(OFFLINE_TABLE_NAME)).thenReturn(externalView);
@@ -954,7 +954,7 @@ public class SegmentStatusCheckerTest {
     when(segmentZKMetadata.getEndTimeMs()).thenReturn(TimeUtils.VALID_MAX_TIME_MILLIS + 1);
 
     PinotHelixResourceManager resourceManager = mock(PinotHelixResourceManager.class);
-    when(resourceManager.getAllTables()).thenReturn(List.of(OFFLINE_TABLE_NAME));
+    when(resourceManager.getAllTables()).thenReturn(Arrays.asList(OFFLINE_TABLE_NAME));
     when(resourceManager.getTableIdealState(OFFLINE_TABLE_NAME)).thenReturn(idealState);
     when(resourceManager.getSegmentZKMetadata(eq(OFFLINE_TABLE_NAME), anyString())).thenReturn(segmentZKMetadata);
 

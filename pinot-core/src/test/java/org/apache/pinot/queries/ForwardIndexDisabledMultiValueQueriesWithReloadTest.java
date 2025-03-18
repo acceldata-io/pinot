@@ -110,8 +110,8 @@ public class ForwardIndexDisabledMultiValueQueriesWithReloadTest extends BaseQue
     FileUtils.deleteQuietly(INDEX_DIR);
 
     TableConfig tableConfig =
-        createTableConfig(List.of("column5", "column7"), List.of("column3", "column6", "column8", "column9"),
-            List.of("column6"));
+        createTableConfig(Arrays.asList("column5", "column7"), Arrays.asList("column3", "column6", "column8", "column9"),
+            Arrays.asList("column6"));
 
     URL resource = getClass().getClassLoader().getResource(AVRO_DATA);
     assertNotNull(resource);
@@ -142,15 +142,15 @@ public class ForwardIndexDisabledMultiValueQueriesWithReloadTest extends BaseQue
     }
 
     _indexSegment = segment;
-    _indexSegments = List.of(segment, segment);
+    _indexSegments = Arrays.asList(segment, segment);
   }
 
   private TableConfig createTableConfig(List<String> noDictionaryColumns, List<String> invertedIndexColumns,
       List<String> forwardIndexDisabledColumns) {
     List<FieldConfig> fieldConfigs = new ArrayList<>(forwardIndexDisabledColumns.size());
     for (String column : forwardIndexDisabledColumns) {
-      fieldConfigs.add(new FieldConfig(column, FieldConfig.EncodingType.DICTIONARY, List.of(), null,
-          Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+      fieldConfigs.add(new FieldConfig(column, FieldConfig.EncodingType.DICTIONARY, Arrays.asList(), null,
+          Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
     }
     return new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME).setTimeColumnName("daysSinceEpoch")
         .setNoDictionaryColumns(noDictionaryColumns).setInvertedIndexColumns(invertedIndexColumns)
@@ -709,8 +709,8 @@ public class ForwardIndexDisabledMultiValueQueriesWithReloadTest extends BaseQue
       throws Exception {
     // Now disable forward index for column7 in the table config
     TableConfig tableConfig =
-        createTableConfig(List.of("column5"), List.of("column3", "column6", "column7", "column8", "column9"),
-            List.of("column6", "column7"));
+        createTableConfig(Arrays.asList("column5"), Arrays.asList("column3", "column6", "column7", "column8", "column9"),
+            Arrays.asList("column6", "column7"));
     IndexLoadingConfig indexLoadingConfig = new IndexLoadingConfig(tableConfig, SCHEMA);
 
     // Reload the segments to pick up the new configs
@@ -718,7 +718,7 @@ public class ForwardIndexDisabledMultiValueQueriesWithReloadTest extends BaseQue
     ImmutableSegment segment = reloadSegment(indexDir, indexLoadingConfig, SCHEMA);
     _indexSegment.destroy();
     _indexSegment = segment;
-    _indexSegments = List.of(segment, segment);
+    _indexSegments = Arrays.asList(segment, segment);
 
     assertNull(segment.getForwardIndex("column7"));
     assertNotNull(segment.getInvertedIndex("column7"));
@@ -730,8 +730,8 @@ public class ForwardIndexDisabledMultiValueQueriesWithReloadTest extends BaseQue
     // Now re-enable forward index for column7 in the table config
     // Also re-enable forward index for column6
     TableConfig tableConfig =
-        createTableConfig(List.of("column5", "column7"), List.of("column3", "column6", "column8", "column9"),
-            List.of());
+        createTableConfig(Arrays.asList("column5", "column7"), Arrays.asList("column3", "column6", "column8", "column9"),
+            Arrays.asList());
     IndexLoadingConfig indexLoadingConfig = new IndexLoadingConfig(tableConfig, SCHEMA);
 
     // Reload the segments to pick up the new configs
@@ -739,7 +739,7 @@ public class ForwardIndexDisabledMultiValueQueriesWithReloadTest extends BaseQue
     ImmutableSegment segment = reloadSegment(indexDir, indexLoadingConfig, SCHEMA);
     _indexSegment.destroy();
     _indexSegment = segment;
-    _indexSegments = List.of(segment, segment);
+    _indexSegments = Arrays.asList(segment, segment);
 
     assertNotNull(segment.getForwardIndex("column7"));
     assertNull(segment.getInvertedIndex("column7"));

@@ -65,7 +65,7 @@ public class PinotSeminJoinDistinctProjectRule extends RelOptRule {
   public void onMatch(RelOptRuleCall call) {
     LogicalJoin join = call.rel(0);
     RelNode newRightProject = insertDistinctToProject(call, call.rel(2));
-    call.transformTo(join.copy(join.getTraitSet(), List.of(call.rel(1), newRightProject)));
+    call.transformTo(join.copy(join.getTraitSet(), Arrays.asList(call.rel(1), newRightProject)));
   }
 
   private RelNode insertDistinctToProject(RelOptRuleCall call, LogicalProject project) {

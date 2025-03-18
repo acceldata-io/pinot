@@ -466,7 +466,7 @@ public class ControllerConf extends PinotConfiguration {
   }
 
   public List<String> getControllerAccessProtocols() {
-    return getProperty(CONTROLLER_ACCESS_PROTOCOLS, getControllerPort() == null ? List.of("http") : List.of());
+    return getProperty(CONTROLLER_ACCESS_PROTOCOLS, getControllerPort() == null ? Arrays.asList("http") : Arrays.asList());
   }
 
   public String getControllerAccessProtocolProperty(String protocol, String property) {

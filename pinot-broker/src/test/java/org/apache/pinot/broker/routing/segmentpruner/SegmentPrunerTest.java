@@ -157,7 +157,7 @@ public class SegmentPrunerTest extends ControllerTest {
     assertEquals(segmentPruners.size(), 0);
 
     // Segment partition config is missing
-    when(routingConfig.getSegmentPrunerTypes()).thenReturn(List.of(RoutingConfig.PARTITION_SEGMENT_PRUNER_TYPE));
+    when(routingConfig.getSegmentPrunerTypes()).thenReturn(Arrays.asList(RoutingConfig.PARTITION_SEGMENT_PRUNER_TYPE));
     segmentPruners = SegmentPrunerFactory.getSegmentPruners(tableConfig, _propertyStore);
     assertEquals(segmentPruners.size(), 0);
 
@@ -217,7 +217,7 @@ public class SegmentPrunerTest extends ControllerTest {
     assertEquals(segmentPruners.size(), 0);
 
     // Validation config is missing
-    when(routingConfig.getSegmentPrunerTypes()).thenReturn(List.of(RoutingConfig.TIME_SEGMENT_PRUNER_TYPE));
+    when(routingConfig.getSegmentPrunerTypes()).thenReturn(Arrays.asList(RoutingConfig.TIME_SEGMENT_PRUNER_TYPE));
     segmentPruners = SegmentPrunerFactory.getSegmentPruners(tableConfig, _propertyStore);
     assertEquals(segmentPruners.size(), 0);
 
@@ -258,13 +258,13 @@ public class SegmentPrunerTest extends ControllerTest {
     ZkHelixPropertyStore<ZNRecord> propertyStore = mock(ZkHelixPropertyStore.class);
 
     // When routingConfig is configured with EmptySegmentPruner, EmptySegmentPruner should be returned.
-    when(routingConfig.getSegmentPrunerTypes()).thenReturn(List.of(RoutingConfig.EMPTY_SEGMENT_PRUNER_TYPE));
+    when(routingConfig.getSegmentPrunerTypes()).thenReturn(Arrays.asList(RoutingConfig.EMPTY_SEGMENT_PRUNER_TYPE));
     List<SegmentPruner> segmentPruners = SegmentPrunerFactory.getSegmentPruners(tableConfig, propertyStore);
     assertEquals(segmentPruners.size(), 1);
     assertTrue(segmentPruners.get(0) instanceof EmptySegmentPruner);
 
     // When indexingConfig is configured with Kinesis streaming, EmptySegmentPruner should be returned.
-    when(indexingConfig.getStreamConfigs()).thenReturn(Map.of(StreamConfigProperties.STREAM_TYPE, KINESIS_STREAM_TYPE));
+    when(indexingConfig.getStreamConfigs()).thenReturn(Collections.singletonMap(StreamConfigProperties.STREAM_TYPE, KINESIS_STREAM_TYPE));
     segmentPruners = SegmentPrunerFactory.getSegmentPruners(tableConfig, propertyStore);
     assertEquals(segmentPruners.size(), 1);
     assertTrue(segmentPruners.get(0) instanceof EmptySegmentPruner);
@@ -272,8 +272,8 @@ public class SegmentPrunerTest extends ControllerTest {
     // When streamIngestionConfig is configured with Kinesis streaming, EmptySegmentPruner should be returned.
     StreamIngestionConfig streamIngestionConfig = mock(StreamIngestionConfig.class);
     when(streamIngestionConfig.getStreamConfigMaps()).thenReturn(
-        List.of(Map.of(StreamConfigProperties.STREAM_TYPE, KINESIS_STREAM_TYPE)));
-    when(indexingConfig.getStreamConfigs()).thenReturn(Map.of(StreamConfigProperties.STREAM_TYPE, KINESIS_STREAM_TYPE));
+        Arrays.asList(Collections.singletonMap(StreamConfigProperties.STREAM_TYPE, KINESIS_STREAM_TYPE)));
+    when(indexingConfig.getStreamConfigs()).thenReturn(Collections.singletonMap(StreamConfigProperties.STREAM_TYPE, KINESIS_STREAM_TYPE));
     segmentPruners = SegmentPrunerFactory.getSegmentPruners(tableConfig, propertyStore);
     assertEquals(segmentPruners.size(), 1);
     assertTrue(segmentPruners.get(0) instanceof EmptySegmentPruner);
@@ -373,7 +373,7 @@ public class SegmentPrunerTest extends ControllerTest {
     Map<String, ColumnPartitionMetadata> columnPartitionMetadataMap = new HashMap<>();
     columnPartitionMetadataMap.put(PARTITION_COLUMN_1, new ColumnPartitionMetadata("Modulo", 4, Set.of(0), null));
     columnPartitionMetadataMap.put(PARTITION_COLUMN_2, new ColumnPartitionMetadata("BoundedColumnValue", 3, Set.of(1),
-        Map.of("columnValues", "xyz|abc", "columnValuesDelimiter", "|")));
+        Collections.singletonMap("columnValues", "xyz|abc", "columnValuesDelimiter", "|")));
     setSegmentZKPartitionMetadata(OFFLINE_TABLE_NAME, segment2, columnPartitionMetadataMap);
     onlineSegments.add(segment2);
     segmentZkMetadataFetcher.onAssignmentChange(idealState, externalView, onlineSegments);
@@ -675,7 +675,7 @@ public class SegmentPrunerTest extends ControllerTest {
   private void setSegmentZKPartitionMetadata(String tableNameWithType, String segment, String partitionFunction,
       int numPartitions, int partitionId) {
     SegmentZKMetadata segmentZKMetadata = new SegmentZKMetadata(segment);
-    segmentZKMetadata.setPartitionMetadata(new SegmentPartitionMetadata(Map.of(PARTITION_COLUMN_1,
+    segmentZKMetadata.setPartitionMetadata(new SegmentPartitionMetadata(Collections.singletonMap(PARTITION_COLUMN_1,
         new ColumnPartitionMetadata(partitionFunction, numPartitions, Set.of(partitionId), null))));
     ZKMetadataProvider.setSegmentZKMetadata(_propertyStore, tableNameWithType, segmentZKMetadata);
   }

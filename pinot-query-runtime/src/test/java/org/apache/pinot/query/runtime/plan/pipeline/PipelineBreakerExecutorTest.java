@@ -69,11 +69,11 @@ public class PipelineBreakerExecutorTest {
   private final ExecutorService _executor = Executors.newCachedThreadPool();
   private final OpChainSchedulerService _scheduler = new OpChainSchedulerService(_executor);
   private final MailboxInfos _mailboxInfos =
-      new SharedMailboxInfos(new MailboxInfo("localhost", 123, ImmutableList.of(0)));
+      new SharedMailboxInfos(new MailboxInfo("localhost", 123, ImmutableArrays.asList(0)));
   private final WorkerMetadata _workerMetadata =
-      new WorkerMetadata(0, ImmutableMap.of(1, _mailboxInfos, 2, _mailboxInfos), ImmutableMap.of());
+      new WorkerMetadata(0, ImmutableCollections.singletonMap(1, _mailboxInfos, 2, _mailboxInfos), Immutablenew HashMap<>());
   private final StageMetadata _stageMetadata =
-      new StageMetadata(0, ImmutableList.of(_workerMetadata), ImmutableMap.of());
+      new StageMetadata(0, ImmutableArrays.asList(_workerMetadata), Immutablenew HashMap<>());
 
   private AutoCloseable _mocks;
   @Mock
@@ -121,7 +121,7 @@ public class PipelineBreakerExecutorTest {
 
     PipelineBreakerResult pipelineBreakerResult =
         PipelineBreakerExecutor.executePipelineBreakers(_scheduler, _mailboxService, _workerMetadata, stagePlan,
-            ImmutableMap.of(), 0, Long.MAX_VALUE);
+            Immutablenew HashMap<>(), 0, Long.MAX_VALUE);
 
     // then
     // should have single PB result, receive 2 data blocks, EOS block shouldn't be included
@@ -141,8 +141,8 @@ public class PipelineBreakerExecutorTest {
     MailboxReceiveNode mailboxReceiveNode1 = getPBReceiveNode(1);
     MailboxReceiveNode mailboxReceiveNode2 = getPBReceiveNode(2);
     JoinNode joinNode =
-        new JoinNode(0, DATA_SCHEMA, PlanNode.NodeHint.EMPTY, List.of(mailboxReceiveNode1, mailboxReceiveNode2),
-            JoinRelType.INNER, List.of(0), List.of(0), List.of(), JoinNode.JoinStrategy.HASH);
+        new JoinNode(0, DATA_SCHEMA, PlanNode.NodeHint.EMPTY, Arrays.asList(mailboxReceiveNode1, mailboxReceiveNode2),
+            JoinRelType.INNER, Arrays.asList(0), Arrays.asList(0), Arrays.asList(), JoinNode.JoinStrategy.HASH);
     StagePlan stagePlan = new StagePlan(joinNode, _stageMetadata);
 
     // when
@@ -157,7 +157,7 @@ public class PipelineBreakerExecutorTest {
 
     PipelineBreakerResult pipelineBreakerResult =
         PipelineBreakerExecutor.executePipelineBreakers(_scheduler, _mailboxService, _workerMetadata, stagePlan,
-            ImmutableMap.of(), 0, Long.MAX_VALUE);
+            Immutablenew HashMap<>(), 0, Long.MAX_VALUE);
 
     // then
     // should have two PB result, receive 2 data blocks, one each, EOS block shouldn't be included
@@ -185,7 +185,7 @@ public class PipelineBreakerExecutorTest {
     // when
     PipelineBreakerResult pipelineBreakerResult =
         PipelineBreakerExecutor.executePipelineBreakers(_scheduler, _mailboxService, _workerMetadata, stagePlan,
-            ImmutableMap.of(), 0, Long.MAX_VALUE);
+            Immutablenew HashMap<>(), 0, Long.MAX_VALUE);
 
     // then
     // should return empty block list
@@ -213,7 +213,7 @@ public class PipelineBreakerExecutorTest {
 
     PipelineBreakerResult pipelineBreakerResult =
         PipelineBreakerExecutor.executePipelineBreakers(_scheduler, _mailboxService, _workerMetadata, stagePlan,
-            ImmutableMap.of(), 0, System.currentTimeMillis() + 100);
+            Immutablenew HashMap<>(), 0, System.currentTimeMillis() + 100);
 
     // then
     // should contain only failure error blocks
@@ -230,8 +230,8 @@ public class PipelineBreakerExecutorTest {
     MailboxReceiveNode mailboxReceiveNode1 = getPBReceiveNode(1);
     MailboxReceiveNode incorrectlyConfiguredMailboxNode = getPBReceiveNode(3);
     JoinNode joinNode = new JoinNode(0, DATA_SCHEMA, PlanNode.NodeHint.EMPTY,
-        List.of(mailboxReceiveNode1, incorrectlyConfiguredMailboxNode), JoinRelType.INNER, List.of(0), List.of(0),
-        List.of(), JoinNode.JoinStrategy.HASH);
+        Arrays.asList(mailboxReceiveNode1, incorrectlyConfiguredMailboxNode), JoinRelType.INNER, Arrays.asList(0), Arrays.asList(0),
+        Arrays.asList(), JoinNode.JoinStrategy.HASH);
     StagePlan stagePlan = new StagePlan(joinNode, _stageMetadata);
 
     // when
@@ -246,7 +246,7 @@ public class PipelineBreakerExecutorTest {
 
     PipelineBreakerResult pipelineBreakerResult =
         PipelineBreakerExecutor.executePipelineBreakers(_scheduler, _mailboxService, _workerMetadata, stagePlan,
-            ImmutableMap.of(), 0, Long.MAX_VALUE);
+            Immutablenew HashMap<>(), 0, Long.MAX_VALUE);
 
     // then
     // should pass when one PB returns result, the other returns empty.
@@ -263,8 +263,8 @@ public class PipelineBreakerExecutorTest {
     MailboxReceiveNode mailboxReceiveNode1 = getPBReceiveNode(1);
     MailboxReceiveNode incorrectlyConfiguredMailboxNode = getPBReceiveNode(2);
     JoinNode joinNode = new JoinNode(0, DATA_SCHEMA, PlanNode.NodeHint.EMPTY,
-        List.of(mailboxReceiveNode1, incorrectlyConfiguredMailboxNode), JoinRelType.INNER, List.of(0), List.of(0),
-        List.of(), JoinNode.JoinStrategy.HASH);
+        Arrays.asList(mailboxReceiveNode1, incorrectlyConfiguredMailboxNode), JoinRelType.INNER, Arrays.asList(0), Arrays.asList(0),
+        Arrays.asList(), JoinNode.JoinStrategy.HASH);
     StagePlan stagePlan = new StagePlan(joinNode, _stageMetadata);
 
     // when
@@ -279,7 +279,7 @@ public class PipelineBreakerExecutorTest {
 
     PipelineBreakerResult pipelineBreakerResult =
         PipelineBreakerExecutor.executePipelineBreakers(_scheduler, _mailboxService, _workerMetadata, stagePlan,
-            ImmutableMap.of(), 0, Long.MAX_VALUE);
+            Immutablenew HashMap<>(), 0, Long.MAX_VALUE);
 
     // then
     // should fail even if one of the 2 PB doesn't contain error block from sender.

@@ -479,11 +479,11 @@ public class SchemaUtilsTest {
     // valid schema
     pinotSchema = new Schema.SchemaBuilder().setSchemaName(TABLE_NAME)
         .addSingleValueDimension("name", DataType.STRING)
-        .addComplex("intMap", DataType.MAP, Map.of(
+        .addComplex("intMap", DataType.MAP, Collections.singletonMap(
             "key", new DimensionFieldSpec("key", DataType.STRING, true),
             "value", new DimensionFieldSpec("value", DataType.INT, true)
         ))
-        .addComplex("stringMap", DataType.MAP, Map.of(
+        .addComplex("stringMap", DataType.MAP, Collections.singletonMap(
             "key", new DimensionFieldSpec("key", DataType.STRING, true),
             "value", new DimensionFieldSpec("value", DataType.STRING, true)
         ))

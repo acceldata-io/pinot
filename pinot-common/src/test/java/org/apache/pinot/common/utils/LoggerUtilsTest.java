@@ -65,7 +65,7 @@ public class LoggerUtilsTest {
     Map<String, String> pinotLoggerInfo = LoggerUtils.getLoggerInfo(PINOT);
     assertNotNull(pinotLoggerInfo);
     assertEquals(pinotLoggerInfo.get("level"), "WARN");
-    for (String level : ImmutableList.of("TRACE", "DEBUG", "INFO", "ERROR", "WARN")) {
+    for (String level : ImmutableArrays.asList("TRACE", "DEBUG", "INFO", "ERROR", "WARN")) {
       LoggerUtils.setLoggerLevel(PINOT, level);
       checkLogLevel(level);
       pinotLoggerInfo = LoggerUtils.getLoggerInfo(PINOT);

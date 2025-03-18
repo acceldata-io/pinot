@@ -85,11 +85,11 @@ public class RealtimeLuceneIndexRefreshManagerTest {
         "Timed out waiting for thead pool to scale up for the second searcher manager holder");
 
     realtimeLuceneIndexRefreshManager.addSearcherManagerHolder(searcherManagerHolder3);
-    TestUtils.waitForCondition(aVoid -> realtimeLuceneIndexRefreshManager.getListSizes().equals(List.of(1, 2)), 5000,
+    TestUtils.waitForCondition(aVoid -> realtimeLuceneIndexRefreshManager.getListSizes().equals(Arrays.asList(1, 2)), 5000,
         "Timed out waiting for the searcher manager holder to be added to another queue");
 
     realtimeLuceneIndexRefreshManager.addSearcherManagerHolder(searcherManagerHolder4);
-    TestUtils.waitForCondition(aVoid -> realtimeLuceneIndexRefreshManager.getListSizes().equals(List.of(2, 2)), 5000,
+    TestUtils.waitForCondition(aVoid -> realtimeLuceneIndexRefreshManager.getListSizes().equals(Arrays.asList(2, 2)), 5000,
         "Timed out waiting for the searcher manager holder to be added to the smallest queue");
 
     searcherManagerHolder1.setIndexClosed();

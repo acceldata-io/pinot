@@ -59,7 +59,7 @@ public class BroadcastExchangeTest {
   public void shouldBroadcast()
       throws Exception {
     // Given:
-    ImmutableList<SendingMailbox> destinations = ImmutableList.of(_mailbox1, _mailbox2);
+    ImmutableList<SendingMailbox> destinations = ImmutableArrays.asList(_mailbox1, _mailbox2);
 
     // When:
     new BroadcastExchange(destinations, TransferableBlockUtils::splitBlock).route(destinations, _block);

@@ -632,18 +632,18 @@ public class JsonIndexTest {
 
     String[] keys = {"$.foo[0].bar[1]", "$.foo[1].bar[0]", "$.foo2[0]", "$.foo[100].bar[100]", "$.foo[0].bar[*]",
             "$.foo[*].bar[0]", "$.foo[*].bar[*]"};
-    List<Map<String, RoaringBitmap>> expected = List.of(
-            Map.of("y", RoaringBitmap.bitmapOf(0), "z", RoaringBitmap.bitmapOf(1)),
-            Map.of("a", RoaringBitmap.bitmapOf(0)),
-            Map.of("u", RoaringBitmap.bitmapOf(0, 1)),
+    List<Map<String, RoaringBitmap>> expected = Arrays.asList(
+            Collections.singletonMap("y", RoaringBitmap.bitmapOf(0), "z", RoaringBitmap.bitmapOf(1)),
+            Collections.singletonMap("a", RoaringBitmap.bitmapOf(0)),
+            Collections.singletonMap("u", RoaringBitmap.bitmapOf(0, 1)),
             Collections.emptyMap(),
-            Map.of("x", RoaringBitmap.bitmapOf(0),
+            Collections.singletonMap("x", RoaringBitmap.bitmapOf(0),
                     "y", RoaringBitmap.bitmapOf(0, 1),
                     "z", RoaringBitmap.bitmapOf(1)),
-            Map.of("x", RoaringBitmap.bitmapOf(0),
+            Collections.singletonMap("x", RoaringBitmap.bitmapOf(0),
                     "a", RoaringBitmap.bitmapOf(0),
                     "y", RoaringBitmap.bitmapOf(1)),
-            Map.of("x", RoaringBitmap.bitmapOf(0),
+            Collections.singletonMap("x", RoaringBitmap.bitmapOf(0),
                     "y", RoaringBitmap.bitmapOf(0, 1),
                     "z", RoaringBitmap.bitmapOf(1),
                     "a", RoaringBitmap.bitmapOf(0),

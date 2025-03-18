@@ -68,7 +68,7 @@ public class KinesisConsumer extends KinesisConnectionHandler implements Partiti
     } catch (ProvisionedThroughputExceededException pte) {
       LOGGER.error("Rate limit exceeded while fetching messages from Kinesis stream: {} with threshold: {}",
           pte.getMessage(), _config.getRpsLimit());
-      return new KinesisMessageBatch(List.of(), (KinesisPartitionGroupOffset) startMsgOffset, false);
+      return new KinesisMessageBatch(Arrays.asList(), (KinesisPartitionGroupOffset) startMsgOffset, false);
     }
   }
 
@@ -90,7 +90,7 @@ public class KinesisConsumer extends KinesisConnectionHandler implements Partiti
       shardIterator = _kinesisClient.getShardIterator(getShardIteratorRequest).shardIterator();
     }
     if (shardIterator == null) {
-      return new KinesisMessageBatch(List.of(), startOffset, true);
+      return new KinesisMessageBatch(Arrays.asList(), startOffset, true);
     }
 
     // Read records
@@ -109,7 +109,7 @@ public class KinesisConsumer extends KinesisConnectionHandler implements Partiti
     } else {
       // TODO: Revisit whether Kinesis can return empty batch when there are available records. The consumer cna handle
       //       empty message batch, but it will treat it as fully caught up.
-      messages = List.of();
+      messages = Arrays.asList();
       offsetOfNextBatch = startOffset;
     }
     assert offsetOfNextBatch != null;
@@ -154,7 +154,7 @@ public class KinesisConsumer extends KinesisConnectionHandler implements Partiti
         new StreamMessageMetadata.Builder().setRecordIngestionTimeMs(timestamp).setSerializedValueSize(value.length)
             .setOffset(offset, offset);
     if (_config.isPopulateMetadata()) {
-      builder.setMetadata(Map.of(KinesisStreamMessageMetadata.APPRX_ARRIVAL_TIMESTAMP_KEY, String.valueOf(timestamp),
+      builder.setMetadata(Collections.singletonMap(KinesisStreamMessageMetadata.APPRX_ARRIVAL_TIMESTAMP_KEY, String.valueOf(timestamp),
           KinesisStreamMessageMetadata.SEQUENCE_NUMBER_KEY, sequenceNumber));
     }
     StreamMessageMetadata metadata = builder.build();

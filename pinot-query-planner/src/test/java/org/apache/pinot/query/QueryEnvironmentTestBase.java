@@ -48,17 +48,17 @@ public class QueryEnvironmentTestBase {
 
   protected static final Random RANDOM_REQUEST_ID_GEN = new Random();
   public static final Map<String, List<String>> SERVER1_SEGMENTS =
-      ImmutableMap.of("a_REALTIME", ImmutableList.of("a1", "a2"), "b_REALTIME", ImmutableList.of("b1"), "c_OFFLINE",
-          ImmutableList.of("c1"), "d_OFFLINE", ImmutableList.of("d1"), "e_OFFLINE", ImmutableList.of("e1"));
+      ImmutableCollections.singletonMap("a_REALTIME", ImmutableArrays.asList("a1", "a2"), "b_REALTIME", ImmutableArrays.asList("b1"), "c_OFFLINE",
+          ImmutableArrays.asList("c1"), "d_OFFLINE", ImmutableArrays.asList("d1"), "e_OFFLINE", ImmutableArrays.asList("e1"));
   public static final Map<String, List<String>> SERVER2_SEGMENTS =
-      ImmutableMap.of("a_REALTIME", ImmutableList.of("a3"), "c_OFFLINE", ImmutableList.of("c2", "c3"),
-          "d_REALTIME", ImmutableList.of("d2"), "d_OFFLINE", ImmutableList.of("d3"), "e_REALTIME",
-          ImmutableList.of("e2"), "e_OFFLINE", ImmutableList.of("e3"));
+      ImmutableCollections.singletonMap("a_REALTIME", ImmutableArrays.asList("a3"), "c_OFFLINE", ImmutableArrays.asList("c2", "c3"),
+          "d_REALTIME", ImmutableArrays.asList("d2"), "d_OFFLINE", ImmutableArrays.asList("d3"), "e_REALTIME",
+          ImmutableArrays.asList("e2"), "e_OFFLINE", ImmutableArrays.asList("e3"));
   public static final Map<String, Schema> TABLE_SCHEMAS = new HashMap<>();
   public static final Map<String, Pair<String, List<List<String>>>> PARTITIONED_SEGMENTS_MAP = new HashMap<>();
   public static final int PARTITION_COUNT = 4;
   public static final Map<String, String> PARTITIONED_TABLES =
-      ImmutableMap.of("a_REALTIME", "col2", "b_REALTIME", "col1");
+      ImmutableCollections.singletonMap("a_REALTIME", "col2", "b_REALTIME", "col1");
   static {
     for (Map.Entry<String, String> e : PARTITIONED_TABLES.entrySet()) {
       String tableName = e.getKey();

@@ -72,7 +72,7 @@ public class UnionOperatorTest {
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
 
     UnionOperator unionOperator =
-        new UnionOperator(OperatorTestUtil.getTracingContext(), ImmutableList.of(_leftOperator, _rightOperator),
+        new UnionOperator(OperatorTestUtil.getTracingContext(), ImmutableArrays.asList(_leftOperator, _rightOperator),
             schema);
     List<Object[]> resultRows = new ArrayList<>();
     TransferableBlock result = unionOperator.nextBlock();

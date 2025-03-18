@@ -69,7 +69,7 @@ public class FilteredAggregationsTest extends BaseQueriesTest {
       .addMetric(INT_COL_NAME, FieldSpec.DataType.INT).build();
   private static final List<FieldConfig> FIELD_CONFIGS = new ArrayList<>();
   private static final TableConfig TABLE_CONFIG = new TableConfigBuilder(TableType.OFFLINE).setTableName(TABLE_NAME)
-      .setInvertedIndexColumns(Collections.singletonList(INT_COL_NAME)).setRangeIndexColumns(List.of(INT_COL_NAME))
+      .setInvertedIndexColumns(Collections.singletonList(INT_COL_NAME)).setRangeIndexColumns(Arrays.asList(INT_COL_NAME))
       .setFieldConfigList(FIELD_CONFIGS).build();
 
   private IndexSegment _indexSegment;

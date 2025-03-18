@@ -328,11 +328,11 @@ public class SegmentPreProcessorTest {
       throws Exception {
     buildSegment(segmentVersion);
     _fieldConfigMap.put(NEWLY_ADDED_STRING_COL_RAW,
-        new FieldConfig(NEWLY_ADDED_STRING_COL_RAW, FieldConfig.EncodingType.RAW, List.of(FieldConfig.IndexType.TEXT),
+        new FieldConfig(NEWLY_ADDED_STRING_COL_RAW, FieldConfig.EncodingType.RAW, Arrays.asList(FieldConfig.IndexType.TEXT),
             null, null));
     _fieldConfigMap.put(NEWLY_ADDED_STRING_MV_COL_RAW,
         new FieldConfig(NEWLY_ADDED_STRING_MV_COL_RAW, FieldConfig.EncodingType.RAW,
-            List.of(FieldConfig.IndexType.TEXT), null, null));
+            Arrays.asList(FieldConfig.IndexType.TEXT), null, null));
     checkTextIndexCreation(NEWLY_ADDED_STRING_COL_RAW, 1, 1, _newColumnsSchemaWithText, true, true, true, 4);
     checkTextIndexCreation(NEWLY_ADDED_STRING_MV_COL_RAW, 1, 1, _newColumnsSchemaWithText, true, true, false, 4, false,
         1);
@@ -344,7 +344,7 @@ public class SegmentPreProcessorTest {
       throws Exception {
     buildSegment(segmentVersion);
     _fieldConfigMap.put(EXISTING_STRING_COL_RAW,
-        new FieldConfig(EXISTING_STRING_COL_RAW, FieldConfig.EncodingType.RAW, List.of(FieldConfig.IndexType.FST), null,
+        new FieldConfig(EXISTING_STRING_COL_RAW, FieldConfig.EncodingType.RAW, Arrays.asList(FieldConfig.IndexType.FST), null,
             null));
     runPreProcessor();
   }
@@ -355,7 +355,7 @@ public class SegmentPreProcessorTest {
     buildSegment(segmentVersion);
     _fieldConfigMap.put(NEWLY_ADDED_FST_COL_DICT,
         new FieldConfig(NEWLY_ADDED_FST_COL_DICT, FieldConfig.EncodingType.DICTIONARY,
-            List.of(FieldConfig.IndexType.FST), null, null));
+            Arrays.asList(FieldConfig.IndexType.FST), null, null));
     checkFSTIndexCreation(NEWLY_ADDED_FST_COL_DICT, 1, 1, _newColumnsSchemaWithFST, true, true, 4);
   }
 
@@ -365,7 +365,7 @@ public class SegmentPreProcessorTest {
     buildSegment(segmentVersion);
     _fieldConfigMap.put(EXISTING_STRING_COL_DICT,
         new FieldConfig(EXISTING_STRING_COL_DICT, FieldConfig.EncodingType.DICTIONARY,
-            List.of(FieldConfig.IndexType.FST), null, null));
+            Arrays.asList(FieldConfig.IndexType.FST), null, null));
     checkFSTIndexCreation(EXISTING_STRING_COL_DICT, 9, 4, _newColumnsSchemaWithFST, false, false, 26);
   }
 
@@ -420,7 +420,7 @@ public class SegmentPreProcessorTest {
     _invertedIndexColumns.add(EXISTING_STRING_COL_RAW);
     _fieldConfigMap.put(EXISTING_STRING_COL_RAW,
         new FieldConfig(EXISTING_STRING_COL_RAW, FieldConfig.EncodingType.DICTIONARY,
-            List.of(FieldConfig.IndexType.INVERTED, FieldConfig.IndexType.TEXT), null, null));
+            Arrays.asList(FieldConfig.IndexType.INVERTED, FieldConfig.IndexType.TEXT), null, null));
     checkForwardIndexCreation(EXISTING_STRING_COL_RAW, 5, 3, _schema, false, true, false, 4, null, true, 0,
         DataType.STRING, 100000);
     validateIndex(StandardIndexes.inverted(), EXISTING_STRING_COL_RAW, 5, 3, false, true, false, 4, true, 0, null,
@@ -431,7 +431,7 @@ public class SegmentPreProcessorTest {
     // TEST 2: EXISTING_STRING_COL_RAW. Enable dictionary on a raw column that already has text index.
     resetIndexConfigs();
     _fieldConfigMap.put(EXISTING_STRING_COL_RAW,
-        new FieldConfig(EXISTING_STRING_COL_RAW, FieldConfig.EncodingType.RAW, List.of(FieldConfig.IndexType.TEXT),
+        new FieldConfig(EXISTING_STRING_COL_RAW, FieldConfig.EncodingType.RAW, Arrays.asList(FieldConfig.IndexType.TEXT),
             null, null));
     buildV3Segment();
     validateIndex(StandardIndexes.text(), EXISTING_STRING_COL_RAW, 5, 3, false, false, false, 0, true, 0, null, false,
@@ -441,7 +441,7 @@ public class SegmentPreProcessorTest {
     _noDictionaryColumns.remove(EXISTING_STRING_COL_RAW);
     _fieldConfigMap.put(EXISTING_STRING_COL_RAW,
         new FieldConfig(EXISTING_STRING_COL_RAW, FieldConfig.EncodingType.DICTIONARY,
-            List.of(FieldConfig.IndexType.TEXT), null, null));
+            Arrays.asList(FieldConfig.IndexType.TEXT), null, null));
     checkForwardIndexCreation(EXISTING_STRING_COL_RAW, 5, 3, _schema, false, true, false, 4, null, true, 0,
         DataType.STRING, 100000);
     validateIndex(StandardIndexes.text(), EXISTING_STRING_COL_RAW, 5, 3, false, true, false, 4, true, 0, null, false,
@@ -564,7 +564,7 @@ public class SegmentPreProcessorTest {
         false, DataType.STRING, 100000);
     _noDictionaryColumns.add(EXISTING_STRING_COL_DICT);
     _fieldConfigMap.put(EXISTING_STRING_COL_DICT,
-        new FieldConfig(EXISTING_STRING_COL_DICT, FieldConfig.EncodingType.RAW, List.of(FieldConfig.IndexType.TEXT),
+        new FieldConfig(EXISTING_STRING_COL_DICT, FieldConfig.EncodingType.RAW, Arrays.asList(FieldConfig.IndexType.TEXT),
             null, null));
     checkForwardIndexCreation(EXISTING_STRING_COL_DICT, 9, 4, _schema, false, false, false, 0, ChunkCompressionType.LZ4,
         true, 0, DataType.STRING, 100000);
@@ -614,7 +614,7 @@ public class SegmentPreProcessorTest {
     // Test1: Rewriting forward index will be a no-op for v1 segments. Default LZ4 compressionType will be retained.
     buildV1Segment();
     _fieldConfigMap.put(EXISTING_STRING_COL_RAW,
-        new FieldConfig(EXISTING_STRING_COL_RAW, FieldConfig.EncodingType.RAW, List.of(), CompressionCodec.ZSTANDARD,
+        new FieldConfig(EXISTING_STRING_COL_RAW, FieldConfig.EncodingType.RAW, Arrays.asList(), CompressionCodec.ZSTANDARD,
             null));
     checkForwardIndexCreation(EXISTING_STRING_COL_RAW, 5, 3, _schema, false, false, false, 0, ChunkCompressionType.LZ4,
         true, 0, DataType.STRING, 100000);
@@ -628,7 +628,7 @@ public class SegmentPreProcessorTest {
 
     // Test3: Change compression on existing raw index column. Also add text index on same column. Check correctness.
     _fieldConfigMap.put(EXISTING_STRING_COL_RAW,
-        new FieldConfig(EXISTING_STRING_COL_RAW, FieldConfig.EncodingType.RAW, List.of(FieldConfig.IndexType.TEXT),
+        new FieldConfig(EXISTING_STRING_COL_RAW, FieldConfig.EncodingType.RAW, Arrays.asList(FieldConfig.IndexType.TEXT),
             CompressionCodec.SNAPPY, null));
     checkTextIndexCreation(EXISTING_STRING_COL_RAW, 5, 3, _schema, false, false, false, 0);
     validateIndex(StandardIndexes.forward(), EXISTING_STRING_COL_RAW, 5, 3, false, false, false, 0, true, 0,
@@ -638,11 +638,11 @@ public class SegmentPreProcessorTest {
     resetIndexConfigs();
     buildV3Segment();
     _fieldConfigMap.put(EXISTING_STRING_COL_RAW,
-        new FieldConfig(EXISTING_STRING_COL_RAW, FieldConfig.EncodingType.RAW, List.of(), CompressionCodec.ZSTANDARD,
+        new FieldConfig(EXISTING_STRING_COL_RAW, FieldConfig.EncodingType.RAW, Arrays.asList(), CompressionCodec.ZSTANDARD,
             null));
     _fieldConfigMap.put(EXISTING_STRING_COL_DICT,
         new FieldConfig(EXISTING_STRING_COL_DICT, FieldConfig.EncodingType.DICTIONARY,
-            List.of(FieldConfig.IndexType.FST), null, null));
+            Arrays.asList(FieldConfig.IndexType.FST), null, null));
     // Check FST index
     checkFSTIndexCreation(EXISTING_STRING_COL_DICT, 9, 4, _newColumnsSchemaWithFST, false, false, 26);
     // Check forward index.
@@ -651,7 +651,7 @@ public class SegmentPreProcessorTest {
 
     // Test5: Change compressionType for an MV column
     _fieldConfigMap.put(EXISTING_INT_COL_RAW_MV,
-        new FieldConfig(EXISTING_INT_COL_RAW_MV, FieldConfig.EncodingType.RAW, List.of(), CompressionCodec.ZSTANDARD,
+        new FieldConfig(EXISTING_INT_COL_RAW_MV, FieldConfig.EncodingType.RAW, Arrays.asList(), CompressionCodec.ZSTANDARD,
             null));
     checkForwardIndexCreation(EXISTING_INT_COL_RAW_MV, 18499, 15, _schema, false, false, false, 0,
         ChunkCompressionType.ZSTANDARD, false, 13, DataType.INT, 106688);
@@ -671,10 +671,10 @@ public class SegmentPreProcessorTest {
     buildSegment(segmentVersion);
     _fieldConfigMap.put(NEWLY_ADDED_STRING_COL_DICT,
         new FieldConfig(NEWLY_ADDED_STRING_COL_DICT, FieldConfig.EncodingType.DICTIONARY,
-            List.of(FieldConfig.IndexType.TEXT), null, null));
+            Arrays.asList(FieldConfig.IndexType.TEXT), null, null));
     _fieldConfigMap.put(NEWLY_ADDED_STRING_MV_COL_DICT,
         new FieldConfig(NEWLY_ADDED_STRING_MV_COL_DICT, FieldConfig.EncodingType.DICTIONARY,
-            List.of(FieldConfig.IndexType.TEXT), null, null));
+            Arrays.asList(FieldConfig.IndexType.TEXT), null, null));
     checkTextIndexCreation(NEWLY_ADDED_STRING_COL_DICT, 1, 1, _newColumnsSchemaWithText, true, true, true, 4);
     validateIndex(StandardIndexes.text(), NEWLY_ADDED_STRING_MV_COL_DICT, 1, 1, true, true, false, 4, false, 1, null,
         false, DataType.STRING, 100000);
@@ -690,7 +690,7 @@ public class SegmentPreProcessorTest {
       throws Exception {
     buildSegment(segmentVersion);
     _fieldConfigMap.put(EXISTING_STRING_COL_RAW,
-        new FieldConfig(EXISTING_STRING_COL_RAW, FieldConfig.EncodingType.RAW, List.of(FieldConfig.IndexType.TEXT),
+        new FieldConfig(EXISTING_STRING_COL_RAW, FieldConfig.EncodingType.RAW, Arrays.asList(FieldConfig.IndexType.TEXT),
             null, null));
     checkTextIndexCreation(EXISTING_STRING_COL_RAW, 5, 3, _schema, false, false, false, 0);
   }
@@ -706,7 +706,7 @@ public class SegmentPreProcessorTest {
     buildSegment(segmentVersion);
     _fieldConfigMap.put(EXISTING_STRING_COL_DICT,
         new FieldConfig(EXISTING_STRING_COL_DICT, FieldConfig.EncodingType.DICTIONARY,
-            List.of(FieldConfig.IndexType.TEXT), null, null));
+            Arrays.asList(FieldConfig.IndexType.TEXT), null, null));
     checkTextIndexCreation(EXISTING_STRING_COL_DICT, 9, 4, _schema, false, true, false, 26);
   }
 
@@ -972,7 +972,7 @@ public class SegmentPreProcessorTest {
     _noDictionaryColumns.add(NEW_RAW_STRING_SV_DIMENSION_COLUMN_NAME);
     _invertedIndexColumns.add(NEW_COLUMN_INVERTED_INDEX);
     _ingestionConfig.setTransformConfigs(
-        List.of(new TransformConfig(NEW_INT_SV_DIMENSION_COLUMN_NAME, "plus(column1, 1)"),
+        Arrays.asList(new TransformConfig(NEW_INT_SV_DIMENSION_COLUMN_NAME, "plus(column1, 1)"),
             new TransformConfig(NEW_RAW_STRING_SV_DIMENSION_COLUMN_NAME, "reverse(column3)"),
             // Ensure that null values returned by transform functions for derived columns are handled appropriately
             // during segment reload
@@ -1255,9 +1255,9 @@ public class SegmentPreProcessorTest {
     _invertedIndexColumns.add(strColumn);
     _rangeIndexColumns.add(strColumn);
     _fieldConfigMap.put(strColumn, new FieldConfig(strColumn, FieldConfig.EncodingType.DICTIONARY,
-        List.of(FieldConfig.IndexType.INVERTED, FieldConfig.IndexType.RANGE, FieldConfig.IndexType.TEXT,
+        Arrays.asList(FieldConfig.IndexType.INVERTED, FieldConfig.IndexType.RANGE, FieldConfig.IndexType.TEXT,
             FieldConfig.IndexType.FST), null, null));
-    _bloomFilterConfigs = Map.of(strColumn, new BloomFilterConfig(0.1, 1024, true));
+    _bloomFilterConfigs = Collections.singletonMap(strColumn, new BloomFilterConfig(0.1, 1024, true));
 
     // V1 use separate file for each column index.
     File iiFile = new File(INDEX_DIR, strColumn + V1Constants.Indexes.BITMAP_INVERTED_INDEX_FILE_EXTENSION);
@@ -1308,9 +1308,9 @@ public class SegmentPreProcessorTest {
     _invertedIndexColumns.add(strColumn);
     _rangeIndexColumns.add(strColumn);
     _fieldConfigMap.put(strColumn, new FieldConfig(strColumn, FieldConfig.EncodingType.DICTIONARY,
-        List.of(FieldConfig.IndexType.INVERTED, FieldConfig.IndexType.RANGE, FieldConfig.IndexType.TEXT,
+        Arrays.asList(FieldConfig.IndexType.INVERTED, FieldConfig.IndexType.RANGE, FieldConfig.IndexType.TEXT,
             FieldConfig.IndexType.FST), null, null));
-    _bloomFilterConfigs = Map.of(strColumn, new BloomFilterConfig(0.1, 1024, true));
+    _bloomFilterConfigs = Collections.singletonMap(strColumn, new BloomFilterConfig(0.1, 1024, true));
 
     // Create all kinds of indices.
     runPreProcessor();
@@ -1350,9 +1350,9 @@ public class SegmentPreProcessorTest {
 
     // Create H3 and Json indices.
     _fieldConfigMap.put("newH3Col",
-        new FieldConfig("newH3Col", FieldConfig.EncodingType.DICTIONARY, List.of(FieldConfig.IndexType.H3), null,
-            Map.of("resolutions", "5")));
-    _jsonIndexConfigs = Map.of("newJsonCol", new JsonIndexConfig());
+        new FieldConfig("newH3Col", FieldConfig.EncodingType.DICTIONARY, Arrays.asList(FieldConfig.IndexType.H3), null,
+            Collections.singletonMap("resolutions", "5")));
+    _jsonIndexConfigs = Collections.singletonMap("newJsonCol", new JsonIndexConfig());
     runPreProcessor(_newColumnsSchemaWithH3Json);
     assertTrue(h3File.exists());
     assertTrue(jsFile.exists());
@@ -1382,9 +1382,9 @@ public class SegmentPreProcessorTest {
 
     // Create H3 and Json indices.
     _fieldConfigMap.put("newH3Col",
-        new FieldConfig("newH3Col", FieldConfig.EncodingType.DICTIONARY, List.of(FieldConfig.IndexType.H3), null,
-            Map.of("resolutions", "5")));
-    _jsonIndexConfigs = Map.of("newJsonCol", new JsonIndexConfig());
+        new FieldConfig("newH3Col", FieldConfig.EncodingType.DICTIONARY, Arrays.asList(FieldConfig.IndexType.H3), null,
+            Collections.singletonMap("resolutions", "5")));
+    _jsonIndexConfigs = Collections.singletonMap("newJsonCol", new JsonIndexConfig());
     runPreProcessor(_newColumnsSchemaWithH3Json);
     long addedLength = 0;
     try (SegmentDirectory segmentDirectory = new SegmentLocalFSDirectory(INDEX_DIR, ReadMode.mmap);
@@ -1431,16 +1431,16 @@ public class SegmentPreProcessorTest {
     _rangeIndexColumns.remove("newColumnX");
     // Add text/FST/H3 index to non-existing column
     _fieldConfigMap.put("newColumnX", new FieldConfig("newColumnX", FieldConfig.EncodingType.DICTIONARY,
-        List.of(FieldConfig.IndexType.TEXT, FieldConfig.IndexType.FST, FieldConfig.IndexType.H3), null,
-        Map.of("resolutions", "5")));
+        Arrays.asList(FieldConfig.IndexType.TEXT, FieldConfig.IndexType.FST, FieldConfig.IndexType.H3), null,
+        Collections.singletonMap("resolutions", "5")));
     verifyProcessNotNeeded();
     _fieldConfigMap.remove("newColumnX");
     // Add bloom filter to non-existing column
-    _bloomFilterConfigs = Map.of("newColumnX", new BloomFilterConfig(0.1, 1024, true));
+    _bloomFilterConfigs = Collections.singletonMap("newColumnX", new BloomFilterConfig(0.1, 1024, true));
     verifyProcessNotNeeded();
     _bloomFilterConfigs = null;
     // Add json index to non-existing column
-    _jsonIndexConfigs = Map.of("newColumnX", new JsonIndexConfig());
+    _jsonIndexConfigs = Collections.singletonMap("newColumnX", new JsonIndexConfig());
     verifyProcessNotNeeded();
     _jsonIndexConfigs = null;
 
@@ -1450,19 +1450,19 @@ public class SegmentPreProcessorTest {
     _rangeIndexColumns.add("column3");
     verifyProcessNeeded();
     _fieldConfigMap.put("column3",
-        new FieldConfig("column3", FieldConfig.EncodingType.DICTIONARY, List.of(FieldConfig.IndexType.TEXT), null,
+        new FieldConfig("column3", FieldConfig.EncodingType.DICTIONARY, Arrays.asList(FieldConfig.IndexType.TEXT), null,
             null));
     verifyProcessNeeded();
     _fieldConfigMap.put("column3", new FieldConfig("column3", FieldConfig.EncodingType.DICTIONARY,
-        List.of(FieldConfig.IndexType.TEXT, FieldConfig.IndexType.FST), null, null));
+        Arrays.asList(FieldConfig.IndexType.TEXT, FieldConfig.IndexType.FST), null, null));
     verifyProcessNeeded();
     _fieldConfigMap.put("newH3Col",
-        new FieldConfig("newH3Col", FieldConfig.EncodingType.DICTIONARY, List.of(FieldConfig.IndexType.H3), null,
-            Map.of("resolutions", "5")));
+        new FieldConfig("newH3Col", FieldConfig.EncodingType.DICTIONARY, Arrays.asList(FieldConfig.IndexType.H3), null,
+            Collections.singletonMap("resolutions", "5")));
     verifyProcessNeeded();
-    _bloomFilterConfigs = Map.of("column3", new BloomFilterConfig(0.1, 1024, true));
+    _bloomFilterConfigs = Collections.singletonMap("column3", new BloomFilterConfig(0.1, 1024, true));
     verifyProcessNeeded();
-    _jsonIndexConfigs = Map.of("newJsonCol", new JsonIndexConfig());
+    _jsonIndexConfigs = Collections.singletonMap("newJsonCol", new JsonIndexConfig());
     verifyProcessNeeded();
 
     // Require to add startree index.
@@ -1597,7 +1597,7 @@ public class SegmentPreProcessorTest {
 
     // Update table config to convert dict to noDict for longCol
     IndexingConfig indexingConfig = tableConfig.getIndexingConfig();
-    indexingConfig.setNoDictionaryColumns(List.of("longCol"));
+    indexingConfig.setNoDictionaryColumns(Arrays.asList("longCol"));
     try (SegmentDirectory segmentDirectory = new SegmentLocalFSDirectory(INDEX_DIR, ReadMode.mmap);
         SegmentPreProcessor processor = new SegmentPreProcessor(segmentDirectory,
             new IndexLoadingConfig(tableConfig, schema), schema)) {
@@ -1615,11 +1615,11 @@ public class SegmentPreProcessorTest {
     }
 
     // Update table config to convert dict to noDict for longCol and add the Startree index config
-    indexingConfig.setNoDictionaryColumns(List.of("longCol"));
+    indexingConfig.setNoDictionaryColumns(Arrays.asList("longCol"));
     indexingConfig.setEnableDynamicStarTreeCreation(true);
     StarTreeIndexConfig starTreeIndexConfig =
-        new StarTreeIndexConfig(List.of("stringCol"), null, List.of("SUM__longCol"), null, 1000);
-    indexingConfig.setStarTreeIndexConfigs(List.of(starTreeIndexConfig));
+        new StarTreeIndexConfig(Arrays.asList("stringCol"), null, Arrays.asList("SUM__longCol"), null, 1000);
+    indexingConfig.setStarTreeIndexConfigs(Arrays.asList(starTreeIndexConfig));
     try (SegmentDirectory segmentDirectory = new SegmentLocalFSDirectory(INDEX_DIR, ReadMode.mmap);
         SegmentPreProcessor processor = new SegmentPreProcessor(segmentDirectory,
             new IndexLoadingConfig(tableConfig, schema), schema)) {
@@ -1638,7 +1638,7 @@ public class SegmentPreProcessorTest {
 
     // Update table config to convert noDict to dict for longCol and also add the Startree index
     indexingConfig.setNoDictionaryColumns(null);
-    indexingConfig.setStarTreeIndexConfigs(List.of(starTreeIndexConfig));
+    indexingConfig.setStarTreeIndexConfigs(Arrays.asList(starTreeIndexConfig));
     try (SegmentDirectory segmentDirectory = new SegmentLocalFSDirectory(INDEX_DIR, ReadMode.mmap);
         SegmentPreProcessor processor = new SegmentPreProcessor(segmentDirectory,
             new IndexLoadingConfig(tableConfig, schema), schema)) {
@@ -1697,8 +1697,8 @@ public class SegmentPreProcessorTest {
     buildSegment(segmentVersion);
     _invertedIndexColumns.add(NEWLY_ADDED_FORWARD_INDEX_DISABLED_COL_SV);
     _fieldConfigMap.put(NEWLY_ADDED_FORWARD_INDEX_DISABLED_COL_SV,
-        new FieldConfig(NEWLY_ADDED_FORWARD_INDEX_DISABLED_COL_SV, FieldConfig.EncodingType.DICTIONARY, List.of(), null,
-            Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+        new FieldConfig(NEWLY_ADDED_FORWARD_INDEX_DISABLED_COL_SV, FieldConfig.EncodingType.DICTIONARY, Arrays.asList(), null,
+            Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
     // Forward index is always going to be present for default SV columns with forward index disabled. This is because
     // such default columns are going to be sorted and the forwardIndexDisabled flag is a no-op for sorted columns
     createAndValidateIndex(StandardIndexes.forward(), NEWLY_ADDED_FORWARD_INDEX_DISABLED_COL_SV, 1, 1,
@@ -1709,8 +1709,8 @@ public class SegmentPreProcessorTest {
     buildSegment(segmentVersion);
     _noDictionaryColumns.add(NEWLY_ADDED_FORWARD_INDEX_DISABLED_COL_SV);
     _fieldConfigMap.put(NEWLY_ADDED_FORWARD_INDEX_DISABLED_COL_SV,
-        new FieldConfig(NEWLY_ADDED_FORWARD_INDEX_DISABLED_COL_SV, FieldConfig.EncodingType.RAW, List.of(), null,
-            Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+        new FieldConfig(NEWLY_ADDED_FORWARD_INDEX_DISABLED_COL_SV, FieldConfig.EncodingType.RAW, Arrays.asList(), null,
+            Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
     // Forward index is always going to be present for default SV columns with forward index disabled. This is because
     // such default columns are going to be sorted and the forwardIndexDisabled flag is a no-op for sorted columns
     // Even raw columns are created with dictionary and forward index
@@ -1721,8 +1721,8 @@ public class SegmentPreProcessorTest {
     resetIndexConfigs();
     buildSegment(segmentVersion);
     _fieldConfigMap.put(NEWLY_ADDED_FORWARD_INDEX_DISABLED_COL_SV,
-        new FieldConfig(NEWLY_ADDED_FORWARD_INDEX_DISABLED_COL_SV, FieldConfig.EncodingType.DICTIONARY, List.of(), null,
-            Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+        new FieldConfig(NEWLY_ADDED_FORWARD_INDEX_DISABLED_COL_SV, FieldConfig.EncodingType.DICTIONARY, Arrays.asList(), null,
+            Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
     // Disabling inverted index should be fine for disabling the forward index
     createAndValidateIndex(StandardIndexes.forward(), NEWLY_ADDED_FORWARD_INDEX_DISABLED_COL_SV, 1, 1,
         _newColumnsSchemaWithForwardIndexDisabled, true, true, true, 4, true, 0, null, true, DataType.STRING, 100000);
@@ -1738,8 +1738,8 @@ public class SegmentPreProcessorTest {
     buildSegment(segmentVersion);
     _invertedIndexColumns.add(NEWLY_ADDED_FORWARD_INDEX_DISABLED_COL_MV);
     _fieldConfigMap.put(NEWLY_ADDED_FORWARD_INDEX_DISABLED_COL_MV,
-        new FieldConfig(NEWLY_ADDED_FORWARD_INDEX_DISABLED_COL_MV, FieldConfig.EncodingType.DICTIONARY, List.of(), null,
-            Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+        new FieldConfig(NEWLY_ADDED_FORWARD_INDEX_DISABLED_COL_MV, FieldConfig.EncodingType.DICTIONARY, Arrays.asList(), null,
+            Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
     createAndValidateIndex(StandardIndexes.forward(), NEWLY_ADDED_FORWARD_INDEX_DISABLED_COL_MV, 1, 1,
         _newColumnsSchemaWithForwardIndexDisabled, true, true, false, 4, false, 1, null, true, DataType.STRING, 100000);
     validateIndex(StandardIndexes.inverted(), NEWLY_ADDED_FORWARD_INDEX_DISABLED_COL_MV, 1, 1, true, true, false, 4,
@@ -1750,8 +1750,8 @@ public class SegmentPreProcessorTest {
     buildSegment(segmentVersion);
     _noDictionaryColumns.add(NEWLY_ADDED_FORWARD_INDEX_DISABLED_COL_MV);
     _fieldConfigMap.put(NEWLY_ADDED_FORWARD_INDEX_DISABLED_COL_MV,
-        new FieldConfig(NEWLY_ADDED_FORWARD_INDEX_DISABLED_COL_MV, FieldConfig.EncodingType.RAW, List.of(), null,
-            Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+        new FieldConfig(NEWLY_ADDED_FORWARD_INDEX_DISABLED_COL_MV, FieldConfig.EncodingType.RAW, Arrays.asList(), null,
+            Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
     if (segmentVersion == SegmentVersion.v1) {
       // For V1 segments reload doesn't support modifying the forward index yet. Since for MV columns we create a
       // dictionary in the default column handler, the forward index should indeed be disabled but we should still have
@@ -1772,8 +1772,8 @@ public class SegmentPreProcessorTest {
     resetIndexConfigs();
     buildSegment(segmentVersion);
     _fieldConfigMap.put(NEWLY_ADDED_FORWARD_INDEX_DISABLED_COL_MV,
-        new FieldConfig(NEWLY_ADDED_FORWARD_INDEX_DISABLED_COL_MV, FieldConfig.EncodingType.DICTIONARY, List.of(), null,
-            Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
+        new FieldConfig(NEWLY_ADDED_FORWARD_INDEX_DISABLED_COL_MV, FieldConfig.EncodingType.DICTIONARY, Arrays.asList(), null,
+            Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true")));
     createAndValidateIndex(StandardIndexes.forward(), NEWLY_ADDED_FORWARD_INDEX_DISABLED_COL_MV, 1, 1,
         _newColumnsSchemaWithForwardIndexDisabled, true, true, false, 4, false, 1, null, true, DataType.STRING, 100000);
     validateIndexDoesNotExist(NEWLY_ADDED_FORWARD_INDEX_DISABLED_COL_MV, StandardIndexes.inverted());

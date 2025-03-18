@@ -121,7 +121,7 @@ public class JsonPathTest extends CustomDataQueryClusterIntegrationTest {
         complexMap.put("k2", "value-k2-" + i);
         complexMap.put("k3", Arrays.asList("value-k3-0-" + i, "value-k3-1-" + i, "value-k3-2-" + i));
         complexMap.put("k4",
-            ImmutableMap.of("k4-k1", "value-k4-k1-" + i, "k4-k2", "value-k4-k2-" + i, "k4-k3", "value-k4-k3-" + i,
+            ImmutableCollections.singletonMap("k4-k1", "value-k4-k1-" + i, "k4-k2", "value-k4-k2-" + i, "k4-k3", "value-k4-k3-" + i,
                 "met", i));
         record.put(COMPLEX_MAP_STR_FIELD_NAME, JsonUtils.objectToString(complexMap));
         fileWriter.append(record);

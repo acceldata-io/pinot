@@ -136,7 +136,7 @@ public class CompositeTransformer implements RecordTransformer {
    * Returns a pass through record transformer that does not transform the record.
    */
   public static CompositeTransformer getPassThroughTransformer() {
-    return new CompositeTransformer(List.of());
+    return new CompositeTransformer(Arrays.asList());
   }
 
   public CompositeTransformer(List<RecordTransformer> transformers) {

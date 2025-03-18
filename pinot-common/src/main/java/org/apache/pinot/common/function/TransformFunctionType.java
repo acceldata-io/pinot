@@ -102,29 +102,29 @@ public enum TransformFunctionType {
   JSON_EXTRACT_SCALAR("jsonExtractScalar",
       opBinding -> positionalReturnTypeInferenceFromStringLiteral(opBinding, 2, SqlTypeName.VARCHAR),
       OperandTypes.family(
-          List.of(SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER),
+          Arrays.asList(SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER),
           i -> i == 3)),
   JSON_EXTRACT_INDEX("jsonExtractIndex",
       opBinding -> positionalReturnTypeInferenceFromStringLiteral(opBinding, 2, SqlTypeName.VARCHAR),
       OperandTypes.family(
-          List.of(SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER,
+          Arrays.asList(SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER,
               SqlTypeFamily.CHARACTER), i -> i > 2)),
   JSON_EXTRACT_KEY("jsonExtractKey", ReturnTypes.TO_ARRAY,
-      OperandTypes.family(List.of(SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER))),
+      OperandTypes.family(Arrays.asList(SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER))),
 
   // Date time functions
   TIME_CONVERT("timeConvert", ReturnTypes.BIGINT,
-      OperandTypes.family(List.of(SqlTypeFamily.ANY, SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER))),
+      OperandTypes.family(Arrays.asList(SqlTypeFamily.ANY, SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER))),
   DATE_TIME_CONVERT("dateTimeConvert", TransformFunctionType::dateTimeConverterReturnTypeInference, OperandTypes.family(
-      List.of(SqlTypeFamily.ANY, SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER,
+      Arrays.asList(SqlTypeFamily.ANY, SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER,
           SqlTypeFamily.CHARACTER), i -> i == 4)),
   DATE_TIME_CONVERT_WINDOW_HOP("dateTimeConvertWindowHop",
       ReturnTypes.cascade(TransformFunctionType::dateTimeConverterReturnTypeInference, SqlTypeTransforms.TO_ARRAY),
       OperandTypes.family(
-          List.of(SqlTypeFamily.ANY, SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER,
+          Arrays.asList(SqlTypeFamily.ANY, SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER,
               SqlTypeFamily.CHARACTER))),
   DATE_TRUNC("dateTrunc", ReturnTypes.BIGINT, OperandTypes.family(
-      List.of(SqlTypeFamily.CHARACTER, SqlTypeFamily.ANY, SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER,
+      Arrays.asList(SqlTypeFamily.CHARACTER, SqlTypeFamily.ANY, SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER,
           SqlTypeFamily.CHARACTER), i -> i > 1)),
   YEAR("year"),
   YEAR_OF_WEEK("yearOfWeek", "yow"),
@@ -155,7 +155,7 @@ public enum TransformFunctionType {
   VALUE_IN("valueIn", ReturnTypes.ARG0, OperandTypes.variadic(SqlOperandCountRanges.from(2))),
   MAP_VALUE("mapValue",
       ReturnTypes.cascade(opBinding -> positionalComponentType(opBinding, 2), SqlTypeTransforms.FORCE_NULLABLE),
-      OperandTypes.family(List.of(SqlTypeFamily.ARRAY, SqlTypeFamily.ANY, SqlTypeFamily.ARRAY))),
+      OperandTypes.family(Arrays.asList(SqlTypeFamily.ARRAY, SqlTypeFamily.ANY, SqlTypeFamily.ARRAY))),
   IN_ID_SET("inIdSet", ReturnTypes.BOOLEAN, OperandTypes.family(SqlTypeFamily.ANY, SqlTypeFamily.CHARACTER)),
   LOOKUP("lookUp"),
   GROOVY("groovy"),
@@ -163,14 +163,14 @@ public enum TransformFunctionType {
 
   // CLP functions
   CLP_DECODE("clpDecode", ReturnTypes.VARCHAR_NULLABLE,
-      OperandTypes.family(List.of(SqlTypeFamily.ANY, SqlTypeFamily.ARRAY, SqlTypeFamily.ARRAY, SqlTypeFamily.CHARACTER),
+      OperandTypes.family(Arrays.asList(SqlTypeFamily.ANY, SqlTypeFamily.ARRAY, SqlTypeFamily.ARRAY, SqlTypeFamily.CHARACTER),
           i -> i == 3)),
   CLP_ENCODED_VARS_MATCH("clpEncodedVarsMatch", ReturnTypes.BOOLEAN_NOT_NULL,
       OperandTypes.family(SqlTypeFamily.ANY, SqlTypeFamily.ARRAY, SqlTypeFamily.CHARACTER, SqlTypeFamily.INTEGER)),
 
   // Regexp functions
   REGEXP_EXTRACT("regexpExtract", ReturnTypes.VARCHAR_NULLABLE, OperandTypes.family(
-      List.of(SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER, SqlTypeFamily.INTEGER, SqlTypeFamily.CHARACTER),
+      Arrays.asList(SqlTypeFamily.CHARACTER, SqlTypeFamily.CHARACTER, SqlTypeFamily.INTEGER, SqlTypeFamily.CHARACTER),
       i -> i > 1)),
 
   // Geo constructors
@@ -184,7 +184,7 @@ public enum TransformFunctionType {
   ST_GEOM_FROM_WKB("ST_GeomFromWKB", ReturnTypes.VARBINARY, OperandTypes.BINARY),
 
   ST_POINT("ST_Point", ReturnTypes.VARBINARY,
-      OperandTypes.family(List.of(SqlTypeFamily.NUMERIC, SqlTypeFamily.NUMERIC, SqlTypeFamily.ANY), i -> i == 2)),
+      OperandTypes.family(Arrays.asList(SqlTypeFamily.NUMERIC, SqlTypeFamily.NUMERIC, SqlTypeFamily.ANY), i -> i == 2)),
   ST_POLYGON("ST_Polygon", ReturnTypes.VARBINARY, OperandTypes.CHARACTER),
 
   // Geo measurements
@@ -211,7 +211,7 @@ public enum TransformFunctionType {
   // Vector functions
   // TODO: Once VECTOR type is defined, we should update here.
   COSINE_DISTANCE("cosineDistance", ReturnTypes.DOUBLE,
-      OperandTypes.family(List.of(SqlTypeFamily.ARRAY, SqlTypeFamily.ARRAY, SqlTypeFamily.NUMERIC), id -> id == 2)),
+      OperandTypes.family(Arrays.asList(SqlTypeFamily.ARRAY, SqlTypeFamily.ARRAY, SqlTypeFamily.NUMERIC), id -> id == 2)),
   INNER_PRODUCT("innerProduct", ReturnTypes.DOUBLE, OperandTypes.ARRAY_ARRAY),
   L1_DISTANCE("l1Distance", ReturnTypes.DOUBLE, OperandTypes.ARRAY_ARRAY),
   L2_DISTANCE("l2Distance", ReturnTypes.DOUBLE, OperandTypes.ARRAY_ARRAY),
@@ -250,7 +250,7 @@ public enum TransformFunctionType {
     _name = name;
     int numAlternativeNames = alternativeNames.length;
     if (numAlternativeNames == 0) {
-      _names = List.of(name);
+      _names = Arrays.asList(name);
     } else {
       List<String> names = new ArrayList<>(numAlternativeNames + 1);
       names.add(name);

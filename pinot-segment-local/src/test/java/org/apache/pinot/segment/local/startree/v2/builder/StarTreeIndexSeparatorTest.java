@@ -42,7 +42,7 @@ import static org.testng.AssertJUnit.assertTrue;
 public class StarTreeIndexSeparatorTest {
   private static final String SEGMENT_PATH = "data/startree/segment";
   private static final StarTreeV2BuilderConfig BUILDER_CONFIG = StarTreeV2BuilderConfig.fromIndexConfig(
-      new StarTreeIndexConfig(List.of("AirlineID", "Origin", "Dest"), List.of(), List.of("count__*", "max__ArrDelay"),
+      new StarTreeIndexConfig(Arrays.asList("AirlineID", "Origin", "Dest"), Arrays.asList(), Arrays.asList("count__*", "max__ArrDelay"),
           null, 10));
   private static final File TEMP_DIR = new File(FileUtils.getTempDirectory(), "StarTreeIndexSeparatorTest");
 

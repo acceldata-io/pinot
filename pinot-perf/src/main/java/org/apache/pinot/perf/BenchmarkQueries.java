@@ -95,14 +95,14 @@ public class BenchmarkQueries extends BaseQueriesTest {
 
   private static final TableConfig TABLE_CONFIG = new TableConfigBuilder(TableType.OFFLINE)
       .setTableName(TABLE_NAME)
-      .setInvertedIndexColumns(List.of(INT_COL_NAME, LOW_CARDINALITY_STRING_COL))
+      .setInvertedIndexColumns(Arrays.asList(INT_COL_NAME, LOW_CARDINALITY_STRING_COL))
       .setFieldConfigList(FIELD_CONFIGS)
-      .setNoDictionaryColumns(List.of(RAW_INT_COL_NAME, RAW_STRING_COL_NAME, TIMESTAMP_COL))
+      .setNoDictionaryColumns(Arrays.asList(RAW_INT_COL_NAME, RAW_STRING_COL_NAME, TIMESTAMP_COL))
       .setSortedColumn(SORTED_COL_NAME)
-      .setRangeIndexColumns(List.of(INT_COL_NAME, LOW_CARDINALITY_STRING_COL))
+      .setRangeIndexColumns(Arrays.asList(INT_COL_NAME, LOW_CARDINALITY_STRING_COL))
       .setStarTreeIndexConfigs(
           Collections.singletonList(
-              new StarTreeIndexConfig(List.of(SORTED_COL_NAME, INT_COL_NAME), null,
+              new StarTreeIndexConfig(Arrays.asList(SORTED_COL_NAME, INT_COL_NAME), null,
               Collections.singletonList(
                   new AggregationFunctionColumnPair(AggregationFunctionType.SUM, RAW_INT_COL_NAME).toColumnName()),
               null, Integer.MAX_VALUE))).build();

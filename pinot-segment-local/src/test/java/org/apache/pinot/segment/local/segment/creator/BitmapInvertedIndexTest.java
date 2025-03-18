@@ -54,7 +54,7 @@ public class BitmapInvertedIndexTest {
       new File(FileUtils.getTempDirectory(), BitmapInvertedIndexTest.class.getSimpleName());
   private static final String RAW_TABLE_NAME = "testTable";
   //@formatter:off
-  private static final List<String> INVERTED_INDEX_COLUMNS = List.of(
+  private static final List<String> INVERTED_INDEX_COLUMNS = Arrays.asList(
       "time_day",           // INT, cardinality 1
       "column10",           // STRING, cardinality 27
       "met_impressionCount" // LONG, cardinality 21

@@ -299,7 +299,7 @@ public class TableConfigUtilsTest {
 
     // using a transformation column in an aggregation
     IndexingConfig indexingConfig = new IndexingConfig();
-    indexingConfig.setNoDictionaryColumns(List.of("twiceSum"));
+    indexingConfig.setNoDictionaryColumns(Arrays.asList("twiceSum"));
     tableConfig.setIndexingConfig(indexingConfig);
     schema =
         new Schema.SchemaBuilder().setSchemaName(TABLE_NAME).addMetric("twiceSum", FieldSpec.DataType.DOUBLE).build();
@@ -311,7 +311,7 @@ public class TableConfigUtilsTest {
     schema =
         new Schema.SchemaBuilder().setSchemaName(TABLE_NAME).addSingleValueDimension("myCol", FieldSpec.DataType.STRING)
             .build();
-    indexingConfig.setNoDictionaryColumns(List.of("myCol"));
+    indexingConfig.setNoDictionaryColumns(Arrays.asList("myCol"));
     ingestionConfig.setAggregationConfigs(null);
     ingestionConfig.setTransformConfigs(Collections.singletonList(new TransformConfig("myCol", "reverse(anotherCol)")));
     TableConfigUtils.validate(tableConfig, schema);
@@ -532,7 +532,7 @@ public class TableConfigUtilsTest {
     }
 
     IndexingConfig indexingConfig = new IndexingConfig();
-    indexingConfig.setNoDictionaryColumns(List.of());
+    indexingConfig.setNoDictionaryColumns(Arrays.asList());
     tableConfig.setIndexingConfig(indexingConfig);
 
     try {
@@ -542,7 +542,7 @@ public class TableConfigUtilsTest {
       // expected
     }
 
-    indexingConfig.setNoDictionaryColumns(List.of("m1"));
+    indexingConfig.setNoDictionaryColumns(Arrays.asList("m1"));
 
     ingestionConfig.setAggregationConfigs(Collections.singletonList(new AggregationConfig("m1", "SUM(m1)")));
     TableConfigUtils.validateIngestionConfig(tableConfig, schema);
@@ -564,7 +564,7 @@ public class TableConfigUtilsTest {
     ingestionConfig.setAggregationConfigs(aggregationConfigs);
     tableConfig =
         new TableConfigBuilder(TableType.REALTIME).setTableName("myTable_REALTIME").setTimeColumnName("timeColumn")
-            .setIngestionConfig(ingestionConfig).setNoDictionaryColumns(List.of("d1")).build();
+            .setIngestionConfig(ingestionConfig).setNoDictionaryColumns(Arrays.asList("d1")).build();
 
     try {
       TableConfigUtils.validateIngestionConfig(tableConfig, schema);
@@ -585,7 +585,7 @@ public class TableConfigUtilsTest {
     ingestionConfig.setAggregationConfigs(aggregationConfigs);
     tableConfig =
         new TableConfigBuilder(TableType.REALTIME).setTableName("myTable_REALTIME").setTimeColumnName("timeColumn")
-            .setIngestionConfig(ingestionConfig).setNoDictionaryColumns(List.of("d1", "d2", "d3", "d4", "d5")).build();
+            .setIngestionConfig(ingestionConfig).setNoDictionaryColumns(Arrays.asList("d1", "d2", "d3", "d4", "d5")).build();
 
     try {
       TableConfigUtils.validateIngestionConfig(tableConfig, schema);
@@ -603,7 +603,7 @@ public class TableConfigUtilsTest {
     ingestionConfig.setAggregationConfigs(aggregationConfigs);
     tableConfig =
         new TableConfigBuilder(TableType.REALTIME).setTableName("myTable_REALTIME").setTimeColumnName("timeColumn")
-            .setIngestionConfig(ingestionConfig).setNoDictionaryColumns(List.of("d1", "d2", "d3", "d4", "d5")).build();
+            .setIngestionConfig(ingestionConfig).setNoDictionaryColumns(Arrays.asList("d1", "d2", "d3", "d4", "d5")).build();
 
     try {
       TableConfigUtils.validateIngestionConfig(tableConfig, schema);
@@ -618,7 +618,7 @@ public class TableConfigUtilsTest {
     ingestionConfig.setAggregationConfigs(aggregationConfigs);
     tableConfig =
         new TableConfigBuilder(TableType.REALTIME).setTableName("myTable_REALTIME").setTimeColumnName("timeColumn")
-            .setIngestionConfig(ingestionConfig).setNoDictionaryColumns(List.of("d1")).build();
+            .setIngestionConfig(ingestionConfig).setNoDictionaryColumns(Arrays.asList("d1")).build();
 
     try {
       TableConfigUtils.validateIngestionConfig(tableConfig, schema);
@@ -630,7 +630,7 @@ public class TableConfigUtilsTest {
     ingestionConfig.setAggregationConfigs(aggregationConfigs);
     tableConfig =
         new TableConfigBuilder(TableType.REALTIME).setTableName("myTable_REALTIME").setTimeColumnName("timeColumn")
-            .setIngestionConfig(ingestionConfig).setNoDictionaryColumns(List.of("d1")).build();
+            .setIngestionConfig(ingestionConfig).setNoDictionaryColumns(Arrays.asList("d1")).build();
 
     try {
       TableConfigUtils.validateIngestionConfig(tableConfig, schema);
@@ -652,7 +652,7 @@ public class TableConfigUtilsTest {
     ingestionConfig.setAggregationConfigs(aggregationConfigs);
     tableConfig =
         new TableConfigBuilder(TableType.REALTIME).setTableName("myTable_REALTIME").setTimeColumnName("timeColumn")
-            .setIngestionConfig(ingestionConfig).setNoDictionaryColumns(List.of("d1", "d2", "d3", "d4", "d5")).build();
+            .setIngestionConfig(ingestionConfig).setNoDictionaryColumns(Arrays.asList("d1", "d2", "d3", "d4", "d5")).build();
     TableConfigUtils.validateIngestionConfig(tableConfig, schema);
 
     // with too many arguments should fail
@@ -665,7 +665,7 @@ public class TableConfigUtilsTest {
     ingestionConfig.setAggregationConfigs(aggregationConfigs);
     tableConfig =
         new TableConfigBuilder(TableType.REALTIME).setTableName("myTable_REALTIME").setTimeColumnName("timeColumn")
-            .setIngestionConfig(ingestionConfig).setNoDictionaryColumns(List.of("d1")).build();
+            .setIngestionConfig(ingestionConfig).setNoDictionaryColumns(Arrays.asList("d1")).build();
 
     try {
       TableConfigUtils.validateIngestionConfig(tableConfig, schema);
@@ -1420,18 +1420,18 @@ public class TableConfigUtilsTest {
 
     // Although this config makes no sense, it should pass the validation phase
     StarTreeIndexConfig starTreeIndexConfig =
-        new StarTreeIndexConfig(List.of("myCol"), List.of("myCol"), List.of("SUM__myCol"), null, 1);
+        new StarTreeIndexConfig(Arrays.asList("myCol"), Arrays.asList("myCol"), Arrays.asList("SUM__myCol"), null, 1);
     tableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(TABLE_NAME)
-        .setStarTreeIndexConfigs(List.of(starTreeIndexConfig)).build();
+        .setStarTreeIndexConfigs(Arrays.asList(starTreeIndexConfig)).build();
     try {
       TableConfigUtils.validate(tableConfig, schema);
     } catch (Exception e) {
       Assert.fail("Should not fail for valid StarTreeIndex config column name");
     }
 
-    starTreeIndexConfig = new StarTreeIndexConfig(List.of("myCol2"), List.of("myCol"), List.of("SUM__myCol"), null, 1);
+    starTreeIndexConfig = new StarTreeIndexConfig(Arrays.asList("myCol2"), Arrays.asList("myCol"), Arrays.asList("SUM__myCol"), null, 1);
     tableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(TABLE_NAME)
-        .setStarTreeIndexConfigs(List.of(starTreeIndexConfig)).build();
+        .setStarTreeIndexConfigs(Arrays.asList(starTreeIndexConfig)).build();
     try {
       TableConfigUtils.validate(tableConfig, schema);
       Assert.fail("Should fail for invalid StarTreeIndex config column name in dimension split order");
@@ -1439,9 +1439,9 @@ public class TableConfigUtilsTest {
       // expected
     }
 
-    starTreeIndexConfig = new StarTreeIndexConfig(List.of("myCol"), List.of("myCol2"), List.of("SUM__myCol"), null, 1);
+    starTreeIndexConfig = new StarTreeIndexConfig(Arrays.asList("myCol"), Arrays.asList("myCol2"), Arrays.asList("SUM__myCol"), null, 1);
     tableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(TABLE_NAME)
-        .setStarTreeIndexConfigs(List.of(starTreeIndexConfig)).build();
+        .setStarTreeIndexConfigs(Arrays.asList(starTreeIndexConfig)).build();
     try {
       TableConfigUtils.validate(tableConfig, schema);
       Assert.fail("Should fail for invalid StarTreeIndex config column name in skip star node for dimension");
@@ -1449,9 +1449,9 @@ public class TableConfigUtilsTest {
       // expected
     }
 
-    starTreeIndexConfig = new StarTreeIndexConfig(List.of("myCol"), List.of("myCol"), List.of("SUM__myCol2"), null, 1);
+    starTreeIndexConfig = new StarTreeIndexConfig(Arrays.asList("myCol"), Arrays.asList("myCol"), Arrays.asList("SUM__myCol2"), null, 1);
     tableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(TABLE_NAME)
-        .setStarTreeIndexConfigs(List.of(starTreeIndexConfig)).build();
+        .setStarTreeIndexConfigs(Arrays.asList(starTreeIndexConfig)).build();
     try {
       TableConfigUtils.validate(tableConfig, schema);
       Assert.fail("Should fail for invalid StarTreeIndex config column name in function column pair");
@@ -1460,10 +1460,10 @@ public class TableConfigUtilsTest {
     }
 
     starTreeIndexConfig =
-        new StarTreeIndexConfig(List.of("myCol"), null, null, List.of(new StarTreeAggregationConfig("myCol2", "SUM")),
+        new StarTreeIndexConfig(Arrays.asList("myCol"), null, null, Arrays.asList(new StarTreeAggregationConfig("myCol2", "SUM")),
             1);
     tableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(TABLE_NAME)
-        .setStarTreeIndexConfigs(List.of(starTreeIndexConfig)).build();
+        .setStarTreeIndexConfigs(Arrays.asList(starTreeIndexConfig)).build();
     try {
       TableConfigUtils.validate(tableConfig, schema);
       Assert.fail("Should fail for invalid StarTreeIndex config column name in aggregation config");
@@ -1471,10 +1471,10 @@ public class TableConfigUtilsTest {
       // expected
     }
 
-    starTreeIndexConfig = new StarTreeIndexConfig(List.of("myCol"), null, List.of("SUM__myCol"),
-        List.of(new StarTreeAggregationConfig("myCol", "SUM")), 1);
+    starTreeIndexConfig = new StarTreeIndexConfig(Arrays.asList("myCol"), null, Arrays.asList("SUM__myCol"),
+        Arrays.asList(new StarTreeAggregationConfig("myCol", "SUM")), 1);
     tableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(TABLE_NAME)
-        .setStarTreeIndexConfigs(List.of(starTreeIndexConfig)).build();
+        .setStarTreeIndexConfigs(Arrays.asList(starTreeIndexConfig)).build();
     try {
       TableConfigUtils.validate(tableConfig, schema);
       Assert.fail("Should fail for invalid StarTreeIndex config with both function column pair and aggregation config");
@@ -1483,9 +1483,9 @@ public class TableConfigUtilsTest {
     }
 
     starTreeIndexConfig =
-        new StarTreeIndexConfig(List.of("multiValCol"), List.of("multiValCol"), List.of("SUM__multiValCol"), null, 1);
+        new StarTreeIndexConfig(Arrays.asList("multiValCol"), Arrays.asList("multiValCol"), Arrays.asList("SUM__multiValCol"), null, 1);
     tableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(TABLE_NAME)
-        .setStarTreeIndexConfigs(List.of(starTreeIndexConfig)).build();
+        .setStarTreeIndexConfigs(Arrays.asList(starTreeIndexConfig)).build();
     try {
       TableConfigUtils.validate(tableConfig, schema);
       Assert.fail("Should fail for multi-value column name in StarTreeIndex config");
@@ -1586,36 +1586,36 @@ public class TableConfigUtilsTest {
             .addMultiValueDimension("multiValCol", FieldSpec.DataType.STRING).build();
 
     StarTreeIndexConfig starTreeIndexConfig =
-        new StarTreeIndexConfig(List.of("myCol"), List.of("myCol"), List.of("SUM__myCol", "SUM__myCol"), null, 1);
+        new StarTreeIndexConfig(Arrays.asList("myCol"), Arrays.asList("myCol"), Arrays.asList("SUM__myCol", "SUM__myCol"), null, 1);
     TableConfig tableConfig = new TableConfigBuilder(TableType.OFFLINE)
         .setTableName(TABLE_NAME)
-        .setStarTreeIndexConfigs(List.of(starTreeIndexConfig))
+        .setStarTreeIndexConfigs(Arrays.asList(starTreeIndexConfig))
         .build();
     IllegalStateException e =
         Assert.expectThrows(IllegalStateException.class, () -> TableConfigUtils.validate(tableConfig, schema));
     Assert.assertTrue(e.getMessage().contains("Duplicate function column pair"));
 
     starTreeIndexConfig =
-        new StarTreeIndexConfig(List.of("mycol"), List.of("mycol"), List.of("DISTINCTCOUNTHLL__myCol"),
-            List.of(new StarTreeAggregationConfig("myCol", "DISTINCTCOUNTHLL", Map.of(Constants.HLL_LOG2M_KEY, 16),
+        new StarTreeIndexConfig(Arrays.asList("mycol"), Arrays.asList("mycol"), Arrays.asList("DISTINCTCOUNTHLL__myCol"),
+            Arrays.asList(new StarTreeAggregationConfig("myCol", "DISTINCTCOUNTHLL", Collections.singletonMap(Constants.HLL_LOG2M_KEY, 16),
                 null, null, null, null, null)), 1);
     TableConfig tableConfig2 = new TableConfigBuilder(TableType.OFFLINE)
         .setTableName(TABLE_NAME)
-        .setStarTreeIndexConfigs(List.of(starTreeIndexConfig))
+        .setStarTreeIndexConfigs(Arrays.asList(starTreeIndexConfig))
         .build();
     e = Assert.expectThrows(IllegalStateException.class, () -> TableConfigUtils.validate(tableConfig2, schema));
     Assert.assertTrue(e.getMessage()
         .contains("Only one of 'functionColumnPairs' or 'aggregationConfigs' can be specified"));
 
     starTreeIndexConfig =
-        new StarTreeIndexConfig(List.of("mycol"), List.of("mycol"), null,
-            List.of(new StarTreeAggregationConfig("myCol", "DISTINCTCOUNTHLL", Map.of(Constants.HLL_LOG2M_KEY, 16),
+        new StarTreeIndexConfig(Arrays.asList("mycol"), Arrays.asList("mycol"), null,
+            Arrays.asList(new StarTreeAggregationConfig("myCol", "DISTINCTCOUNTHLL", Collections.singletonMap(Constants.HLL_LOG2M_KEY, 16),
                 null, null, null, null, null),
-                new StarTreeAggregationConfig("myCol", "DISTINCTCOUNTHLL", Map.of(Constants.HLL_LOG2M_KEY, 8),
+                new StarTreeAggregationConfig("myCol", "DISTINCTCOUNTHLL", Collections.singletonMap(Constants.HLL_LOG2M_KEY, 8),
                     null, null, null, null, null)), 1);
     TableConfig tableConfig3 = new TableConfigBuilder(TableType.OFFLINE)
         .setTableName(TABLE_NAME)
-        .setStarTreeIndexConfigs(List.of(starTreeIndexConfig))
+        .setStarTreeIndexConfigs(Arrays.asList(starTreeIndexConfig))
         .build();
     e = Assert.expectThrows(IllegalStateException.class, () -> TableConfigUtils.validate(tableConfig3, schema));
     Assert.assertTrue(e.getMessage().contains("Duplicate function column pair"));
@@ -2284,15 +2284,15 @@ public class TableConfigUtilsTest {
 
     TableConfig tableConfigWithInstancePartitionsMap =
         new TableConfigBuilder(TableType.OFFLINE).setTableName(TABLE_NAME)
-            .setInstancePartitionsMap(ImmutableMap.of(InstancePartitionsType.OFFLINE, "test_OFFLINE")).build();
+            .setInstancePartitionsMap(ImmutableCollections.singletonMap(InstancePartitionsType.OFFLINE, "test_OFFLINE")).build();
 
     // Call validate with a table-config with instance partitions set but not instance assignment config
     TableConfigUtils.validateInstancePartitionsTypeMapConfig(tableConfigWithInstancePartitionsMap);
 
     TableConfig invalidTableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(TABLE_NAME)
-        .setInstancePartitionsMap(ImmutableMap.of(InstancePartitionsType.OFFLINE, "test_OFFLINE"))
+        .setInstancePartitionsMap(ImmutableCollections.singletonMap(InstancePartitionsType.OFFLINE, "test_OFFLINE"))
         .setInstanceAssignmentConfigMap(
-            ImmutableMap.of(InstancePartitionsType.OFFLINE.toString(), instanceAssignmentConfig)).build();
+            ImmutableCollections.singletonMap(InstancePartitionsType.OFFLINE.toString(), instanceAssignmentConfig)).build();
     try {
       // Call validate with instance partitions and config set for the same type
       TableConfigUtils.validateInstancePartitionsTypeMapConfig(invalidTableConfig);
@@ -2431,7 +2431,7 @@ public class TableConfigUtilsTest {
         .getReplicaGroupPartitionConfig();
 
     TableConfig invalidTableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(TABLE_NAME)
-        .setInstanceAssignmentConfigMap(ImmutableMap.of(TableType.OFFLINE.toString(), instanceAssignmentConfig))
+        .setInstanceAssignmentConfigMap(ImmutableCollections.singletonMap(TableType.OFFLINE.toString(), instanceAssignmentConfig))
         .build();
     invalidTableConfig.getValidationConfig().setReplicaGroupStrategyConfig(replicaGroupStrategyConfig);
 
@@ -2487,7 +2487,7 @@ public class TableConfigUtilsTest {
     TableConfig tableConfig =
         new TableConfig("table", TableType.OFFLINE.name(), new SegmentsValidationAndRetentionConfig(),
             new TenantConfig("DefaultTenant", "DefaultTenant", null), new IndexingConfig(), new TableCustomConfig(null),
-            null, null, null, null, Map.of("OFFLINE", config), null, null, null, null, null, null, false, null, null,
+            null, null, null, null, Collections.singletonMap("OFFLINE", config), null, null, null, null, null, null, false, null, null,
             null);
 
     Assert.assertTrue(TableConfigUtils.isTableUsingInstancePoolAndReplicaGroup(tableConfig));
@@ -2502,7 +2502,7 @@ public class TableConfigUtilsTest {
     TableConfig tableConfig =
         new TableConfig("table", TableType.REALTIME.name(), new SegmentsValidationAndRetentionConfig(),
             new TenantConfig("DefaultTenant", "DefaultTenant", null), new IndexingConfig(), new TableCustomConfig(null),
-            null, null, null, null, Map.of("CONSUMING", config), null, null, null, null, null, null, false, null, null,
+            null, null, null, null, Collections.singletonMap("CONSUMING", config), null, null, null, null, null, null, false, null, null,
             null);
 
     Assert.assertTrue(TableConfigUtils.isTableUsingInstancePoolAndReplicaGroup(tableConfig));
@@ -2537,7 +2537,7 @@ public class TableConfigUtilsTest {
     TableConfig tableConfig =
         new TableConfig("table", TableType.OFFLINE.name(), new SegmentsValidationAndRetentionConfig(),
             new TenantConfig("DefaultTenant", "DefaultTenant", null), new IndexingConfig(), new TableCustomConfig(null),
-            null, null, null, null, Map.of("OFFLINE", config), null, null, null, null, null, null, false, null, null,
+            null, null, null, null, Collections.singletonMap("OFFLINE", config), null, null, null, null, null, null, false, null, null,
             null);
 
     Assert.assertFalse(TableConfigUtils.isTableUsingInstancePoolAndReplicaGroup(tableConfig));
@@ -2552,7 +2552,7 @@ public class TableConfigUtilsTest {
     TableConfig tableConfig =
         new TableConfig("table", TableType.REALTIME.name(), new SegmentsValidationAndRetentionConfig(),
             new TenantConfig("DefaultTenant", "DefaultTenant", null), new IndexingConfig(), new TableCustomConfig(null),
-            null, null, null, null, Map.of("CONSUMING", config), null, null, null, null, null, null, false, null, null,
+            null, null, null, null, Collections.singletonMap("CONSUMING", config), null, null, null, null, null, null, false, null, null,
             null);
 
     Assert.assertFalse(TableConfigUtils.isTableUsingInstancePoolAndReplicaGroup(tableConfig));
@@ -2567,7 +2567,7 @@ public class TableConfigUtilsTest {
     TableConfig tableConfig =
         new TableConfig("table", TableType.OFFLINE.name(), new SegmentsValidationAndRetentionConfig(),
             new TenantConfig("DefaultTenant", "DefaultTenant", null), new IndexingConfig(), new TableCustomConfig(null),
-            null, null, null, null, Map.of("OFFLINE", config), null, null, null, null, null, null, false, null, null,
+            null, null, null, null, Collections.singletonMap("OFFLINE", config), null, null, null, null, null, null, false, null, null,
             null);
 
     Assert.assertFalse(TableConfigUtils.isTableUsingInstancePoolAndReplicaGroup(tableConfig));
@@ -2582,7 +2582,7 @@ public class TableConfigUtilsTest {
     TableConfig tableConfig =
         new TableConfig("table", TableType.REALTIME.name(), new SegmentsValidationAndRetentionConfig(),
             new TenantConfig("DefaultTenant", "DefaultTenant", null), new IndexingConfig(), new TableCustomConfig(null),
-            null, null, null, null, Map.of("CONSUMING", config), null, null, null, null, null, null, false, null, null,
+            null, null, null, null, Collections.singletonMap("CONSUMING", config), null, null, null, null, null, null, false, null, null,
             null);
 
     Assert.assertFalse(TableConfigUtils.isTableUsingInstancePoolAndReplicaGroup(tableConfig));

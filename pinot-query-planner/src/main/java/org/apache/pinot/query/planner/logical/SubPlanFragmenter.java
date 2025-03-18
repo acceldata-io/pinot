@@ -140,7 +140,7 @@ public class SubPlanFragmenter implements PlanNodeVisitor<PlanNode, SubPlanFragm
     }
     context._subPlanIdToChildrenMap.get(currentStageId).add(nextSubPlanId);
     context._subPlanIdToMetadataMap.put(nextSubPlanId,
-        new SubPlanMetadata(node.getTableNames(), ImmutablePairList.of()));
+        new SubPlanMetadata(node.getTableNames(), ImmutablePairArrays.asList()));
     PlanNode literalValueNode = new LiteralValueNode(nextStageRoot.getDataSchema());
     return literalValueNode;
   }

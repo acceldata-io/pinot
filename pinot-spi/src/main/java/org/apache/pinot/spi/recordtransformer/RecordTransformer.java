@@ -42,7 +42,7 @@ public interface RecordTransformer extends Serializable {
    * extracted.
    */
   default Collection<String> getInputColumns() {
-    return List.of();
+    return Arrays.asList();
   }
 
   /**

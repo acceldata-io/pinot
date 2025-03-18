@@ -378,7 +378,7 @@ public class RexExpressionUtils {
       return convertLowerBound(leftOperand, dataType, range);
     }
     return new RexExpression.FunctionCall(ColumnDataType.BOOLEAN, SqlKind.AND.name(),
-        List.of(convertLowerBound(leftOperand, dataType, range), convertUpperBound(leftOperand, dataType, range)));
+        Arrays.asList(convertLowerBound(leftOperand, dataType, range), convertUpperBound(leftOperand, dataType, range)));
   }
 
   private static RexExpression convertLowerBound(RexExpression leftOperand, ColumnDataType dataType,
@@ -386,7 +386,7 @@ public class RexExpressionUtils {
     assert range.hasLowerBound();
     SqlKind sqlKind = range.lowerBoundType() == BoundType.OPEN ? SqlKind.GREATER_THAN : SqlKind.GREATER_THAN_OR_EQUAL;
     return new RexExpression.FunctionCall(ColumnDataType.BOOLEAN, sqlKind.name(),
-        List.of(leftOperand, fromRexLiteralValue(dataType, range.lowerEndpoint())));
+        Arrays.asList(leftOperand, fromRexLiteralValue(dataType, range.lowerEndpoint())));
   }
 
   private static RexExpression convertUpperBound(RexExpression leftOperand, ColumnDataType dataType,
@@ -394,7 +394,7 @@ public class RexExpressionUtils {
     assert range.hasUpperBound();
     SqlKind sqlKind = range.upperBoundType() == BoundType.OPEN ? SqlKind.LESS_THAN : SqlKind.LESS_THAN_OR_EQUAL;
     return new RexExpression.FunctionCall(ColumnDataType.BOOLEAN, sqlKind.name(),
-        List.of(leftOperand, fromRexLiteralValue(dataType, range.upperEndpoint())));
+        Arrays.asList(leftOperand, fromRexLiteralValue(dataType, range.upperEndpoint())));
   }
 
   /**

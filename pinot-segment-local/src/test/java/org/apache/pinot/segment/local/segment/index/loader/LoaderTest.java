@@ -270,10 +270,10 @@ public class LoaderTest {
 
   private TableConfig createTableConfigWithFSTIndex(@Nullable SegmentVersion segmentVersion) {
     FieldConfig fieldConfig =
-        new FieldConfig(FST_INDEX_COL_NAME, FieldConfig.EncodingType.DICTIONARY, List.of(FieldConfig.IndexType.FST),
+        new FieldConfig(FST_INDEX_COL_NAME, FieldConfig.EncodingType.DICTIONARY, Arrays.asList(FieldConfig.IndexType.FST),
             null, null);
     TableConfigBuilder builder =
-        new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME).setFieldConfigList(List.of(fieldConfig));
+        new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME).setFieldConfigList(Arrays.asList(fieldConfig));
     if (segmentVersion != null) {
       builder.setSegmentVersion(segmentVersion.toString());
     }
@@ -415,15 +415,15 @@ public class LoaderTest {
   private TableConfig createTableConfigWithForwardIndexDisabled(@Nullable SegmentVersion segmentVersion,
       boolean enableInvertedIndex) {
     FieldConfig fieldConfig =
-        new FieldConfig(NO_FORWARD_INDEX_COL_NAME, FieldConfig.EncodingType.DICTIONARY, List.of(), null,
-            Map.of(FieldConfig.FORWARD_INDEX_DISABLED, "true"));
+        new FieldConfig(NO_FORWARD_INDEX_COL_NAME, FieldConfig.EncodingType.DICTIONARY, Arrays.asList(), null,
+            Collections.singletonMap(FieldConfig.FORWARD_INDEX_DISABLED, "true"));
     TableConfigBuilder builder =
-        new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME).setFieldConfigList(List.of(fieldConfig));
+        new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME).setFieldConfigList(Arrays.asList(fieldConfig));
     if (segmentVersion != null) {
       builder.setSegmentVersion(segmentVersion.toString());
     }
     if (enableInvertedIndex) {
-      builder.setInvertedIndexColumns(List.of(NO_FORWARD_INDEX_COL_NAME))
+      builder.setInvertedIndexColumns(Arrays.asList(NO_FORWARD_INDEX_COL_NAME))
           .setCreateInvertedIndexDuringSegmentGeneration(true);
     }
     return builder.build();
@@ -567,10 +567,10 @@ public class LoaderTest {
 
   private TableConfig createTableConfigWithTextIndex(@Nullable SegmentVersion segmentVersion) {
     FieldConfig fieldConfig =
-        new FieldConfig(TEXT_INDEX_COL_NAME, FieldConfig.EncodingType.DICTIONARY, List.of(FieldConfig.IndexType.TEXT),
+        new FieldConfig(TEXT_INDEX_COL_NAME, FieldConfig.EncodingType.DICTIONARY, Arrays.asList(FieldConfig.IndexType.TEXT),
             null, null);
     TableConfigBuilder builder =
-        new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME).setFieldConfigList(List.of(fieldConfig));
+        new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME).setFieldConfigList(Arrays.asList(fieldConfig));
     if (segmentVersion != null) {
       builder.setSegmentVersion(segmentVersion.toString());
     }
@@ -773,10 +773,10 @@ public class LoaderTest {
 
   private TableConfig createTableConfigWithVectorIndex(SegmentVersion segmentVersion) {
     FieldConfig fieldConfig =
-        new FieldConfig(VECTOR_INDEX_COL_NAME, FieldConfig.EncodingType.RAW, List.of(FieldConfig.IndexType.VECTOR),
-            null, Map.of("vectorDimension", Integer.toString(VECTOR_DIM_SIZE), "vectorIndexType", "HNSW"));
+        new FieldConfig(VECTOR_INDEX_COL_NAME, FieldConfig.EncodingType.RAW, Arrays.asList(FieldConfig.IndexType.VECTOR),
+            null, Collections.singletonMap("vectorDimension", Integer.toString(VECTOR_DIM_SIZE), "vectorIndexType", "HNSW"));
     TableConfigBuilder builder = new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME)
-        .setNoDictionaryColumns(List.of(VECTOR_INDEX_COL_NAME)).setFieldConfigList(List.of(fieldConfig));
+        .setNoDictionaryColumns(Arrays.asList(VECTOR_INDEX_COL_NAME)).setFieldConfigList(Arrays.asList(fieldConfig));
     if (segmentVersion != null) {
       builder.setSegmentVersion(segmentVersion.toString());
     }

@@ -33,25 +33,25 @@ public class DistinctCountThetaSketchAggregationFunctionTest {
   public void testCanUseStarTreeDefaultK() {
     // Default aggregation function lgK = 12 / K=4096
     DistinctCountThetaSketchAggregationFunction function =
-        new DistinctCountThetaSketchAggregationFunction(List.of(ExpressionContext.forIdentifier("col")));
+        new DistinctCountThetaSketchAggregationFunction(Arrays.asList(ExpressionContext.forIdentifier("col")));
 
-    Assert.assertTrue(function.canUseStarTree(Map.of()));
-    Assert.assertTrue(function.canUseStarTree(Map.of(Constants.THETA_TUPLE_SKETCH_NOMINAL_ENTRIES, "4096")));
-    Assert.assertTrue(function.canUseStarTree(Map.of(Constants.THETA_TUPLE_SKETCH_NOMINAL_ENTRIES, 4096)));
-    Assert.assertFalse(function.canUseStarTree(Map.of(Constants.THETA_TUPLE_SKETCH_NOMINAL_ENTRIES, 2048)));
+    Assert.assertTrue(function.canUseStarTree(new HashMap<>()));
+    Assert.assertTrue(function.canUseStarTree(Collections.singletonMap(Constants.THETA_TUPLE_SKETCH_NOMINAL_ENTRIES, "4096")));
+    Assert.assertTrue(function.canUseStarTree(Collections.singletonMap(Constants.THETA_TUPLE_SKETCH_NOMINAL_ENTRIES, 4096)));
+    Assert.assertFalse(function.canUseStarTree(Collections.singletonMap(Constants.THETA_TUPLE_SKETCH_NOMINAL_ENTRIES, 2048)));
   }
 
   @Test
   public void testCanUseCustomK() {
     DistinctCountThetaSketchAggregationFunction function = new DistinctCountThetaSketchAggregationFunction(
-        List.of(ExpressionContext.forIdentifier("col"),
+        Arrays.asList(ExpressionContext.forIdentifier("col"),
             ExpressionContext.forLiteral(Literal.stringValue("nominalEntries=32768"))));
 
     // Default StarTree lgK = 14 / K=16384
-    Assert.assertFalse(function.canUseStarTree(Map.of()));
-    Assert.assertFalse(function.canUseStarTree(Map.of(Constants.THETA_TUPLE_SKETCH_NOMINAL_ENTRIES, "16384")));
-    Assert.assertTrue(function.canUseStarTree(Map.of(Constants.THETA_TUPLE_SKETCH_NOMINAL_ENTRIES, "65536")));
-    Assert.assertTrue(function.canUseStarTree(Map.of(Constants.THETA_TUPLE_SKETCH_NOMINAL_ENTRIES, 32768)));
-    Assert.assertTrue(function.canUseStarTree(Map.of(Constants.THETA_TUPLE_SKETCH_NOMINAL_ENTRIES, "32768")));
+    Assert.assertFalse(function.canUseStarTree(new HashMap<>()));
+    Assert.assertFalse(function.canUseStarTree(Collections.singletonMap(Constants.THETA_TUPLE_SKETCH_NOMINAL_ENTRIES, "16384")));
+    Assert.assertTrue(function.canUseStarTree(Collections.singletonMap(Constants.THETA_TUPLE_SKETCH_NOMINAL_ENTRIES, "65536")));
+    Assert.assertTrue(function.canUseStarTree(Collections.singletonMap(Constants.THETA_TUPLE_SKETCH_NOMINAL_ENTRIES, 32768)));
+    Assert.assertTrue(function.canUseStarTree(Collections.singletonMap(Constants.THETA_TUPLE_SKETCH_NOMINAL_ENTRIES, "32768")));
   }
 }

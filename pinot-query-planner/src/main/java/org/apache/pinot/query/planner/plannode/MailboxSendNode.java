@@ -48,9 +48,9 @@ public class MailboxSendNode extends BasePlanNode {
     _receiverStages = receiverStages;
     _exchangeType = exchangeType;
     _distributionType = distributionType;
-    _keys = keys != null ? keys : List.of();
+    _keys = keys != null ? keys : Arrays.asList();
     _prePartitioned = prePartitioned;
-    _collations = collations != null ? collations : List.of();
+    _collations = collations != null ? collations : Arrays.asList();
     _sort = sort;
   }
 

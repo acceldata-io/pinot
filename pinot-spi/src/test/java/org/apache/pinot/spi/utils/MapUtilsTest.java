@@ -29,7 +29,7 @@ public class MapUtilsTest {
   @Test
   void testSerializeAndDeserializeEmptyMap() {
     // Test for empty map
-    Map<String, Object> emptyMap = Map.of();
+    Map<String, Object> emptyMap = new HashMap<>();
     byte[] serialized = MapUtils.serializeMap(emptyMap);
     Map<String, Object> deserialized = MapUtils.deserializeMap(serialized);
 

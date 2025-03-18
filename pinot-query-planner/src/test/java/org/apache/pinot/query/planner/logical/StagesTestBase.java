@@ -112,7 +112,7 @@ public class StagesTestBase {
     return (stageId, mySchema, myHints) -> {
       PlanNode left = leftBuilder.build(stageId);
       PlanNode right = rightBuilder.build(stageId);
-      return new JoinNode(stageId, mySchema, myHints, List.of(left, right), JoinRelType.FULL,
+      return new JoinNode(stageId, mySchema, myHints, Arrays.asList(left, right), JoinRelType.FULL,
           Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), JoinNode.JoinStrategy.HASH);
     };
   }
@@ -133,7 +133,7 @@ public class StagesTestBase {
           PinotRelExchangeType exchangeType, RelDistribution.Type distribution, List<Integer> keys,
           boolean prePartitioned, List<RelFieldCollation> collations, boolean sort, boolean sortedOnSender) {
         PlanNode input = childBuilder.build(nextStageId);
-        MailboxSendNode mailboxSendNode = new MailboxSendNode(nextStageId, input.getDataSchema(), List.of(input),
+        MailboxSendNode mailboxSendNode = new MailboxSendNode(nextStageId, input.getDataSchema(), Arrays.asList(input),
             stageId, exchangeType, distribution, keys, prePartitioned, collations, sort);
         MailboxSendNode old = _stageRoots.put(nextStageId, mailboxSendNode);
         Preconditions.checkState(old == null, "Mailbox already exists for stageId: %s", nextStageId);
@@ -164,7 +164,7 @@ public class StagesTestBase {
    * Creates a table scan node with the given table name.
    */
   public SimpleChildBuilder<TableScanNode> tableScan(String tableName) {
-    return (stageId, mySchema, myHints) -> new TableScanNode(stageId, mySchema, myHints, List.of(), tableName,
+    return (stageId, mySchema, myHints) -> new TableScanNode(stageId, mySchema, myHints, Arrays.asList(), tableName,
         Collections.emptyList());
   }
 
@@ -190,7 +190,7 @@ public class StagesTestBase {
       int newStageId, SimpleChildBuilder<? extends PlanNode> childBuilder) {
     return (stageId, mySchema, myHints) -> {
       PlanNode input = childBuilder.build(stageId);
-      MailboxSendNode mailboxSendNode = new MailboxSendNode(newStageId, mySchema, List.of(input), stageId, null,
+      MailboxSendNode mailboxSendNode = new MailboxSendNode(newStageId, mySchema, Arrays.asList(input), stageId, null,
           null, null, false, null, false);
       MailboxSendNode old = _stageRoots.put(stageId, mailboxSendNode);
       Preconditions.checkState(old == null, "Mailbox already exists for stageId: %s", stageId);
@@ -232,14 +232,14 @@ public class StagesTestBase {
      * <pre>
      *   when(
      *     tableScan("T1")
-     *       .withHints("hint1", Map.of("key1", "value1"))
+     *       .withHints("hint1", Collections.singletonMap("key1", "value1"))
      *   );
      * </pre>
      */
     default SimpleChildBuilder<P> withHints(String key, Map<String, String> values) {
       return (stageId, dataSchema, hints1) -> {
         PlanNode.NodeHint myHints = hints1 == null
-            ? new PlanNode.NodeHint(ImmutableMap.of(key, values))
+            ? new PlanNode.NodeHint(ImmutableCollections.singletonMap(key, values))
             : hints1.with(key, values);
         return build(stageId, dataSchema, myHints);
       };
@@ -380,7 +380,7 @@ public class StagesTestBase {
 
       PlanNode input = _childBuilder.build(_senderStageId);
       DataSchema mySchema = input.getDataSchema();
-      _sender = new MailboxSendNode(_senderStageId, mySchema, List.of(input), null,
+      _sender = new MailboxSendNode(_senderStageId, mySchema, Arrays.asList(input), null,
           null, null, false, null, false);
     }
 

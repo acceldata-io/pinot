@@ -531,13 +531,13 @@ public class RealtimeToOfflineSegmentsTaskGeneratorTest {
     taskGenerator.init(mockClusterInfoAccessor);
 
     Map<String, String> realtimeToOfflineTaskConfig =
-        ImmutableMap.of("schedule", "0 */10 * ? * * *", "bucketTimePeriod", "6h", "bufferTimePeriod", "5d", "mergeType",
+        ImmutableCollections.singletonMap("schedule", "0 */10 * ? * * *", "bucketTimePeriod", "6h", "bufferTimePeriod", "5d", "mergeType",
             "rollup", "myCol.aggregationType", "max");
 
-    Map<String, String> segmentGenerationAndPushTaskConfig = ImmutableMap.of("schedule", "0 */10 * ? * * *");
+    Map<String, String> segmentGenerationAndPushTaskConfig = ImmutableCollections.singletonMap("schedule", "0 */10 * ? * * *");
 
     TableConfig tableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME).setTaskConfig(
-        new TableTaskConfig(ImmutableMap.of("RealtimeToOfflineSegmentsTask", realtimeToOfflineTaskConfig,
+        new TableTaskConfig(ImmutableCollections.singletonMap("RealtimeToOfflineSegmentsTask", realtimeToOfflineTaskConfig,
             "SegmentGenerationAndPushTask", segmentGenerationAndPushTaskConfig))).build();
 
     // validate valid config
@@ -547,7 +547,7 @@ public class RealtimeToOfflineSegmentsTaskGeneratorTest {
     tableConfig =
         new TableConfigBuilder(TableType.REALTIME).setTableName(RAW_TABLE_NAME).setTimeColumnName(TIME_COLUMN_NAME)
             .setUpsertConfig(new UpsertConfig(UpsertConfig.Mode.FULL)).setTaskConfig(new TableTaskConfig(
-                ImmutableMap.of("RealtimeToOfflineSegmentsTask", realtimeToOfflineTaskConfig,
+                ImmutableCollections.singletonMap("RealtimeToOfflineSegmentsTask", realtimeToOfflineTaskConfig,
                     "SegmentGenerationAndPushTask", segmentGenerationAndPushTaskConfig))).build();
     try {
       taskGenerator.validateTaskConfigs(tableConfig, schema, realtimeToOfflineTaskConfig);
@@ -561,7 +561,7 @@ public class RealtimeToOfflineSegmentsTaskGeneratorTest {
     invalidPeriodConfig.put("roundBucketTimePeriod", "garbage");
     tableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME).setTaskConfig(
         new TableTaskConfig(
-            ImmutableMap.of("RealtimeToOfflineSegmentsTask", invalidPeriodConfig, "SegmentGenerationAndPushTask",
+            ImmutableCollections.singletonMap("RealtimeToOfflineSegmentsTask", invalidPeriodConfig, "SegmentGenerationAndPushTask",
                 segmentGenerationAndPushTaskConfig))).build();
     try {
       taskGenerator.validateTaskConfigs(tableConfig, schema, invalidPeriodConfig);
@@ -575,7 +575,7 @@ public class RealtimeToOfflineSegmentsTaskGeneratorTest {
     invalidMergeType.put("mergeType", "garbage");
     tableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME).setTaskConfig(
         new TableTaskConfig(
-            ImmutableMap.of("RealtimeToOfflineSegmentsTask", invalidMergeType, "SegmentGenerationAndPushTask",
+            ImmutableCollections.singletonMap("RealtimeToOfflineSegmentsTask", invalidMergeType, "SegmentGenerationAndPushTask",
                 segmentGenerationAndPushTaskConfig))).build();
     try {
       taskGenerator.validateTaskConfigs(tableConfig, schema, invalidMergeType);
@@ -589,7 +589,7 @@ public class RealtimeToOfflineSegmentsTaskGeneratorTest {
     invalidColumnConfig.put("score.aggregationType", "max");
     tableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME).setTaskConfig(
         new TableTaskConfig(
-            ImmutableMap.of("RealtimeToOfflineSegmentsTask", invalidColumnConfig, "SegmentGenerationAndPushTask",
+            ImmutableCollections.singletonMap("RealtimeToOfflineSegmentsTask", invalidColumnConfig, "SegmentGenerationAndPushTask",
                 segmentGenerationAndPushTaskConfig))).build();
     try {
       taskGenerator.validateTaskConfigs(tableConfig, schema, invalidColumnConfig);
@@ -603,7 +603,7 @@ public class RealtimeToOfflineSegmentsTaskGeneratorTest {
     invalidAggConfig.put("myCol.aggregationType", "garbage");
     tableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME).setTaskConfig(
         new TableTaskConfig(
-            ImmutableMap.of("RealtimeToOfflineSegmentsTask", invalidAggConfig, "SegmentGenerationAndPushTask",
+            ImmutableCollections.singletonMap("RealtimeToOfflineSegmentsTask", invalidAggConfig, "SegmentGenerationAndPushTask",
                 segmentGenerationAndPushTaskConfig))).build();
     try {
       taskGenerator.validateTaskConfigs(tableConfig, schema, invalidAggConfig);
@@ -617,7 +617,7 @@ public class RealtimeToOfflineSegmentsTaskGeneratorTest {
     invalidAgg2Config.put("myCol.aggregationType", "Histogram");
     tableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME).setTaskConfig(
         new TableTaskConfig(
-            ImmutableMap.of("RealtimeToOfflineSegmentsTask", invalidAgg2Config, "SegmentGenerationAndPushTask",
+            ImmutableCollections.singletonMap("RealtimeToOfflineSegmentsTask", invalidAgg2Config, "SegmentGenerationAndPushTask",
                 segmentGenerationAndPushTaskConfig))).build();
     try {
       taskGenerator.validateTaskConfigs(tableConfig, schema, invalidAgg2Config);
@@ -631,7 +631,7 @@ public class RealtimeToOfflineSegmentsTaskGeneratorTest {
     validAggConfig.put("myCol.aggregationType", "distinctCountHLL");
     tableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME).setTaskConfig(
         new TableTaskConfig(
-            ImmutableMap.of("RealtimeToOfflineSegmentsTask", validAggConfig, "SegmentGenerationAndPushTask",
+            ImmutableCollections.singletonMap("RealtimeToOfflineSegmentsTask", validAggConfig, "SegmentGenerationAndPushTask",
                 segmentGenerationAndPushTaskConfig))).build();
     taskGenerator.validateTaskConfigs(tableConfig, schema, validAggConfig);
 
@@ -640,7 +640,7 @@ public class RealtimeToOfflineSegmentsTaskGeneratorTest {
     validAgg2Config.put("myCol.aggregationType", "distinctCountHLLPlus");
     tableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME).setTaskConfig(
         new TableTaskConfig(
-            ImmutableMap.of("RealtimeToOfflineSegmentsTask", validAgg2Config, "SegmentGenerationAndPushTask",
+            ImmutableCollections.singletonMap("RealtimeToOfflineSegmentsTask", validAgg2Config, "SegmentGenerationAndPushTask",
                 segmentGenerationAndPushTaskConfig))).build();
     taskGenerator.validateTaskConfigs(tableConfig, schema, validAgg2Config);
   }

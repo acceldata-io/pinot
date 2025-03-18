@@ -83,10 +83,10 @@ public class WindowAggregateOperatorTest {
     DataSchema resultSchema = new DataSchema(new String[]{"group", "arg", "sum"}, new ColumnDataType[]{
         INT, INT, DOUBLE
     });
-    List<Integer> keys = List.of(0);
-    List<RexExpression.FunctionCall> aggCalls = List.of(getSum(new RexExpression.InputRef(1)));
+    List<Integer> keys = Arrays.asList(0);
+    List<RexExpression.FunctionCall> aggCalls = Arrays.asList(getSum(new RexExpression.InputRef(1)));
     WindowAggregateOperator operator =
-        getOperator(inputSchema, resultSchema, keys, List.of(), aggCalls, WindowNode.WindowFrameType.RANGE,
+        getOperator(inputSchema, resultSchema, keys, Arrays.asList(), aggCalls, WindowNode.WindowFrameType.RANGE,
             Integer.MIN_VALUE, Integer.MAX_VALUE);
 
     // When:
@@ -105,10 +105,10 @@ public class WindowAggregateOperatorTest {
     DataSchema resultSchema = new DataSchema(new String[]{"group", "arg", "sum"}, new ColumnDataType[]{
         INT, INT, DOUBLE
     });
-    List<Integer> keys = List.of(0);
-    List<RexExpression.FunctionCall> aggCalls = List.of(getSum(new RexExpression.InputRef(1)));
+    List<Integer> keys = Arrays.asList(0);
+    List<RexExpression.FunctionCall> aggCalls = Arrays.asList(getSum(new RexExpression.InputRef(1)));
     WindowAggregateOperator operator =
-        getOperator(inputSchema, resultSchema, keys, List.of(), aggCalls, WindowNode.WindowFrameType.RANGE,
+        getOperator(inputSchema, resultSchema, keys, Arrays.asList(), aggCalls, WindowNode.WindowFrameType.RANGE,
             Integer.MIN_VALUE, Integer.MAX_VALUE);
 
     // When:
@@ -128,10 +128,10 @@ public class WindowAggregateOperatorTest {
     DataSchema resultSchema = new DataSchema(new String[]{"group", "arg", "sum"}, new ColumnDataType[]{
         INT, INT, DOUBLE
     });
-    List<Integer> keys = List.of(0);
-    List<RexExpression.FunctionCall> aggCalls = List.of(getSum(new RexExpression.InputRef(1)));
+    List<Integer> keys = Arrays.asList(0);
+    List<RexExpression.FunctionCall> aggCalls = Arrays.asList(getSum(new RexExpression.InputRef(1)));
     WindowAggregateOperator operator =
-        getOperator(inputSchema, resultSchema, keys, List.of(), aggCalls, WindowNode.WindowFrameType.RANGE,
+        getOperator(inputSchema, resultSchema, keys, Arrays.asList(), aggCalls, WindowNode.WindowFrameType.RANGE,
             Integer.MIN_VALUE, Integer.MAX_VALUE);
 
     // When:
@@ -152,10 +152,10 @@ public class WindowAggregateOperatorTest {
     DataSchema resultSchema = new DataSchema(new String[]{"group", "arg", "sum"}, new ColumnDataType[]{
         INT, INT, DOUBLE
     });
-    List<Integer> keys = List.of(0);
+    List<Integer> keys = Arrays.asList(0);
     List<RelFieldCollation> collations =
-        List.of(new RelFieldCollation(0, RelFieldCollation.Direction.ASCENDING, RelFieldCollation.NullDirection.LAST));
-    List<RexExpression.FunctionCall> aggCalls = List.of(getSum(new RexExpression.InputRef(1)));
+        Arrays.asList(new RelFieldCollation(0, RelFieldCollation.Direction.ASCENDING, RelFieldCollation.NullDirection.LAST));
+    List<RexExpression.FunctionCall> aggCalls = Arrays.asList(getSum(new RexExpression.InputRef(1)));
     WindowAggregateOperator operator =
         getOperator(inputSchema, resultSchema, keys, collations, aggCalls, WindowNode.WindowFrameType.RANGE,
             Integer.MIN_VALUE, Integer.MAX_VALUE);
@@ -178,9 +178,9 @@ public class WindowAggregateOperatorTest {
     DataSchema resultSchema = new DataSchema(new String[]{"group", "arg", "sum"}, new ColumnDataType[]{
         INT, INT, DOUBLE
     });
-    List<RexExpression.FunctionCall> aggCalls = List.of(getSum(new RexExpression.InputRef(1)));
+    List<RexExpression.FunctionCall> aggCalls = Arrays.asList(getSum(new RexExpression.InputRef(1)));
     WindowAggregateOperator operator =
-        getOperator(inputSchema, resultSchema, List.of(), List.of(), aggCalls, WindowNode.WindowFrameType.RANGE,
+        getOperator(inputSchema, resultSchema, Arrays.asList(), Arrays.asList(), aggCalls, WindowNode.WindowFrameType.RANGE,
             Integer.MIN_VALUE, Integer.MAX_VALUE);
 
     // When:
@@ -201,10 +201,10 @@ public class WindowAggregateOperatorTest {
     DataSchema resultSchema = new DataSchema(new String[]{"group", "arg", "sum"}, new ColumnDataType[]{
         INT, INT, DOUBLE
     });
-    List<Integer> keys = List.of(0);
-    List<RexExpression.FunctionCall> aggCalls = List.of(getSum(new RexExpression.Literal(ColumnDataType.INT, 42)));
+    List<Integer> keys = Arrays.asList(0);
+    List<RexExpression.FunctionCall> aggCalls = Arrays.asList(getSum(new RexExpression.Literal(ColumnDataType.INT, 42)));
     WindowAggregateOperator operator =
-        getOperator(inputSchema, resultSchema, keys, List.of(), aggCalls, WindowNode.WindowFrameType.RANGE,
+        getOperator(inputSchema, resultSchema, keys, Arrays.asList(), aggCalls, WindowNode.WindowFrameType.RANGE,
             Integer.MIN_VALUE, Integer.MAX_VALUE);
 
     // When:
@@ -223,18 +223,18 @@ public class WindowAggregateOperatorTest {
     DataSchema inputSchema = new DataSchema(new String[]{"arg", "group"}, new ColumnDataType[]{INT, STRING});
     DataSchema resultSchema =
         new DataSchema(new String[]{"arg", "group", "sum"}, new ColumnDataType[]{INT, STRING, DOUBLE});
-    List<Integer> keys = List.of(1);
-    List<RexExpression.FunctionCall> aggCalls = List.of(getSum(new RexExpression.InputRef(0)));
+    List<Integer> keys = Arrays.asList(1);
+    List<RexExpression.FunctionCall> aggCalls = Arrays.asList(getSum(new RexExpression.InputRef(0)));
     WindowAggregateOperator operator =
-        getOperator(inputSchema, resultSchema, keys, List.of(), aggCalls, WindowNode.WindowFrameType.RANGE,
+        getOperator(inputSchema, resultSchema, keys, Arrays.asList(), aggCalls, WindowNode.WindowFrameType.RANGE,
             Integer.MIN_VALUE, Integer.MAX_VALUE);
 
     // When:
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, keys, Map.of("Aa", List.<Object[]>of(new Object[]{1, "Aa", 1.0}), "BB",
-        List.of(new Object[]{2, "BB", 5.0}, new Object[]{3, "BB", 5.0})));
+    verifyResultRows(resultRows, keys, Collections.singletonMap("Aa", List.<Object[]>of(new Object[]{1, "Aa", 1.0}), "BB",
+        Arrays.asList(new Object[]{2, "BB", 5.0}, new Object[]{3, "BB", 5.0})));
     assertTrue(operator.nextBlock().isSuccessfulEndOfStreamBlock(), "Second block is EOS (done processing)");
   }
 
@@ -244,12 +244,12 @@ public class WindowAggregateOperatorTest {
     // Given:
     DataSchema inputSchema = new DataSchema(new String[]{"unknown"}, new ColumnDataType[]{DOUBLE});
     DataSchema resultSchema = new DataSchema(new String[]{"unknown"}, new ColumnDataType[]{DOUBLE});
-    List<Integer> keys = List.of(0);
+    List<Integer> keys = Arrays.asList(0);
     List<RexExpression.FunctionCall> aggCalls =
-        List.of(new RexExpression.FunctionCall(ColumnDataType.INT, "AVERAGE", List.of()));
+        Arrays.asList(new RexExpression.FunctionCall(ColumnDataType.INT, "AVERAGE", Arrays.asList()));
 
     // When:
-    getOperator(inputSchema, resultSchema, keys, List.of(), aggCalls, WindowNode.WindowFrameType.RANGE,
+    getOperator(inputSchema, resultSchema, keys, Arrays.asList(), aggCalls, WindowNode.WindowFrameType.RANGE,
         Integer.MIN_VALUE, Integer.MAX_VALUE);
   }
 
@@ -260,12 +260,12 @@ public class WindowAggregateOperatorTest {
     // Given:
     DataSchema inputSchema = new DataSchema(new String[]{"unknown"}, new ColumnDataType[]{DOUBLE});
     DataSchema resultSchema = new DataSchema(new String[]{"unknown"}, new ColumnDataType[]{DOUBLE});
-    List<Integer> keys = List.of(0);
+    List<Integer> keys = Arrays.asList(0);
     List<RexExpression.FunctionCall> aggCalls =
-        List.of(new RexExpression.FunctionCall(ColumnDataType.INT, SqlKind.NTILE.name(), List.of()));
+        Arrays.asList(new RexExpression.FunctionCall(ColumnDataType.INT, SqlKind.NTILE.name(), Arrays.asList()));
 
     // When:
-    getOperator(inputSchema, resultSchema, keys, List.of(), aggCalls, WindowNode.WindowFrameType.RANGE,
+    getOperator(inputSchema, resultSchema, keys, Arrays.asList(), aggCalls, WindowNode.WindowFrameType.RANGE,
         Integer.MIN_VALUE, Integer.MAX_VALUE);
   }
 
@@ -282,12 +282,12 @@ public class WindowAggregateOperatorTest {
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
     DataSchema resultSchema = new DataSchema(new String[]{"group", "arg", "rank", "dense_rank"},
         new ColumnDataType[]{INT, STRING, LONG, LONG});
-    List<Integer> keys = List.of(0);
+    List<Integer> keys = Arrays.asList(0);
     List<RelFieldCollation> collations =
-        List.of(new RelFieldCollation(1, RelFieldCollation.Direction.ASCENDING, RelFieldCollation.NullDirection.LAST));
+        Arrays.asList(new RelFieldCollation(1, RelFieldCollation.Direction.ASCENDING, RelFieldCollation.NullDirection.LAST));
     List<RexExpression.FunctionCall> aggCalls =
-        List.of(new RexExpression.FunctionCall(ColumnDataType.INT, SqlKind.RANK.name(), List.of()),
-            new RexExpression.FunctionCall(ColumnDataType.INT, SqlKind.DENSE_RANK.name(), List.of()));
+        Arrays.asList(new RexExpression.FunctionCall(ColumnDataType.INT, SqlKind.RANK.name(), Arrays.asList()),
+            new RexExpression.FunctionCall(ColumnDataType.INT, SqlKind.DENSE_RANK.name(), Arrays.asList()));
     WindowAggregateOperator operator =
         getOperator(inputSchema, resultSchema, keys, collations, aggCalls, WindowNode.WindowFrameType.RANGE,
             Integer.MIN_VALUE, 0);
@@ -297,12 +297,12 @@ public class WindowAggregateOperatorTest {
 
     // Then:
     verifyResultRows(resultRows, keys,
-        Map.of(1, List.of(new Object[]{1, "foo", 1L, 1L}, new Object[]{1, "foo", 1L, 1L}, new Object[]{
+        Collections.singletonMap(1, Arrays.asList(new Object[]{1, "foo", 1L, 1L}, new Object[]{1, "foo", 1L, 1L}, new Object[]{
                 1, "numb", 3L, 2L
-            }), 2, List.of(new Object[]{2, "bar", 1L, 1L}, new Object[]{2, "foo", 2L, 2L}, new Object[]{
+            }), 2, Arrays.asList(new Object[]{2, "bar", 1L, 1L}, new Object[]{2, "foo", 2L, 2L}, new Object[]{
                 2, "foo", 2L, 2L
             }, new Object[]{2, "the", 4L, 3L}), 3,
-            List.of(new Object[]{3, "and", 1L, 1L}, new Object[]{3, "true", 2L, 2L})));
+            Arrays.asList(new Object[]{3, "and", 1L, 1L}, new Object[]{3, "true", 2L, 2L})));
     assertTrue(operator.nextBlock().isSuccessfulEndOfStreamBlock(), "Second block is EOS (done processing)");
   }
 
@@ -318,11 +318,11 @@ public class WindowAggregateOperatorTest {
                 new Object[]{3, "true"})).thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
     DataSchema resultSchema =
         new DataSchema(new String[]{"group", "arg", "row_number"}, new ColumnDataType[]{INT, STRING, LONG});
-    List<Integer> keys = List.of(0);
+    List<Integer> keys = Arrays.asList(0);
     List<RelFieldCollation> collations =
-        List.of(new RelFieldCollation(1, RelFieldCollation.Direction.ASCENDING, RelFieldCollation.NullDirection.LAST));
+        Arrays.asList(new RelFieldCollation(1, RelFieldCollation.Direction.ASCENDING, RelFieldCollation.NullDirection.LAST));
     List<RexExpression.FunctionCall> aggCalls =
-        List.of(new RexExpression.FunctionCall(ColumnDataType.INT, SqlKind.ROW_NUMBER.name(), List.of()));
+        Arrays.asList(new RexExpression.FunctionCall(ColumnDataType.INT, SqlKind.ROW_NUMBER.name(), Arrays.asList()));
     WindowAggregateOperator operator =
         getOperator(inputSchema, resultSchema, keys, collations, aggCalls, ROWS,
             Integer.MIN_VALUE, 0);
@@ -331,9 +331,9 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, keys, Map.of(1, List.<Object[]>of(new Object[]{1, "foo", 1L}), 2,
-        List.of(new Object[]{2, "bar", 1L}, new Object[]{2, "foo", 2L}, new Object[]{2, "foo", 3L},
-            new Object[]{2, "the", 4L}), 3, List.of(new Object[]{3, "and", 1L}, new Object[]{3, "true", 2L})));
+    verifyResultRows(resultRows, keys, Collections.singletonMap(1, List.<Object[]>of(new Object[]{1, "foo", 1L}), 2,
+        Arrays.asList(new Object[]{2, "bar", 1L}, new Object[]{2, "foo", 2L}, new Object[]{2, "foo", 3L},
+            new Object[]{2, "the", 4L}), 3, Arrays.asList(new Object[]{3, "and", 1L}, new Object[]{3, "true", 2L})));
     assertTrue(operator.nextBlock().isSuccessfulEndOfStreamBlock(), "Second block is EOS (done processing)");
   }
 
@@ -348,10 +348,10 @@ public class WindowAggregateOperatorTest {
             new Object[]{3, "true"})).thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
     DataSchema resultSchema =
         new DataSchema(new String[]{"group", "arg", "sum"}, new ColumnDataType[]{INT, STRING, DOUBLE});
-    List<Integer> keys = List.of(0);
+    List<Integer> keys = Arrays.asList(0);
     List<RelFieldCollation> collations =
-        List.of(new RelFieldCollation(1, RelFieldCollation.Direction.ASCENDING, RelFieldCollation.NullDirection.LAST));
-    List<RexExpression.FunctionCall> aggCalls = List.of(getSum(new RexExpression.InputRef(0)));
+        Arrays.asList(new RelFieldCollation(1, RelFieldCollation.Direction.ASCENDING, RelFieldCollation.NullDirection.LAST));
+    List<RexExpression.FunctionCall> aggCalls = Arrays.asList(getSum(new RexExpression.InputRef(0)));
     // RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW (default window frame for ORDER BY)
     WindowAggregateOperator operator =
         getOperator(inputSchema, resultSchema, keys, collations, aggCalls, WindowNode.WindowFrameType.RANGE,
@@ -361,9 +361,9 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, keys, Map.of(1, List.<Object[]>of(new Object[]{1, "foo", 1.0}), 2,
-        List.of(new Object[]{2, "bar", 2.0}, new Object[]{2, "foo", 6.0}, new Object[]{2, "foo", 6.0}), 3,
-        List.of(new Object[]{3, "and", 3.0}, new Object[]{3, "true", 6.0})));
+    verifyResultRows(resultRows, keys, Collections.singletonMap(1, List.<Object[]>of(new Object[]{1, "foo", 1.0}), 2,
+        Arrays.asList(new Object[]{2, "bar", 2.0}, new Object[]{2, "foo", 6.0}, new Object[]{2, "foo", 6.0}), 3,
+        Arrays.asList(new Object[]{3, "and", 3.0}, new Object[]{3, "true", 6.0})));
     assertTrue(operator.nextBlock().isSuccessfulEndOfStreamBlock(), "Second block is EOS (done processing)");
   }
 
@@ -375,10 +375,10 @@ public class WindowAggregateOperatorTest {
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
     DataSchema resultSchema =
         new DataSchema(new String[]{"group", "arg", "sum"}, new ColumnDataType[]{INT, STRING, DOUBLE});
-    List<Integer> keys = List.of(1);
+    List<Integer> keys = Arrays.asList(1);
     List<RelFieldCollation> collations =
-        List.of(new RelFieldCollation(1, RelFieldCollation.Direction.ASCENDING, RelFieldCollation.NullDirection.LAST));
-    List<RexExpression.FunctionCall> aggCalls = List.of(getSum(new RexExpression.InputRef(0)));
+        Arrays.asList(new RelFieldCollation(1, RelFieldCollation.Direction.ASCENDING, RelFieldCollation.NullDirection.LAST));
+    List<RexExpression.FunctionCall> aggCalls = Arrays.asList(getSum(new RexExpression.InputRef(0)));
     WindowAggregateOperator operator =
         getOperator(inputSchema, resultSchema, keys, collations, aggCalls, WindowNode.WindowFrameType.RANGE,
             Integer.MIN_VALUE, 0);
@@ -405,10 +405,10 @@ public class WindowAggregateOperatorTest {
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
     DataSchema resultSchema =
         new DataSchema(new String[]{"group", "arg", "sum"}, new ColumnDataType[]{INT, STRING, DOUBLE});
-    List<Integer> keys = List.of(1);
+    List<Integer> keys = Arrays.asList(1);
     List<RelFieldCollation> collations =
-        List.of(new RelFieldCollation(1, RelFieldCollation.Direction.DESCENDING, RelFieldCollation.NullDirection.LAST));
-    List<RexExpression.FunctionCall> aggCalls = List.of(getSum(new RexExpression.InputRef(0)));
+        Arrays.asList(new RelFieldCollation(1, RelFieldCollation.Direction.DESCENDING, RelFieldCollation.NullDirection.LAST));
+    List<RexExpression.FunctionCall> aggCalls = Arrays.asList(getSum(new RexExpression.InputRef(0)));
     WindowAggregateOperator operator =
         getOperator(inputSchema, resultSchema, keys, collations, aggCalls, WindowNode.WindowFrameType.RANGE,
             Integer.MIN_VALUE, Integer.MAX_VALUE);
@@ -417,8 +417,8 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, keys, Map.of("bar", List.<Object[]>of(new Object[]{2, "bar", 2.0}), "foo",
-        List.of(new Object[]{2, "foo", 5.0}, new Object[]{3, "foo", 5.0})));
+    verifyResultRows(resultRows, keys, Collections.singletonMap("bar", List.<Object[]>of(new Object[]{2, "bar", 2.0}), "foo",
+        Arrays.asList(new Object[]{2, "foo", 5.0}, new Object[]{3, "foo", 5.0})));
     assertTrue(operator.nextBlock().isSuccessfulEndOfStreamBlock(), "Second block is EOS (done processing)");
   }
 
@@ -433,10 +433,10 @@ public class WindowAggregateOperatorTest {
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
     DataSchema resultSchema =
         new DataSchema(new String[]{"group", "arg", "sum"}, new ColumnDataType[]{INT, STRING, DOUBLE});
-    List<RexExpression.FunctionCall> aggCalls = List.of(getSum(new RexExpression.InputRef(1)));
-    List<Integer> keys = List.of(0);
+    List<RexExpression.FunctionCall> aggCalls = Arrays.asList(getSum(new RexExpression.InputRef(1)));
+    List<Integer> keys = Arrays.asList(0);
     WindowAggregateOperator operator =
-        getOperator(inputSchema, resultSchema, keys, List.of(), aggCalls, WindowNode.WindowFrameType.RANGE,
+        getOperator(inputSchema, resultSchema, keys, Arrays.asList(), aggCalls, WindowNode.WindowFrameType.RANGE,
             Integer.MIN_VALUE, Integer.MAX_VALUE);
 
     // When:
@@ -456,13 +456,13 @@ public class WindowAggregateOperatorTest {
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
     DataSchema resultSchema =
         new DataSchema(new String[]{"group", "arg", "sum"}, new ColumnDataType[]{INT, INT, DOUBLE});
-    List<Integer> keys = List.of(0);
-    List<RexExpression.FunctionCall> aggCalls = List.of(getSum(new RexExpression.InputRef(1)));
-    PlanNode.NodeHint nodeHint = new PlanNode.NodeHint(Map.of(PinotHintOptions.WINDOW_HINT_OPTIONS,
-        Map.of(PinotHintOptions.WindowHintOptions.WINDOW_OVERFLOW_MODE, "THROW",
+    List<Integer> keys = Arrays.asList(0);
+    List<RexExpression.FunctionCall> aggCalls = Arrays.asList(getSum(new RexExpression.InputRef(1)));
+    PlanNode.NodeHint nodeHint = new PlanNode.NodeHint(Collections.singletonMap(PinotHintOptions.WINDOW_HINT_OPTIONS,
+        Collections.singletonMap(PinotHintOptions.WindowHintOptions.WINDOW_OVERFLOW_MODE, "THROW",
             PinotHintOptions.WindowHintOptions.MAX_ROWS_IN_WINDOW, "1")));
     WindowAggregateOperator operator =
-        getOperator(inputSchema, resultSchema, keys, List.of(), aggCalls, WindowNode.WindowFrameType.RANGE,
+        getOperator(inputSchema, resultSchema, keys, Arrays.asList(), aggCalls, WindowNode.WindowFrameType.RANGE,
             Integer.MIN_VALUE, Integer.MAX_VALUE, nodeHint);
 
     // When:
@@ -482,13 +482,13 @@ public class WindowAggregateOperatorTest {
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
     DataSchema resultSchema =
         new DataSchema(new String[]{"group", "arg", "sum"}, new ColumnDataType[]{INT, INT, DOUBLE});
-    List<Integer> keys = List.of(0);
-    List<RexExpression.FunctionCall> aggCalls = List.of(getSum(new RexExpression.InputRef(1)));
-    PlanNode.NodeHint nodeHint = new PlanNode.NodeHint(Map.of(PinotHintOptions.WINDOW_HINT_OPTIONS,
-        Map.of(PinotHintOptions.WindowHintOptions.WINDOW_OVERFLOW_MODE, "BREAK",
+    List<Integer> keys = Arrays.asList(0);
+    List<RexExpression.FunctionCall> aggCalls = Arrays.asList(getSum(new RexExpression.InputRef(1)));
+    PlanNode.NodeHint nodeHint = new PlanNode.NodeHint(Collections.singletonMap(PinotHintOptions.WINDOW_HINT_OPTIONS,
+        Collections.singletonMap(PinotHintOptions.WindowHintOptions.WINDOW_OVERFLOW_MODE, "BREAK",
             PinotHintOptions.WindowHintOptions.MAX_ROWS_IN_WINDOW, "1")));
     WindowAggregateOperator operator =
-        getOperator(inputSchema, resultSchema, keys, List.of(), aggCalls, WindowNode.WindowFrameType.RANGE,
+        getOperator(inputSchema, resultSchema, keys, Arrays.asList(), aggCalls, WindowNode.WindowFrameType.RANGE,
             Integer.MIN_VALUE, Integer.MAX_VALUE, nodeHint);
 
     // When:
@@ -518,14 +518,14 @@ public class WindowAggregateOperatorTest {
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
     DataSchema resultSchema =
         new DataSchema(new String[]{"group", "arg", "lead", "lag"}, new ColumnDataType[]{INT, STRING, INT, INT});
-    List<Integer> keys = List.of(0);
+    List<Integer> keys = Arrays.asList(0);
     List<RelFieldCollation> collations =
-        List.of(new RelFieldCollation(1, RelFieldCollation.Direction.ASCENDING, RelFieldCollation.NullDirection.LAST));
-    List<RexExpression.FunctionCall> aggCalls = List.of(
+        Arrays.asList(new RelFieldCollation(1, RelFieldCollation.Direction.ASCENDING, RelFieldCollation.NullDirection.LAST));
+    List<RexExpression.FunctionCall> aggCalls = Arrays.asList(
         new RexExpression.FunctionCall(ColumnDataType.INT, SqlKind.LEAD.name(),
-            List.of(new RexExpression.InputRef(0), new RexExpression.Literal(ColumnDataType.INT, 1))),
+            Arrays.asList(new RexExpression.InputRef(0), new RexExpression.Literal(ColumnDataType.INT, 1))),
         new RexExpression.FunctionCall(ColumnDataType.INT, SqlKind.LAG.name(),
-            List.of(new RexExpression.InputRef(0), new RexExpression.Literal(ColumnDataType.INT, 1))));
+            Arrays.asList(new RexExpression.InputRef(0), new RexExpression.Literal(ColumnDataType.INT, 1))));
     WindowAggregateOperator operator =
         getOperator(inputSchema, resultSchema, keys, collations, aggCalls, WindowNode.WindowFrameType.RANGE,
             Integer.MIN_VALUE, 0);
@@ -533,17 +533,17 @@ public class WindowAggregateOperatorTest {
     // When:
     List<Object[]> resultRows = operator.nextBlock().getContainer();
     // Then:
-    verifyResultRows(resultRows, keys, Map.of(
-        1, List.of(
+    verifyResultRows(resultRows, keys, Collections.singletonMap(
+        1, Arrays.asList(
             new Object[]{1, "foo", 1, null},
             new Object[]{1, "foo", 1, 1},
             new Object[]{1, "numb", null, 1}),
-        2, List.of(
+        2, Arrays.asList(
             new Object[]{2, "bar", 2, null},
             new Object[]{2, "foo", 2, 2},
             new Object[]{2, "foo", 2, 2},
             new Object[]{2, "the", null, 2}),
-        3, List.of(
+        3, Arrays.asList(
             new Object[]{3, "and", 3, null},
             new Object[]{3, "true", null, 3})
     ));
@@ -562,15 +562,15 @@ public class WindowAggregateOperatorTest {
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
     DataSchema resultSchema =
         new DataSchema(new String[]{"group", "arg", "lead", "lag"}, new ColumnDataType[]{INT, STRING, INT, INT});
-    List<Integer> keys = List.of(0);
+    List<Integer> keys = Arrays.asList(0);
     List<RelFieldCollation> collations =
-        List.of(new RelFieldCollation(1, RelFieldCollation.Direction.ASCENDING, RelFieldCollation.NullDirection.LAST));
-    List<RexExpression.FunctionCall> aggCalls = List.of(
+        Arrays.asList(new RelFieldCollation(1, RelFieldCollation.Direction.ASCENDING, RelFieldCollation.NullDirection.LAST));
+    List<RexExpression.FunctionCall> aggCalls = Arrays.asList(
         new RexExpression.FunctionCall(ColumnDataType.INT, SqlKind.LEAD.name(),
-            List.of(new RexExpression.InputRef(0), new RexExpression.Literal(ColumnDataType.INT, 2),
+            Arrays.asList(new RexExpression.InputRef(0), new RexExpression.Literal(ColumnDataType.INT, 2),
                 new RexExpression.Literal(ColumnDataType.INT, 100))),
         new RexExpression.FunctionCall(ColumnDataType.INT, SqlKind.LAG.name(),
-            List.of(new RexExpression.InputRef(0), new RexExpression.Literal(ColumnDataType.INT, 1),
+            Arrays.asList(new RexExpression.InputRef(0), new RexExpression.Literal(ColumnDataType.INT, 1),
                 new RexExpression.Literal(ColumnDataType.INT, 200))));
     WindowAggregateOperator operator =
         getOperator(inputSchema, resultSchema, keys, collations, aggCalls, WindowNode.WindowFrameType.RANGE,
@@ -579,17 +579,17 @@ public class WindowAggregateOperatorTest {
     // When:
     List<Object[]> resultRows = operator.nextBlock().getContainer();
     // Then:
-    verifyResultRows(resultRows, keys, Map.of(
-        1, List.of(
+    verifyResultRows(resultRows, keys, Collections.singletonMap(
+        1, Arrays.asList(
             new Object[]{1, "foo", 1, 200},
             new Object[]{1, "foo", 100, 1},
             new Object[]{1, "numb", 100, 1}),
-        2, List.of(
+        2, Arrays.asList(
             new Object[]{2, "bar", 2, 200},
             new Object[]{2, "foo", 2, 2},
             new Object[]{2, "foo", 100, 2},
             new Object[]{2, "the", 100, 2}),
-        3, List.of(
+        3, Arrays.asList(
             new Object[]{3, "and", 100, 200},
             new Object[]{3, "true", 100, 3})
     ));
@@ -600,7 +600,7 @@ public class WindowAggregateOperatorTest {
   public void testSumWithUnboundedPrecedingLowerAndUnboundedFollowingUpper(WindowNode.WindowFrameType frameType) {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, DOUBLE, List.of(0), 2, frameType, Integer.MIN_VALUE, Integer.MAX_VALUE,
+        new ColumnDataType[]{STRING, INT, INT}, DOUBLE, Arrays.asList(0), 2, frameType, Integer.MIN_VALUE, Integer.MAX_VALUE,
         getSum(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -615,14 +615,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then (result should be the same for both window frame types):
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 59.0},
             new Object[]{"A", 10, 2002, 59.0},
             new Object[]{"A", 20, 2008, 59.0},
             new Object[]{"A", 15, 2008, 59.0}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 30.0},
             new Object[]{"B", 20, 2005, 30.0}
         )));
@@ -633,7 +633,7 @@ public class WindowAggregateOperatorTest {
   public void testSumWithUnboundedPrecedingLowerAndCurrentRowUpper(WindowNode.WindowFrameType frameType) {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, DOUBLE, List.of(0), 2, frameType, Integer.MIN_VALUE, 0,
+        new ColumnDataType[]{STRING, INT, INT}, DOUBLE, Arrays.asList(0), 2, frameType, Integer.MIN_VALUE, 0,
         getSum(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -648,14 +648,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 14.0},
             new Object[]{"A", 10, 2002, 24.0},
             new Object[]{"A", 20, 2008, frameType == ROWS ? 44.0 : 59.0},
             new Object[]{"A", 15, 2008, 59.0}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 10.0},
             new Object[]{"B", 20, 2005, 30.0}
         )));
@@ -666,7 +666,7 @@ public class WindowAggregateOperatorTest {
   public void testSumWithUnboundedPrecedingLowerAndOffsetFollowingUpper() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, DOUBLE, List.of(0), 2, ROWS, Integer.MIN_VALUE, 2,
+        new ColumnDataType[]{STRING, INT, INT}, DOUBLE, Arrays.asList(0), 2, ROWS, Integer.MIN_VALUE, 2,
         getSum(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -681,14 +681,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 44.0},
             new Object[]{"A", 10, 2002, 59.0},
             new Object[]{"A", 20, 2008, 59.0},
             new Object[]{"A", 15, 2008, 59.0}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 30.0},
             new Object[]{"B", 20, 2005, 30.0}
         )));
@@ -699,7 +699,7 @@ public class WindowAggregateOperatorTest {
   public void testSumWithUnboundedPrecedingLowerAndOffsetPrecedingUpper() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, DOUBLE, List.of(0), 2, ROWS, Integer.MIN_VALUE, -2,
+        new ColumnDataType[]{STRING, INT, INT}, DOUBLE, Arrays.asList(0), 2, ROWS, Integer.MIN_VALUE, -2,
         getSum(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -714,14 +714,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, null},
             new Object[]{"A", 10, 2002, null},
             new Object[]{"A", 20, 2008, 14.0},
             new Object[]{"A", 15, 2008, 24.0}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, null},
             new Object[]{"B", 20, 2005, null}
         )));
@@ -732,7 +732,7 @@ public class WindowAggregateOperatorTest {
   public void testSumWithCurrentRowLowerAndUnboundedFollowingUpper(WindowNode.WindowFrameType frameType) {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, DOUBLE, List.of(0), 2, frameType, 0, Integer.MAX_VALUE,
+        new ColumnDataType[]{STRING, INT, INT}, DOUBLE, Arrays.asList(0), 2, frameType, 0, Integer.MAX_VALUE,
         getSum(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -747,14 +747,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 59.0},
             new Object[]{"A", 10, 2002, 45.0},
             new Object[]{"A", 20, 2008, 35.0},
             new Object[]{"A", 15, 2008, frameType == ROWS ? 15.0 : 35.0}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 30.0},
             new Object[]{"B", 20, 2005, 20.0}
         )));
@@ -765,7 +765,7 @@ public class WindowAggregateOperatorTest {
   public void testSumWithCurrentRowLowerAndCurrentRowUpper(WindowNode.WindowFrameType frameType) {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, DOUBLE, List.of(0), 2, frameType, 0, 0,
+        new ColumnDataType[]{STRING, INT, INT}, DOUBLE, Arrays.asList(0), 2, frameType, 0, 0,
         getSum(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -780,14 +780,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 14.0},
             new Object[]{"A", 10, 2002, 10.0},
             new Object[]{"A", 20, 2008, frameType == ROWS ? 20.0 : 35.0},
             new Object[]{"A", 15, 2008, frameType == ROWS ? 15.0 : 35.0}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 10.0},
             new Object[]{"B", 20, 2005, 20.0}
         )));
@@ -798,7 +798,7 @@ public class WindowAggregateOperatorTest {
   public void testSumWithCurrentRowLowerAndOffsetFollowingUpper() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, DOUBLE, List.of(0), 2, ROWS, 0, 2,
+        new ColumnDataType[]{STRING, INT, INT}, DOUBLE, Arrays.asList(0), 2, ROWS, 0, 2,
         getSum(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -813,14 +813,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 44.0},
             new Object[]{"A", 10, 2002, 45.0},
             new Object[]{"A", 20, 2008, 35.0},
             new Object[]{"A", 15, 2008, 15.0}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 30.0},
             new Object[]{"B", 20, 2005, 20.0}
         )));
@@ -831,7 +831,7 @@ public class WindowAggregateOperatorTest {
   public void testSumWithOffsetPrecedingLowerAndUnboundedFollowingUpper() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, DOUBLE, List.of(0), 2, ROWS, -1, Integer.MAX_VALUE,
+        new ColumnDataType[]{STRING, INT, INT}, DOUBLE, Arrays.asList(0), 2, ROWS, -1, Integer.MAX_VALUE,
         getSum(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -846,14 +846,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 59.0},
             new Object[]{"A", 10, 2002, 59.0},
             new Object[]{"A", 20, 2008, 45.0},
             new Object[]{"A", 15, 2008, 35.0}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 30.0},
             new Object[]{"B", 20, 2005, 30.0}
         )));
@@ -864,7 +864,7 @@ public class WindowAggregateOperatorTest {
   public void testSumWithOffsetFollowingLowerAndUnboundedFollowingUpper() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, DOUBLE, List.of(0), 2, ROWS, 1, Integer.MAX_VALUE,
+        new ColumnDataType[]{STRING, INT, INT}, DOUBLE, Arrays.asList(0), 2, ROWS, 1, Integer.MAX_VALUE,
         getSum(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -879,14 +879,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 45.0},
             new Object[]{"A", 10, 2002, 35.0},
             new Object[]{"A", 20, 2008, 15.0},
             new Object[]{"A", 15, 2008, null}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 20.0},
             new Object[]{"B", 20, 2005, null}
         )));
@@ -897,7 +897,7 @@ public class WindowAggregateOperatorTest {
   public void testSumWithOffsetPrecedingLowerAndCurrentRowUpper() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, DOUBLE, List.of(0), 2, ROWS, -2, 0,
+        new ColumnDataType[]{STRING, INT, INT}, DOUBLE, Arrays.asList(0), 2, ROWS, -2, 0,
         getSum(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -912,14 +912,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 14.0},
             new Object[]{"A", 10, 2002, 24.0},
             new Object[]{"A", 20, 2008, 44.0},
             new Object[]{"A", 15, 2008, 45.0}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 10.0},
             new Object[]{"B", 20, 2005, 30.0}
         )));
@@ -930,7 +930,7 @@ public class WindowAggregateOperatorTest {
   public void testSumWithOffsetPrecedingLowerAndOffsetFollowingUpper() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, DOUBLE, List.of(0), 2, ROWS, -1, 2,
+        new ColumnDataType[]{STRING, INT, INT}, DOUBLE, Arrays.asList(0), 2, ROWS, -1, 2,
         getSum(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -945,14 +945,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 44.0},
             new Object[]{"A", 10, 2002, 59.0},
             new Object[]{"A", 20, 2008, 45.0},
             new Object[]{"A", 15, 2008, 35.0}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 30.0},
             new Object[]{"B", 20, 2005, 30.0}
         )));
@@ -964,7 +964,7 @@ public class WindowAggregateOperatorTest {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
         // Verify if overflows are handled correctly
-        new ColumnDataType[]{STRING, INT, INT}, DOUBLE, List.of(0), 2, ROWS, -1, 2147483646,
+        new ColumnDataType[]{STRING, INT, INT}, DOUBLE, Arrays.asList(0), 2, ROWS, -1, 2147483646,
         getSum(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -979,14 +979,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 59.0},
             new Object[]{"A", 10, 2002, 59.0},
             new Object[]{"A", 20, 2008, 45.0},
             new Object[]{"A", 15, 2008, 35.0}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 30.0},
             new Object[]{"B", 20, 2005, 30.0}
         )));
@@ -998,7 +998,7 @@ public class WindowAggregateOperatorTest {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
         // Verify if overflows are handled correctly
-        new ColumnDataType[]{STRING, INT, INT}, DOUBLE, List.of(0), 2, ROWS, 2147483646, 2147483647,
+        new ColumnDataType[]{STRING, INT, INT}, DOUBLE, Arrays.asList(0), 2, ROWS, 2147483646, 2147483647,
         getSum(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -1013,14 +1013,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, null},
             new Object[]{"A", 10, 2002, null},
             new Object[]{"A", 20, 2008, null},
             new Object[]{"A", 15, 2008, null}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, null},
             new Object[]{"B", 20, 2005, null}
         )));
@@ -1031,7 +1031,7 @@ public class WindowAggregateOperatorTest {
   public void testSumWithOffsetPrecedingLowerAndOffsetPrecedingUpper() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, DOUBLE, List.of(0), 2, ROWS, -3, -2,
+        new ColumnDataType[]{STRING, INT, INT}, DOUBLE, Arrays.asList(0), 2, ROWS, -3, -2,
         getSum(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -1046,14 +1046,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, null},
             new Object[]{"A", 10, 2002, null},
             new Object[]{"A", 20, 2008, 14.0},
             new Object[]{"A", 15, 2008, 24.0}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, null},
             new Object[]{"B", 20, 2005, null}
         )));
@@ -1064,7 +1064,7 @@ public class WindowAggregateOperatorTest {
   public void testSumWithOffsetFollowingLowerAndOffsetFollowingUpper() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, DOUBLE, List.of(0), 2, ROWS, 1, 2,
+        new ColumnDataType[]{STRING, INT, INT}, DOUBLE, Arrays.asList(0), 2, ROWS, 1, 2,
         getSum(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -1079,14 +1079,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 30.0},
             new Object[]{"A", 10, 2002, 35.0},
             new Object[]{"A", 20, 2008, 15.0},
             new Object[]{"A", 15, 2008, null}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 20.0},
             new Object[]{"B", 20, 2005, null}
         )));
@@ -1097,7 +1097,7 @@ public class WindowAggregateOperatorTest {
   public void testSumWithSamePartitionAndCollationKey() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, DOUBLE, List.of(0), 0, RANGE, Integer.MIN_VALUE, 0,
+        new ColumnDataType[]{STRING, INT, INT}, DOUBLE, Arrays.asList(0), 0, RANGE, Integer.MIN_VALUE, 0,
         getSum(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -1112,14 +1112,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 59.0},
             new Object[]{"A", 10, 2002, 59.0},
             new Object[]{"A", 20, 2008, 59.0},
             new Object[]{"A", 15, 2008, 59.0}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 30.0},
             new Object[]{"B", 20, 2005, 30.0}
         )));
@@ -1130,7 +1130,7 @@ public class WindowAggregateOperatorTest {
   public void testMinWithRowsWindow() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, ROWS, -1, 1,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, ROWS, -1, 1,
         getMin(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -1145,14 +1145,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 10},
             new Object[]{"A", 10, 2002, 10},
             new Object[]{"A", 10, 2008, 10},
             new Object[]{"A", 15, 2008, 10}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 10},
             new Object[]{"B", 20, 2005, 10}
         )));
@@ -1163,7 +1163,7 @@ public class WindowAggregateOperatorTest {
   public void testMinWithRangeWindow() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, RANGE, 0, Integer.MAX_VALUE,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, RANGE, 0, Integer.MAX_VALUE,
         getMin(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -1179,15 +1179,15 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 10},
             new Object[]{"A", 10, 2002, 10},
             new Object[]{"A", 20, 2008, 12},
             new Object[]{"A", 12, 2008, 12},
             new Object[]{"A", 15, 2008, 12}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 10},
             new Object[]{"B", null, 2005, null}
         )));
@@ -1198,7 +1198,7 @@ public class WindowAggregateOperatorTest {
   public void testMaxWithRowsWindow() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, ROWS, 0, 2,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, ROWS, 0, 2,
         getMax(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 20, 2000},
@@ -1213,14 +1213,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 20, 2000, 20},
             new Object[]{"A", 15, 2002, 15},
             new Object[]{"A", 15, 2008, 15},
             new Object[]{"A", 10, 2008, 10}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 20},
             new Object[]{"B", 20, 2005, 20}
         )));
@@ -1231,7 +1231,7 @@ public class WindowAggregateOperatorTest {
   public void testMaxWithRangeWindow() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, RANGE, 0, 0,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, RANGE, 0, 0,
         getMax(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -1247,14 +1247,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 14},
             new Object[]{"A", 10, 2002, 10},
             new Object[]{"A", 20, 2008, 20},
             new Object[]{"A", 15, 2008, 20}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 20},
             new Object[]{"B", 20, 2000, 20},
             new Object[]{"B", null, 2005, null}
@@ -1266,7 +1266,7 @@ public class WindowAggregateOperatorTest {
   public void testBoolAndWithRowsWindow() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, BOOLEAN, INT}, BOOLEAN, List.of(0), 2, ROWS, -2, -1,
+        new ColumnDataType[]{STRING, BOOLEAN, INT}, BOOLEAN, Arrays.asList(0), 2, ROWS, -2, -1,
         getBoolAnd(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 0, 2000},
@@ -1282,15 +1282,15 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 0, 2000, null},
             new Object[]{"A", 1, 2002, 0},
             new Object[]{"A", 1, 2008, 0},
             new Object[]{"A", null, 2008, 1},
             new Object[]{"A", null, 2010, null}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 1, 2000, null},
             new Object[]{"B", 0, 2005, 1}
         )));
@@ -1301,7 +1301,7 @@ public class WindowAggregateOperatorTest {
   public void testBoolAndWithRangeWindow() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, BOOLEAN, INT}, BOOLEAN, List.of(0), 2, RANGE, Integer.MIN_VALUE, 0,
+        new ColumnDataType[]{STRING, BOOLEAN, INT}, BOOLEAN, Arrays.asList(0), 2, RANGE, Integer.MIN_VALUE, 0,
         getBoolAnd(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 0, 2000},
@@ -1317,15 +1317,15 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 0, 2000, 0},
             new Object[]{"A", 1, 2002, 0},
             new Object[]{"A", 1, 2008, 0},
             new Object[]{"A", null, 2008, 0},
             new Object[]{"A", null, 2010, 0}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 1, 2000, 1},
             new Object[]{"B", 0, 2005, 0}
         )));
@@ -1336,7 +1336,7 @@ public class WindowAggregateOperatorTest {
   public void testBoolOrWithRowsWindow() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, BOOLEAN, INT}, BOOLEAN, List.of(0), 2, ROWS, 1, 2,
+        new ColumnDataType[]{STRING, BOOLEAN, INT}, BOOLEAN, Arrays.asList(0), 2, ROWS, 1, 2,
         getBoolOr(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 0, 2000},
@@ -1352,15 +1352,15 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 0, 2000, 1},
             new Object[]{"A", 1, 2002, 1},
             new Object[]{"A", 1, 2008, null},
             new Object[]{"A", null, 2008, null},
             new Object[]{"A", null, 2010, null}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 1, 2000, 0},
             new Object[]{"B", 0, 2005, null}
         )));
@@ -1371,7 +1371,7 @@ public class WindowAggregateOperatorTest {
   public void testBoolOrWithRangeWindow() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, BOOLEAN, INT}, BOOLEAN, List.of(0), 2, RANGE, Integer.MIN_VALUE, Integer.MAX_VALUE,
+        new ColumnDataType[]{STRING, BOOLEAN, INT}, BOOLEAN, Arrays.asList(0), 2, RANGE, Integer.MIN_VALUE, Integer.MAX_VALUE,
         getBoolOr(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 0, 2000},
@@ -1387,15 +1387,15 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 0, 2000, 1},
             new Object[]{"A", 1, 2002, 1},
             new Object[]{"A", 1, 2008, 1},
             new Object[]{"A", null, 2008, 1},
             new Object[]{"A", null, 2010, 1}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 1, 2000, 1},
             new Object[]{"B", 0, 2005, 1}
         )));
@@ -1406,7 +1406,7 @@ public class WindowAggregateOperatorTest {
   public void testFirstValueWithUnboundedPrecedingLowerAndCurrentRowUpper(WindowNode.WindowFrameType frameType) {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, frameType, Integer.MIN_VALUE, 0,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, frameType, Integer.MIN_VALUE, 0,
         getFirstValue(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -1421,14 +1421,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 14},
             new Object[]{"A", 10, 2002, 14},
             new Object[]{"A", 20, 2008, 14},
             new Object[]{"A", 15, 2008, 14}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 10},
             new Object[]{"B", 20, 2005, 10}
         )));
@@ -1440,7 +1440,7 @@ public class WindowAggregateOperatorTest {
       WindowNode.WindowFrameType frameType) {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, frameType, Integer.MIN_VALUE, Integer.MAX_VALUE,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, frameType, Integer.MIN_VALUE, Integer.MAX_VALUE,
         getFirstValue(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -1455,14 +1455,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 14},
             new Object[]{"A", 10, 2002, 14},
             new Object[]{"A", 20, 2008, 14},
             new Object[]{"A", 15, 2008, 14}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 10},
             new Object[]{"B", 20, 2005, 10}
         )));
@@ -1473,7 +1473,7 @@ public class WindowAggregateOperatorTest {
   public void testFirstValueWithUnboundedPrecedingLowerAndOffsetPrecedingUpper() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, ROWS, Integer.MIN_VALUE, -2,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, ROWS, Integer.MIN_VALUE, -2,
         getFirstValue(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -1488,14 +1488,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, null},
             new Object[]{"A", 10, 2002, null},
             new Object[]{"A", 20, 2008, 14},
             new Object[]{"A", 15, 2008, 14}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, null},
             new Object[]{"B", 20, 2005, null}
         )));
@@ -1506,7 +1506,7 @@ public class WindowAggregateOperatorTest {
   public void testFirstValueWithUnboundedPrecedingLowerAndOffsetFollowingUpper() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, ROWS, Integer.MIN_VALUE, 2,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, ROWS, Integer.MIN_VALUE, 2,
         getFirstValue(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -1521,14 +1521,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 14},
             new Object[]{"A", 10, 2002, 14},
             new Object[]{"A", 20, 2008, 14},
             new Object[]{"A", 15, 2008, 14}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 10},
             new Object[]{"B", 20, 2005, 10}
         )));
@@ -1539,7 +1539,7 @@ public class WindowAggregateOperatorTest {
   public void testFirstValueWithCurrentRowLowerAndUnboundedFollowingUpper(WindowNode.WindowFrameType frameType) {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, frameType, 0, Integer.MAX_VALUE,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, frameType, 0, Integer.MAX_VALUE,
         getFirstValue(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -1554,14 +1554,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 14},
             new Object[]{"A", 10, 2002, 10},
             new Object[]{"A", null, 2008, null},
             new Object[]{"A", 15, 2008, frameType == ROWS ? 15 : null}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 10},
             new Object[]{"B", 20, 2005, 20}
         )));
@@ -1572,7 +1572,7 @@ public class WindowAggregateOperatorTest {
   public void testFirstValueWithCurrentRowLowerAndCurrentRowUpper(WindowNode.WindowFrameType frameType) {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, frameType, 0, 0,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, frameType, 0, 0,
         getFirstValue(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -1587,14 +1587,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 14},
             new Object[]{"A", 10, 2002, 10},
             new Object[]{"A", 20, 2008, 20},
             new Object[]{"A", 15, 2008, frameType == ROWS ? 15 : 20}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 10},
             new Object[]{"B", 20, 2005, 20}
         )));
@@ -1605,7 +1605,7 @@ public class WindowAggregateOperatorTest {
   public void testFirstValueWithCurrentRowLowerAndOffsetFollowingUpper() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, ROWS, 0, 2,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, ROWS, 0, 2,
         getFirstValue(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -1620,14 +1620,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 14},
             new Object[]{"A", 10, 2002, 10},
             new Object[]{"A", 20, 2008, 20},
             new Object[]{"A", 15, 2008, 15}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 10},
             new Object[]{"B", 20, 2005, 20}
         )));
@@ -1638,7 +1638,7 @@ public class WindowAggregateOperatorTest {
   public void testFirstValueWithOffsetPrecedingLowerAndOffsetFollowingUpper() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, ROWS, -1, 2,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, ROWS, -1, 2,
         getFirstValue(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -1653,14 +1653,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 14},
             new Object[]{"A", 10, 2002, 14},
             new Object[]{"A", 20, 2008, 10},
             new Object[]{"A", 15, 2008, 20}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 10},
             new Object[]{"B", 20, 2005, 10}
         )));
@@ -1671,7 +1671,7 @@ public class WindowAggregateOperatorTest {
   public void testFirstValueWithOffsetPrecedingLowerAndOffsetPrecedingUpper() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, ROWS, -2, -1,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, ROWS, -2, -1,
         getFirstValue(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -1686,14 +1686,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, null},
             new Object[]{"A", 10, 2002, 14},
             new Object[]{"A", 20, 2008, 14},
             new Object[]{"A", 15, 2008, 10}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, null},
             new Object[]{"B", 20, 2005, 10}
         )));
@@ -1704,7 +1704,7 @@ public class WindowAggregateOperatorTest {
   public void testFirstValueWithOffsetFollowingLowerAndOffsetFollowingUpper() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, ROWS, 2, 3,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, ROWS, 2, 3,
         getFirstValue(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -1719,14 +1719,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 20},
             new Object[]{"A", 10, 2002, 15},
             new Object[]{"A", 20, 2008, null},
             new Object[]{"A", 15, 2008, null}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, null},
             new Object[]{"B", 20, 2005, null}
         )));
@@ -1737,7 +1737,7 @@ public class WindowAggregateOperatorTest {
   public void testLastValueWithUnboundedPrecedingLowerAndCurrentRowUpper(WindowNode.WindowFrameType frameType) {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, frameType, Integer.MIN_VALUE, 0,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, frameType, Integer.MIN_VALUE, 0,
         getLastValue(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -1752,14 +1752,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 14},
             new Object[]{"A", 10, 2002, 10},
             new Object[]{"A", 20, 2008, frameType == ROWS ? 20 : 15},
             new Object[]{"A", 15, 2008, 15}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 10},
             new Object[]{"B", 20, 2005, 20}
         )));
@@ -1771,7 +1771,7 @@ public class WindowAggregateOperatorTest {
       WindowNode.WindowFrameType frameType) {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, frameType, Integer.MIN_VALUE, Integer.MAX_VALUE,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, frameType, Integer.MIN_VALUE, Integer.MAX_VALUE,
         getLastValue(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -1786,14 +1786,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 15},
             new Object[]{"A", 10, 2002, 15},
             new Object[]{"A", 20, 2008, 15},
             new Object[]{"A", 15, 2008, 15}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 20},
             new Object[]{"B", 20, 2005, 20}
         )));
@@ -1804,7 +1804,7 @@ public class WindowAggregateOperatorTest {
   public void testLastValueWithUnboundedPrecedingLowerAndOffsetPrecedingUpper() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, ROWS, Integer.MIN_VALUE, -2,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, ROWS, Integer.MIN_VALUE, -2,
         getLastValue(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -1819,14 +1819,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, null},
             new Object[]{"A", 10, 2002, null},
             new Object[]{"A", 20, 2008, 14},
             new Object[]{"A", 15, 2008, 10}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, null},
             new Object[]{"B", 20, 2005, null}
         )));
@@ -1837,7 +1837,7 @@ public class WindowAggregateOperatorTest {
   public void testLastValueWithUnboundedPrecedingLowerAndOffsetFollowingUpper() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, ROWS, Integer.MIN_VALUE, 2,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, ROWS, Integer.MIN_VALUE, 2,
         getLastValue(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -1852,14 +1852,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 20},
             new Object[]{"A", 10, 2002, 15},
             new Object[]{"A", 20, 2008, 15},
             new Object[]{"A", 15, 2008, 15}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 20},
             new Object[]{"B", 20, 2005, 20}
         )));
@@ -1870,7 +1870,7 @@ public class WindowAggregateOperatorTest {
   public void testLastValueWithCurrentRowLowerAndUnboundedFollowingUpper(WindowNode.WindowFrameType frameType) {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, frameType, 0, Integer.MAX_VALUE,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, frameType, 0, Integer.MAX_VALUE,
         getLastValue(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -1885,14 +1885,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 15},
             new Object[]{"A", 10, 2002, 15},
             new Object[]{"A", 20, 2008, 15},
             new Object[]{"A", 15, 2008, 15}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 20},
             new Object[]{"B", 20, 2005, 20}
         )));
@@ -1903,7 +1903,7 @@ public class WindowAggregateOperatorTest {
   public void testLastValueWithCurrentRowLowerAndCurrentRowUpper(WindowNode.WindowFrameType frameType) {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, frameType, 0, 0,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, frameType, 0, 0,
         getLastValue(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -1918,14 +1918,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 14},
             new Object[]{"A", 10, 2002, 10},
             new Object[]{"A", 20, 2008, frameType == ROWS ? 20 : null},
             new Object[]{"A", null, 2008, null}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 10},
             new Object[]{"B", 20, 2005, 20}
         )));
@@ -1936,7 +1936,7 @@ public class WindowAggregateOperatorTest {
   public void testLastValueWithCurrentRowLowerAndOffsetFollowingUpper() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, ROWS, 0, 2,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, ROWS, 0, 2,
         getLastValue(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -1951,14 +1951,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 20},
             new Object[]{"A", 10, 2002, 15},
             new Object[]{"A", 20, 2008, 15},
             new Object[]{"A", 15, 2008, 15}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 20},
             new Object[]{"B", 20, 2005, 20}
         )));
@@ -1969,7 +1969,7 @@ public class WindowAggregateOperatorTest {
   public void testLastValueWithOffsetPrecedingLowerAndOffsetFollowingUpper() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, ROWS, -1, 2,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, ROWS, -1, 2,
         getLastValue(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -1984,14 +1984,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 20},
             new Object[]{"A", 10, 2002, 15},
             new Object[]{"A", 20, 2008, 15},
             new Object[]{"A", 15, 2008, 15}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 20},
             new Object[]{"B", 20, 2005, 20}
         )));
@@ -2002,7 +2002,7 @@ public class WindowAggregateOperatorTest {
   public void testLastValueWithOffsetPrecedingLowerAndOffsetPrecedingUpper() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, ROWS, -2, -1,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, ROWS, -2, -1,
         getLastValue(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -2017,14 +2017,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, null},
             new Object[]{"A", 10, 2002, 14},
             new Object[]{"A", 20, 2008, 10},
             new Object[]{"A", 15, 2008, 20}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, null},
             new Object[]{"B", 20, 2005, 10}
         )));
@@ -2035,7 +2035,7 @@ public class WindowAggregateOperatorTest {
   public void testLastValueWithOffsetFollowingLowerAndOffsetFollowingUpper() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, ROWS, 1, 3,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, ROWS, 1, 3,
         getLastValue(new RexExpression.InputRef(1)),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -2050,14 +2050,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 15},
             new Object[]{"A", 10, 2002, 15},
             new Object[]{"A", 20, 2008, 15},
             new Object[]{"A", 15, 2008, null}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 20},
             new Object[]{"B", 20, 2005, null}
         )));
@@ -2069,7 +2069,7 @@ public class WindowAggregateOperatorTest {
       WindowNode.WindowFrameType frameType) {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, frameType, Integer.MIN_VALUE, 0,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, frameType, Integer.MIN_VALUE, 0,
         getFirstValue(new RexExpression.InputRef(1), true),
         new Object[][]{
             new Object[]{"A", null, 2000},
@@ -2085,15 +2085,15 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", null, 2000, null},
             new Object[]{"A", null, 2002, frameType == ROWS ? null : 10},
             new Object[]{"A", 10, 2002, 10},
             new Object[]{"A", 20, 2008, 10},
             new Object[]{"A", null, 2008, 10}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 10},
             new Object[]{"B", 20, 2005, 10}
         )));
@@ -2105,7 +2105,7 @@ public class WindowAggregateOperatorTest {
       WindowNode.WindowFrameType frameType) {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, frameType, Integer.MIN_VALUE, Integer.MAX_VALUE,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, frameType, Integer.MIN_VALUE, Integer.MAX_VALUE,
         getFirstValue(new RexExpression.InputRef(1), true),
         new Object[][]{
             new Object[]{"A", null, 2000},
@@ -2121,15 +2121,15 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", null, 2000, 10},
             new Object[]{"A", null, 2002, 10},
             new Object[]{"A", 10, 2002, 10},
             new Object[]{"A", 20, 2008, 10},
             new Object[]{"A", null, 2008, 10}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 10},
             new Object[]{"B", 20, 2005, 10}
         )));
@@ -2140,7 +2140,7 @@ public class WindowAggregateOperatorTest {
   public void testFirstValueIgnoreNullsWithUnboundedPrecedingLowerAndOffsetPrecedingUpper() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, ROWS, Integer.MIN_VALUE, -1,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, ROWS, Integer.MIN_VALUE, -1,
         getFirstValue(new RexExpression.InputRef(1), true),
         new Object[][]{
             new Object[]{"A", null, 2000},
@@ -2156,15 +2156,15 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", null, 2000, null},
             new Object[]{"A", null, 2002, null},
             new Object[]{"A", 10, 2002, null},
             new Object[]{"A", 20, 2008, 10},
             new Object[]{"A", null, 2008, 10}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, null},
             new Object[]{"B", null, 2005, 10}
         )));
@@ -2175,7 +2175,7 @@ public class WindowAggregateOperatorTest {
   public void testFirstValueIgnoreNullsWithUnboundedPrecedingLowerAndOffsetFollowingUpper() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, ROWS, Integer.MIN_VALUE, 1,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, ROWS, Integer.MIN_VALUE, 1,
         getFirstValue(new RexExpression.InputRef(1), true),
         new Object[][]{
             new Object[]{"A", null, 2000},
@@ -2191,15 +2191,15 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", null, 2000, null},
             new Object[]{"A", null, 2002, 10},
             new Object[]{"A", 10, 2002, 10},
             new Object[]{"A", 20, 2008, 10},
             new Object[]{"A", null, 2008, 10}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 10},
             new Object[]{"B", null, 2005, 10}
         )));
@@ -2211,7 +2211,7 @@ public class WindowAggregateOperatorTest {
       WindowNode.WindowFrameType frameType) {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, frameType, 0, Integer.MAX_VALUE,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, frameType, 0, Integer.MAX_VALUE,
         getFirstValue(new RexExpression.InputRef(1), true),
         new Object[][]{
             new Object[]{"A", null, 2000},
@@ -2227,15 +2227,15 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", null, 2000, 10},
             new Object[]{"A", null, 2002, 10},
             new Object[]{"A", 10, 2002, 10},
             new Object[]{"A", 20, 2008, 20},
             new Object[]{"A", null, 2008, frameType == ROWS ? null : 20}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 10},
             new Object[]{"B", null, 2005, null}
         )));
@@ -2247,7 +2247,7 @@ public class WindowAggregateOperatorTest {
       WindowNode.WindowFrameType frameType) {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, frameType, 0, 0,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, frameType, 0, 0,
         getFirstValue(new RexExpression.InputRef(1), true),
         new Object[][]{
             new Object[]{"A", null, 2000},
@@ -2263,15 +2263,15 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", null, 2000, null},
             new Object[]{"A", null, 2002, frameType == ROWS ? null : 10},
             new Object[]{"A", 10, 2002, 10},
             new Object[]{"A", 20, 2008, 20},
             new Object[]{"A", null, 2008, frameType == ROWS ? null : 20}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 10},
             new Object[]{"B", null, 2005, null}
         )));
@@ -2282,7 +2282,7 @@ public class WindowAggregateOperatorTest {
   public void testFirstValueIgnoreNullsWithCurrentRowLowerAndOffsetFollowingUpper() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, ROWS, 0, 1,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, ROWS, 0, 1,
         getFirstValue(new RexExpression.InputRef(1), true),
         new Object[][]{
             new Object[]{"A", null, 2000},
@@ -2298,15 +2298,15 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", null, 2000, null},
             new Object[]{"A", null, 2002, 10},
             new Object[]{"A", 10, 2002, 10},
             new Object[]{"A", 20, 2008, 20},
             new Object[]{"A", null, 2008, null}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 10},
             new Object[]{"B", null, 2005, null}
         )));
@@ -2317,7 +2317,7 @@ public class WindowAggregateOperatorTest {
   public void testFirstValueIgnoreNullsWithOffsetPrecedingLowerAndOffsetFollowingUpper() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, ROWS, -1, 1,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, ROWS, -1, 1,
         getFirstValue(new RexExpression.InputRef(1), true),
         new Object[][]{
             new Object[]{"A", null, 2000},
@@ -2333,15 +2333,15 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", null, 2000, null},
             new Object[]{"A", null, 2002, 10},
             new Object[]{"A", 10, 2002, 10},
             new Object[]{"A", 20, 2008, 10},
             new Object[]{"A", null, 2008, 20}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 10},
             new Object[]{"B", null, 2005, 10}
         )));
@@ -2352,7 +2352,7 @@ public class WindowAggregateOperatorTest {
   public void testFirstValueIgnoreNullsWithOffsetPrecedingLowerAndOffsetPrecedingUpper() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, ROWS, -2, -1,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, ROWS, -2, -1,
         getFirstValue(new RexExpression.InputRef(1), true),
         new Object[][]{
             new Object[]{"A", null, 2000},
@@ -2368,15 +2368,15 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", null, 2000, null},
             new Object[]{"A", null, 2002, null},
             new Object[]{"A", 10, 2002, null},
             new Object[]{"A", 20, 2008, 10},
             new Object[]{"A", null, 2008, 10}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, null},
             new Object[]{"B", null, 2005, 10}
         )));
@@ -2387,7 +2387,7 @@ public class WindowAggregateOperatorTest {
   public void testFirstValueIgnoreNullsWithOffsetFollowingLowerAndOffsetFollowingUpper() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, ROWS, 1, 3,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, ROWS, 1, 3,
         getFirstValue(new RexExpression.InputRef(1), true),
         new Object[][]{
             new Object[]{"A", null, 2000},
@@ -2403,15 +2403,15 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", null, 2000, 10},
             new Object[]{"A", null, 2002, 10},
             new Object[]{"A", 10, 2002, 20},
             new Object[]{"A", 20, 2008, null},
             new Object[]{"A", null, 2008, null}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, null},
             new Object[]{"B", null, 2005, null}
         )));
@@ -2423,7 +2423,7 @@ public class WindowAggregateOperatorTest {
       WindowNode.WindowFrameType frameType) {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, frameType, Integer.MIN_VALUE, 0,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, frameType, Integer.MIN_VALUE, 0,
         getLastValue(new RexExpression.InputRef(1), true),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -2438,14 +2438,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 14},
             new Object[]{"A", 10, 2002, 10},
             new Object[]{"A", null, 2008, frameType == ROWS ? 10 : 15},
             new Object[]{"A", 15, 2008, 15}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 10},
             new Object[]{"B", null, 2005, 10}
         )));
@@ -2457,7 +2457,7 @@ public class WindowAggregateOperatorTest {
       WindowNode.WindowFrameType frameType) {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, frameType, Integer.MIN_VALUE, Integer.MAX_VALUE,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, frameType, Integer.MIN_VALUE, Integer.MAX_VALUE,
         getLastValue(new RexExpression.InputRef(1), true),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -2472,14 +2472,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 15},
             new Object[]{"A", 10, 2002, 15},
             new Object[]{"A", 15, 2008, 15},
             new Object[]{"A", null, 2008, 15}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 10},
             new Object[]{"B", null, 2005, 10}
         )));
@@ -2490,7 +2490,7 @@ public class WindowAggregateOperatorTest {
   public void testLastValueIgnoreNullsWithUnboundedPrecedingLowerAndOffsetPrecedingUpper() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, ROWS, Integer.MIN_VALUE, -1,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, ROWS, Integer.MIN_VALUE, -1,
         getLastValue(new RexExpression.InputRef(1), true),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -2505,14 +2505,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, null},
             new Object[]{"A", 10, 2002, 14},
             new Object[]{"A", null, 2008, 10},
             new Object[]{"A", 15, 2008, 10}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, null},
             new Object[]{"B", null, 2005, 10}
         )));
@@ -2523,7 +2523,7 @@ public class WindowAggregateOperatorTest {
   public void testLastValueIgnoreNullsWithUnboundedPrecedingLowerAndOffsetFollowingUpper() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, ROWS, Integer.MIN_VALUE, 2,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, ROWS, Integer.MIN_VALUE, 2,
         getLastValue(new RexExpression.InputRef(1), true),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -2538,14 +2538,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 10},
             new Object[]{"A", 10, 2002, 15},
             new Object[]{"A", null, 2008, 15},
             new Object[]{"A", 15, 2008, 15}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 10},
             new Object[]{"B", null, 2005, 10}
         )));
@@ -2557,7 +2557,7 @@ public class WindowAggregateOperatorTest {
       WindowNode.WindowFrameType frameType) {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, frameType, 0, Integer.MAX_VALUE,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, frameType, 0, Integer.MAX_VALUE,
         getLastValue(new RexExpression.InputRef(1), true),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -2573,15 +2573,15 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 15},
             new Object[]{"A", 10, 2002, 15},
             new Object[]{"A", 15, 2008, 15},
             new Object[]{"A", null, 2008, frameType == ROWS ? null : 15},
             new Object[]{"A", null, 2010, null}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", null, 2000, 10},
             new Object[]{"B", 10, 2005, 10}
         )));
@@ -2593,7 +2593,7 @@ public class WindowAggregateOperatorTest {
       WindowNode.WindowFrameType frameType) {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, frameType, 0, 0,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, frameType, 0, 0,
         getLastValue(new RexExpression.InputRef(1), true),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -2609,14 +2609,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 14},
             new Object[]{"A", 10, 2002, 10},
             new Object[]{"A", null, 2008, frameType == ROWS ? null : 15},
             new Object[]{"A", 15, 2008, 15}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 10},
             new Object[]{"B", null, 2000, frameType == ROWS ? null : 10},
             new Object[]{"B", null, 2008, null}
@@ -2628,7 +2628,7 @@ public class WindowAggregateOperatorTest {
   public void testLastValueIgnoreNullsWithCurrentRowLowerAndOffsetFollowingUpper() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, ROWS, 0, 1,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, ROWS, 0, 1,
         getLastValue(new RexExpression.InputRef(1), true),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -2643,14 +2643,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 10},
             new Object[]{"A", 10, 2002, 10},
             new Object[]{"A", null, 2008, 15},
             new Object[]{"A", 15, 2008, 15}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 10},
             new Object[]{"B", null, 2008, null}
         )));
@@ -2661,7 +2661,7 @@ public class WindowAggregateOperatorTest {
   public void testLastValueIgnoreNullsWithOffsetPrecedingLowerAndOffsetFollowingUpper() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, ROWS, -1, 1,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, ROWS, -1, 1,
         getLastValue(new RexExpression.InputRef(1), true),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -2676,14 +2676,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 10},
             new Object[]{"A", 10, 2002, 10},
             new Object[]{"A", null, 2008, 15},
             new Object[]{"A", 15, 2008, 15}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, 10},
             new Object[]{"B", null, 2008, 10}
         )));
@@ -2694,7 +2694,7 @@ public class WindowAggregateOperatorTest {
   public void testLastValueIgnoreNullsWithOffsetPrecedingLowerAndOffsetPrecedingUpper() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, ROWS, -2, -1,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, ROWS, -2, -1,
         getLastValue(new RexExpression.InputRef(1), true),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -2709,14 +2709,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, null},
             new Object[]{"A", 10, 2002, 14},
             new Object[]{"A", null, 2008, 10},
             new Object[]{"A", 15, 2008, 10}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, null},
             new Object[]{"B", null, 2008, 10}
         )));
@@ -2727,7 +2727,7 @@ public class WindowAggregateOperatorTest {
   public void testLastValueIgnoreNullsWithOffsetFollowingLowerAndOffsetFollowingUpper() {
     // Given:
     WindowAggregateOperator operator = prepareDataForWindowFunction(new String[]{"name", "value", "year"},
-        new ColumnDataType[]{STRING, INT, INT}, INT, List.of(0), 2, ROWS, 1, 2,
+        new ColumnDataType[]{STRING, INT, INT}, INT, Arrays.asList(0), 2, ROWS, 1, 2,
         getLastValue(new RexExpression.InputRef(1), true),
         new Object[][]{
             new Object[]{"A", 14, 2000},
@@ -2742,14 +2742,14 @@ public class WindowAggregateOperatorTest {
     List<Object[]> resultRows = operator.nextBlock().getContainer();
 
     // Then:
-    verifyResultRows(resultRows, List.of(0), Map.of(
-        "A", List.of(
+    verifyResultRows(resultRows, Arrays.asList(0), Collections.singletonMap(
+        "A", Arrays.asList(
             new Object[]{"A", 14, 2000, 10},
             new Object[]{"A", 10, 2002, 15},
             new Object[]{"A", null, 2008, 15},
             new Object[]{"A", 15, 2008, null}
         ),
-        "B", List.of(
+        "B", Arrays.asList(
             new Object[]{"B", 10, 2000, null},
             new Object[]{"B", null, 2008, null}
         )));
@@ -2773,8 +2773,8 @@ public class WindowAggregateOperatorTest {
     outputSchemaColTypes[inputSchemaCols.length] = outputType;
 
     DataSchema resultSchema = new DataSchema(outputSchemaCols, outputSchemaColTypes);
-    List<RexExpression.FunctionCall> aggCalls = List.of(functionCall);
-    List<RelFieldCollation> collations = List.of(new RelFieldCollation(collationFieldIndex));
+    List<RexExpression.FunctionCall> aggCalls = Arrays.asList(functionCall);
+    List<RelFieldCollation> collations = Arrays.asList(new RelFieldCollation(collationFieldIndex));
     return getOperator(inputSchema, resultSchema, partitionKeys, collations, aggCalls, frameType, windowFrameLowerBound,
         windowFrameUpperBound);
   }
@@ -2787,16 +2787,16 @@ public class WindowAggregateOperatorTest {
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
     DataSchema resultSchema =
         new DataSchema(new String[]{"group", "arg", "sum"}, new ColumnDataType[]{INT, STRING, DOUBLE});
-    List<Integer> keys = List.of(0);
-    List<RexExpression.FunctionCall> aggCalls = List.of(getSum(new RexExpression.InputRef(1)));
+    List<Integer> keys = Arrays.asList(0);
+    List<RexExpression.FunctionCall> aggCalls = Arrays.asList(getSum(new RexExpression.InputRef(1)));
 
     // Then:
     IllegalStateException e = Assert.expectThrows(IllegalStateException.class,
-        () -> getOperator(inputSchema, resultSchema, keys, List.of(), aggCalls, ROWS, 5, 2));
+        () -> getOperator(inputSchema, resultSchema, keys, Arrays.asList(), aggCalls, ROWS, 5, 2));
     assertEquals(e.getMessage(), "Window frame lower bound can't be greater than upper bound");
 
     e = Assert.expectThrows(IllegalStateException.class,
-        () -> getOperator(inputSchema, resultSchema, keys, List.of(), aggCalls, ROWS, -2, -3));
+        () -> getOperator(inputSchema, resultSchema, keys, Arrays.asList(), aggCalls, ROWS, -2, -3));
     assertEquals(e.getMessage(), "Window frame lower bound can't be greater than upper bound");
   }
 
@@ -2809,17 +2809,17 @@ public class WindowAggregateOperatorTest {
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
     DataSchema resultSchema =
         new DataSchema(new String[]{"group", "arg", "sum"}, new ColumnDataType[]{INT, STRING, DOUBLE});
-    List<Integer> keys = List.of(0);
-    List<RexExpression.FunctionCall> aggCalls = List.of(getSum(new RexExpression.InputRef(1)));
+    List<Integer> keys = Arrays.asList(0);
+    List<RexExpression.FunctionCall> aggCalls = Arrays.asList(getSum(new RexExpression.InputRef(1)));
 
     // Then:
     IllegalStateException e = Assert.expectThrows(IllegalStateException.class,
-        () -> getOperator(inputSchema, resultSchema, keys, List.of(), aggCalls, WindowNode.WindowFrameType.RANGE, 5,
+        () -> getOperator(inputSchema, resultSchema, keys, Arrays.asList(), aggCalls, WindowNode.WindowFrameType.RANGE, 5,
             Integer.MAX_VALUE));
     assertEquals(e.getMessage(), "RANGE window frame with offset PRECEDING / FOLLOWING is not supported");
 
     e = Assert.expectThrows(IllegalStateException.class,
-        () -> getOperator(inputSchema, resultSchema, keys, List.of(), aggCalls, WindowNode.WindowFrameType.RANGE,
+        () -> getOperator(inputSchema, resultSchema, keys, Arrays.asList(), aggCalls, WindowNode.WindowFrameType.RANGE,
             Integer.MAX_VALUE, 5));
     assertEquals(e.getMessage(), "RANGE window frame with offset PRECEDING / FOLLOWING is not supported");
   }
@@ -2828,8 +2828,8 @@ public class WindowAggregateOperatorTest {
       List<RelFieldCollation> collations, List<RexExpression.FunctionCall> aggCalls,
       WindowNode.WindowFrameType windowFrameType, int lowerBound, int upperBound, PlanNode.NodeHint nodeHint) {
     return new WindowAggregateOperator(OperatorTestUtil.getTracingContext(), _input, inputSchema,
-        new WindowNode(-1, resultSchema, nodeHint, List.of(), keys, collations, aggCalls, windowFrameType, lowerBound,
-            upperBound, List.of()));
+        new WindowNode(-1, resultSchema, nodeHint, Arrays.asList(), keys, collations, aggCalls, windowFrameType, lowerBound,
+            upperBound, Arrays.asList()));
   }
 
   private WindowAggregateOperator getOperator(DataSchema inputSchema, DataSchema resultSchema, List<Integer> keys,
@@ -2840,23 +2840,23 @@ public class WindowAggregateOperatorTest {
   }
 
   private static RexExpression.FunctionCall getSum(RexExpression arg) {
-    return new RexExpression.FunctionCall(ColumnDataType.INT, SqlKind.SUM.name(), List.of(arg));
+    return new RexExpression.FunctionCall(ColumnDataType.INT, SqlKind.SUM.name(), Arrays.asList(arg));
   }
 
   private static RexExpression.FunctionCall getMin(RexExpression arg) {
-    return new RexExpression.FunctionCall(ColumnDataType.INT, SqlKind.MIN.name(), List.of(arg));
+    return new RexExpression.FunctionCall(ColumnDataType.INT, SqlKind.MIN.name(), Arrays.asList(arg));
   }
 
   private static RexExpression.FunctionCall getMax(RexExpression arg) {
-    return new RexExpression.FunctionCall(ColumnDataType.INT, SqlKind.MAX.name(), List.of(arg));
+    return new RexExpression.FunctionCall(ColumnDataType.INT, SqlKind.MAX.name(), Arrays.asList(arg));
   }
 
   private static RexExpression.FunctionCall getBoolAnd(RexExpression arg) {
-    return new RexExpression.FunctionCall(ColumnDataType.INT, "BOOLAND", List.of(arg));
+    return new RexExpression.FunctionCall(ColumnDataType.INT, "BOOLAND", Arrays.asList(arg));
   }
 
   private static RexExpression.FunctionCall getBoolOr(RexExpression arg) {
-    return new RexExpression.FunctionCall(ColumnDataType.INT, "BOOLOR", List.of(arg));
+    return new RexExpression.FunctionCall(ColumnDataType.INT, "BOOLOR", Arrays.asList(arg));
   }
 
   private static RexExpression.FunctionCall getFirstValue(RexExpression arg) {
@@ -2864,7 +2864,7 @@ public class WindowAggregateOperatorTest {
   }
 
   private static RexExpression.FunctionCall getFirstValue(RexExpression arg, boolean ignoreNulls) {
-    return new RexExpression.FunctionCall(ColumnDataType.INT, SqlKind.FIRST_VALUE.name(), List.of(arg), false,
+    return new RexExpression.FunctionCall(ColumnDataType.INT, SqlKind.FIRST_VALUE.name(), Arrays.asList(arg), false,
         ignoreNulls);
   }
 
@@ -2873,7 +2873,7 @@ public class WindowAggregateOperatorTest {
   }
 
   private static RexExpression.FunctionCall getLastValue(RexExpression arg, boolean ignoreNulls) {
-    return new RexExpression.FunctionCall(ColumnDataType.INT, SqlKind.LAST_VALUE.name(), List.of(arg), false,
+    return new RexExpression.FunctionCall(ColumnDataType.INT, SqlKind.LAST_VALUE.name(), Arrays.asList(arg), false,
         ignoreNulls);
   }
 

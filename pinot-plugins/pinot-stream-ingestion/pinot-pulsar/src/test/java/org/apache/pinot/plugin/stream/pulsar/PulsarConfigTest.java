@@ -66,7 +66,7 @@ public class PulsarConfigTest {
         pulsarConfig.getMetadataFields();
     Assert.assertEquals(metadataFieldsToExtract.size(), 6);
     Assert.assertTrue(metadataFieldsToExtract.containsAll(
-        ImmutableList.of(PulsarStreamMessageMetadata.PulsarMessageMetadataValue.MESSAGE_ID,
+        ImmutableArrays.asList(PulsarStreamMessageMetadata.PulsarMessageMetadataValue.MESSAGE_ID,
             PulsarStreamMessageMetadata.PulsarMessageMetadataValue.MESSAGE_ID_BYTES_B64,
             PulsarStreamMessageMetadata.PulsarMessageMetadataValue.PUBLISH_TIME,
             PulsarStreamMessageMetadata.PulsarMessageMetadataValue.EVENT_TIME,

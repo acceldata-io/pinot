@@ -80,7 +80,7 @@ public class CrcUtilsTest {
     File avroFile = new File(TestUtils.getFileFromResourceUrl(resource));
     TableConfig tableConfig =
         new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME).setTimeColumnName("daysSinceEpoch")
-            .setInvertedIndexColumns(List.of("column1", "column5", "column6"))
+            .setInvertedIndexColumns(Arrays.asList("column1", "column5", "column6"))
             .setCreateInvertedIndexDuringSegmentGeneration(true)
             .setIngestionConfig(SegmentTestUtils.getSkipTimeCheckIngestionConfig()).build();
     SegmentGeneratorConfig config = new SegmentGeneratorConfig(tableConfig, SCHEMA);
@@ -104,12 +104,12 @@ public class CrcUtilsTest {
     URL resource = getClass().getClassLoader().getResource(AVRO_DATA);
     assertNotNull(resource);
     File avroFile = new File(TestUtils.getFileFromResourceUrl(resource));
-    List<FieldConfig> fieldConfigs = List.of(
-        new FieldConfig("column5", FieldConfig.EncodingType.DICTIONARY, List.of(FieldConfig.IndexType.FST), null,
+    List<FieldConfig> fieldConfigs = Arrays.asList(
+        new FieldConfig("column5", FieldConfig.EncodingType.DICTIONARY, Arrays.asList(FieldConfig.IndexType.FST), null,
             null));
     TableConfig tableConfig =
         new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME).setTimeColumnName("daysSinceEpoch")
-            .setInvertedIndexColumns(List.of("column1", "column5", "column6"))
+            .setInvertedIndexColumns(Arrays.asList("column1", "column5", "column6"))
             .setCreateInvertedIndexDuringSegmentGeneration(true).setFieldConfigList(fieldConfigs)
             .setIngestionConfig(SegmentTestUtils.getSkipTimeCheckIngestionConfig()).build();
     tableConfig.getIndexingConfig().setFSTIndexType(FSTType.NATIVE);
@@ -134,12 +134,12 @@ public class CrcUtilsTest {
     URL resource = getClass().getClassLoader().getResource(AVRO_DATA);
     assertNotNull(resource);
     File avroFile = new File(TestUtils.getFileFromResourceUrl(resource));
-    List<FieldConfig> fieldConfigs = List.of(
-        new FieldConfig("column5", FieldConfig.EncodingType.DICTIONARY, List.of(FieldConfig.IndexType.FST), null,
+    List<FieldConfig> fieldConfigs = Arrays.asList(
+        new FieldConfig("column5", FieldConfig.EncodingType.DICTIONARY, Arrays.asList(FieldConfig.IndexType.FST), null,
             null));
     TableConfig tableConfig =
         new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME).setTimeColumnName("daysSinceEpoch")
-            .setInvertedIndexColumns(List.of("column1", "column5", "column6"))
+            .setInvertedIndexColumns(Arrays.asList("column1", "column5", "column6"))
             .setCreateInvertedIndexDuringSegmentGeneration(true).setFieldConfigList(fieldConfigs)
             .setIngestionConfig(SegmentTestUtils.getSkipTimeCheckIngestionConfig()).build();
     SegmentGeneratorConfig config = new SegmentGeneratorConfig(tableConfig, SCHEMA);
@@ -163,12 +163,12 @@ public class CrcUtilsTest {
     URL resource = getClass().getClassLoader().getResource(AVRO_DATA);
     assertNotNull(resource);
     File avroFile = new File(TestUtils.getFileFromResourceUrl(resource));
-    List<FieldConfig> fieldConfigs = List.of(
-        new FieldConfig("column5", FieldConfig.EncodingType.DICTIONARY, List.of(FieldConfig.IndexType.TEXT), null,
+    List<FieldConfig> fieldConfigs = Arrays.asList(
+        new FieldConfig("column5", FieldConfig.EncodingType.DICTIONARY, Arrays.asList(FieldConfig.IndexType.TEXT), null,
             null));
     TableConfig tableConfig =
         new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME).setTimeColumnName("daysSinceEpoch")
-            .setInvertedIndexColumns(List.of("column1", "column5", "column6"))
+            .setInvertedIndexColumns(Arrays.asList("column1", "column5", "column6"))
             .setCreateInvertedIndexDuringSegmentGeneration(true).setFieldConfigList(fieldConfigs)
             .setIngestionConfig(SegmentTestUtils.getSkipTimeCheckIngestionConfig()).build();
     SegmentGeneratorConfig config = new SegmentGeneratorConfig(tableConfig, SCHEMA);
