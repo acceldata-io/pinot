@@ -94,10 +94,10 @@ public class UpsertCompactMergeTaskGeneratorTest {
 
     // check with OFFLINE table
     Map<String, String> upsertCompactMergeTaskConfig =
-        ImmutableCollections.singletonMap("bufferTimePeriod", "5d");
+        Collections.singletonMap("bufferTimePeriod", "5d");
     TableConfig offlineTableConfig =
         new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME).setTaskConfig(
-                new TableTaskConfig(ImmutableCollections.singletonMap(MinionConstants.UpsertCompactMergeTask.TASK_TYPE,
+                new TableTaskConfig(Collections.singletonMap(MinionConstants.UpsertCompactMergeTask.TASK_TYPE,
                     upsertCompactMergeTaskConfig)))
             .build();
     Assert.assertThrows(IllegalStateException.class,
@@ -105,7 +105,7 @@ public class UpsertCompactMergeTaskGeneratorTest {
 
     // check with non-upsert REALTIME table
     TableConfig nonUpsertRealtimetableConfig = new TableConfigBuilder(TableType.REALTIME).setTableName(RAW_TABLE_NAME)
-        .setTaskConfig(new TableTaskConfig(ImmutableCollections.singletonMap(MinionConstants.UpsertCompactMergeTask.TASK_TYPE,
+        .setTaskConfig(new TableTaskConfig(Collections.singletonMap(MinionConstants.UpsertCompactMergeTask.TASK_TYPE,
             upsertCompactMergeTaskConfig)))
         .build();
 
@@ -116,7 +116,7 @@ public class UpsertCompactMergeTaskGeneratorTest {
     // check with snapshot disabled
     TableConfig disabledSnapshotTableConfig = new TableConfigBuilder(TableType.REALTIME).setTableName(RAW_TABLE_NAME)
         .setUpsertConfig(new UpsertConfig(UpsertConfig.Mode.FULL))
-        .setTaskConfig(new TableTaskConfig(ImmutableCollections.singletonMap(MinionConstants.UpsertCompactMergeTask.TASK_TYPE,
+        .setTaskConfig(new TableTaskConfig(Collections.singletonMap(MinionConstants.UpsertCompactMergeTask.TASK_TYPE,
             upsertCompactMergeTaskConfig)))
         .build();
     Assert.assertThrows(IllegalStateException.class,
@@ -128,14 +128,14 @@ public class UpsertCompactMergeTaskGeneratorTest {
     upsertConfig.setEnableSnapshot(true);
     TableConfig validTableConfig = new TableConfigBuilder(TableType.REALTIME).setTableName(RAW_TABLE_NAME)
         .setUpsertConfig(upsertConfig)
-        .setTaskConfig(new TableTaskConfig(ImmutableCollections.singletonMap(MinionConstants.UpsertCompactMergeTask.TASK_TYPE,
+        .setTaskConfig(new TableTaskConfig(Collections.singletonMap(MinionConstants.UpsertCompactMergeTask.TASK_TYPE,
             upsertCompactMergeTaskConfig)))
         .build();
     _taskGenerator.validateTaskConfigs(validTableConfig, new Schema(), upsertCompactMergeTaskConfig);
 
     // invalid buffer time period
     Map<String, String> upsertCompactMergeTaskConfig1 =
-        ImmutableCollections.singletonMap("bufferTimePeriod", "5hd");
+        Collections.singletonMap("bufferTimePeriod", "5hd");
     Assert.assertThrows(IllegalArgumentException.class,
         () -> _taskGenerator.validateTaskConfigs(validTableConfig, new Schema(), upsertCompactMergeTaskConfig1));
   }

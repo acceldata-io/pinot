@@ -65,7 +65,7 @@ public class BlockExchangeTest {
   public void shouldSendEosBlockToAllDestinations()
       throws Exception {
     // Given:
-    List<SendingMailbox> destinations = ImmutableArrays.asList(_mailbox1, _mailbox2);
+    List<SendingMailbox> destinations = Arrays.asList(_mailbox1, _mailbox2);
     BlockExchange exchange = new TestBlockExchange(destinations);
 
     // When:
@@ -87,9 +87,9 @@ public class BlockExchangeTest {
   public void shouldSendDataBlocksOnlyToTargetDestination()
       throws Exception {
     // Given:
-    List<SendingMailbox> destinations = ImmutableArrays.asList(_mailbox1);
+    List<SendingMailbox> destinations = Arrays.asList(_mailbox1);
     BlockExchange exchange = new TestBlockExchange(destinations);
-    TransferableBlock block = new TransferableBlock(ImmutableArrays.asList(new Object[]{"val"}),
+    TransferableBlock block = new TransferableBlock(Arrays.asList(new Object[]{"val"}),
         new DataSchema(new String[]{"foo"}, new ColumnDataType[]{ColumnDataType.STRING}), DataBlock.Type.ROW);
 
     // When:
@@ -107,9 +107,9 @@ public class BlockExchangeTest {
   public void shouldSignalEarlyTerminationProperly()
       throws Exception {
     // Given:
-    List<SendingMailbox> destinations = ImmutableArrays.asList(_mailbox1, _mailbox2);
+    List<SendingMailbox> destinations = Arrays.asList(_mailbox1, _mailbox2);
     BlockExchange exchange = new TestBlockExchange(destinations);
-    TransferableBlock block = new TransferableBlock(ImmutableArrays.asList(new Object[]{"val"}),
+    TransferableBlock block = new TransferableBlock(Arrays.asList(new Object[]{"val"}),
         new DataSchema(new String[]{"foo"}, new ColumnDataType[]{ColumnDataType.STRING}), DataBlock.Type.ROW);
 
     // When send normal block and some mailbox has terminated
@@ -138,21 +138,21 @@ public class BlockExchangeTest {
   public void shouldSplitBlocks()
       throws Exception {
     // Given:
-    List<SendingMailbox> destinations = ImmutableArrays.asList(_mailbox1);
+    List<SendingMailbox> destinations = Arrays.asList(_mailbox1);
 
     DataSchema schema = new DataSchema(new String[]{"foo"}, new ColumnDataType[]{ColumnDataType.STRING});
 
     TransferableBlock inBlock =
-        new TransferableBlock(ImmutableArrays.asList(new Object[]{"one"}, new Object[]{"two"}), schema, DataBlock.Type.ROW);
+        new TransferableBlock(Arrays.asList(new Object[]{"one"}, new Object[]{"two"}), schema, DataBlock.Type.ROW);
 
     TransferableBlock outBlockOne =
-        new TransferableBlock(ImmutableArrays.asList(new Object[]{"one"}), schema, DataBlock.Type.ROW);
+        new TransferableBlock(Arrays.asList(new Object[]{"one"}), schema, DataBlock.Type.ROW);
 
     TransferableBlock outBlockTwo =
-        new TransferableBlock(ImmutableArrays.asList(new Object[]{"two"}), schema, DataBlock.Type.ROW);
+        new TransferableBlock(Arrays.asList(new Object[]{"two"}), schema, DataBlock.Type.ROW);
 
     BlockExchange exchange = new TestBlockExchange(destinations,
-        (block, type, maxSize) -> ImmutableArrays.asList(outBlockOne, outBlockTwo).iterator());
+        (block, type, maxSize) -> Arrays.asList(outBlockOne, outBlockTwo).iterator());
 
     // When:
     exchange.send(inBlock);

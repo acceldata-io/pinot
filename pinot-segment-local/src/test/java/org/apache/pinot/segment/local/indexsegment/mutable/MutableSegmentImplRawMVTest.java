@@ -101,8 +101,8 @@ public class MutableSegmentImplRawMVTest {
 
     VirtualColumnProviderFactory.addBuiltInVirtualColumnsToSegmentSchema(_schema, "testSegment");
     _mutableSegmentImpl =
-        MutableSegmentImplTestUtils.createMutableSegmentImpl(_schema, new HashSet<>(noDictionaryColumns), Set.of(),
-            Set.of(), false);
+        MutableSegmentImplTestUtils.createMutableSegmentImpl(_schema, new HashSet<>(noDictionaryColumns), Collections.emptySet(),
+            Collections.emptySet(), false);
     _lastIngestionTimeMs = System.currentTimeMillis();
     StreamMessageMetadata defaultMetadata = new StreamMessageMetadata(_lastIngestionTimeMs, new GenericRow());
     _startTimeMs = System.currentTimeMillis();

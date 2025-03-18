@@ -53,8 +53,8 @@ public class NotFilterOperatorTest {
     NotFilterOperator notFilterOperator =
         new NotFilterOperator(new TestFilterOperator(docIds, nullDocIds, numDocs), numDocs, true);
 
-    Assert.assertEquals(TestUtils.getDocIds(notFilterOperator.getTrues()), ImmutableArrays.asList(7, 8, 9));
-    Assert.assertEquals(TestUtils.getDocIds(notFilterOperator.getFalses()), ImmutableArrays.asList(0, 1, 2, 3));
+    Assert.assertEquals(TestUtils.getDocIds(notFilterOperator.getTrues()), Arrays.asList(7, 8, 9));
+    Assert.assertEquals(TestUtils.getDocIds(notFilterOperator.getFalses()), Arrays.asList(0, 1, 2, 3));
   }
 
   @Test
@@ -63,7 +63,7 @@ public class NotFilterOperatorTest {
 
     NotFilterOperator notFilterOperator = new NotFilterOperator(EmptyFilterOperator.getInstance(), numDocs, true);
 
-    Assert.assertEquals(TestUtils.getDocIds(notFilterOperator.getTrues()), ImmutableArrays.asList(0, 1, 2, 3, 4));
+    Assert.assertEquals(TestUtils.getDocIds(notFilterOperator.getTrues()), Arrays.asList(0, 1, 2, 3, 4));
     Assert.assertEquals(TestUtils.getDocIds(notFilterOperator.getFalses()), Collections.emptyList());
   }
 }

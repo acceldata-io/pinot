@@ -18,7 +18,10 @@
  */
 package org.apache.pinot.client.utils;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.testng.Assert;
@@ -32,7 +35,7 @@ public class BrokerSelectorUtilsTest {
   @Test
   public void getTablesCommonBrokersSetNullTables() {
     Set<String> tableSet = BrokerSelectorUtils.getTablesCommonBrokersSet(null, _brokerData);
-    Assert.assertEquals(tableSet, Set.of());
+    Assert.assertEquals(tableSet, Collections.emptySet());
   }
 
   @Test
@@ -44,7 +47,7 @@ public class BrokerSelectorUtilsTest {
   @Test
   public void getTablesCommonBrokersSetEmptyTables() {
     Set<String> tableSet = BrokerSelectorUtils.getTablesCommonBrokersSet(Arrays.asList(), _brokerData);
-    Assert.assertEquals(tableSet, Set.of());
+    Assert.assertEquals(tableSet, Collections.emptySet());
   }
 
   @Test
@@ -56,7 +59,7 @@ public class BrokerSelectorUtilsTest {
   @Test
   public void getTablesCommonBrokersSetNotExistentTable() {
     Set<String> tableSet = BrokerSelectorUtils.getTablesCommonBrokersSet(Arrays.asList("notExistent"), _brokerData);
-    Assert.assertEquals(tableSet, Set.of());
+    Assert.assertEquals(tableSet, Collections.emptySet());
   }
 
   @Test
@@ -69,7 +72,7 @@ public class BrokerSelectorUtilsTest {
   public void getTablesCommonBrokersSetOneTable() {
     _brokerData.put("table1", Arrays.asList("broker1"));
     Set<String> tableSet = BrokerSelectorUtils.getTablesCommonBrokersSet(Arrays.asList("table1"), _brokerData);
-    Assert.assertEquals(tableSet, Set.of("broker1"));
+    Assert.assertEquals(tableSet, Collections.singleton("broker1"));
   }
 
   @Test
@@ -86,7 +89,7 @@ public class BrokerSelectorUtilsTest {
     _brokerData.put("table2", Arrays.asList("broker1"));
     Set<String> tableSet = BrokerSelectorUtils.getTablesCommonBrokersSet(Arrays.asList("table1", "table2"), _brokerData);
     Assert.assertNotNull(tableSet);
-    Assert.assertEquals(tableSet, Set.of("broker1"));
+    Assert.assertEquals(tableSet, new HashSet<>(Arrays.asList("broker1")));
   }
 
   @Test
@@ -103,7 +106,7 @@ public class BrokerSelectorUtilsTest {
     _brokerData.put("table1", Arrays.asList("broker1"));
     _brokerData.put("table2", Arrays.asList("broker2"));
     Set<String> tableSet = BrokerSelectorUtils.getTablesCommonBrokersSet(Arrays.asList("table1", "table2"), _brokerData);
-    Assert.assertEquals(tableSet, Set.of());
+    Assert.assertEquals(tableSet, Collections.emptySet());
   }
 
   @Test

@@ -41,7 +41,7 @@ public class CSVRecordExtractor extends BaseRecordExtractor<CSVRecord> {
     if (fields == null || fields.isEmpty()) {
       _fields = csvRecordExtractorConfig.getColumnNames();
     } else {
-      _fields = Set.copyOf(fields);
+      _fields = new HashSet<>(fields);
     }
     _multiValueDelimiter = csvRecordExtractorConfig.getMultiValueDelimiter();
   }

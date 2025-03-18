@@ -77,7 +77,7 @@ public class BrokerResponseNativeV2 implements BrokerResponse {
   private int _numServersQueried;
   private int _numServersResponded;
   private long _brokerReduceTimeMs;
-  private Set<String> _tablesQueried = Set.of();
+  private Set<String> _tablesQueried = Collections.emptySet();
 
   @JsonInclude(JsonInclude.Include.NON_NULL)
   @Nullable

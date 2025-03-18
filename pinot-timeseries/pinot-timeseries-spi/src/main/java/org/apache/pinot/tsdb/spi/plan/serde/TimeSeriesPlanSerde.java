@@ -75,7 +75,9 @@ public class TimeSeriesPlanSerde {
         inputs = objectNode.get("inputs");
         objectNode.remove("inputs");
       }
-      objectNode.putIfAbsent("inputs", OBJECT_MAPPER.createArrayNode());
+      if (!objectNode.has("inputs")) {
+        objectNode.set("inputs", OBJECT_MAPPER.createArrayNode());
+      }
     }
     BaseTimeSeriesPlanNode planNode = null;
     try {

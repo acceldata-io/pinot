@@ -46,16 +46,16 @@ public class JsonExtractScalarTest extends BaseJsonQueryTest {
       .addSingleValueDimension(JSON_COLUMN_WITHOUT_INDEX, FieldSpec.DataType.JSON).build();
 
   private static final FieldConfig RAW_JSON_COLUMN_CONFIG = new FieldConfig(RAW_JSON_COLUMN,
-      FieldConfig.EncodingType.RAW, ImmutableArrays.asList(), FieldConfig.CompressionCodec.LZ4, Immutablenew HashMap<>());
+      FieldConfig.EncodingType.RAW, Arrays.asList(), FieldConfig.CompressionCodec.LZ4, new HashMap<>());
   private static final FieldConfig RAW_BYTES_COLUMN_CONFIG = new FieldConfig(RAW_BYTES_COLUMN,
-      FieldConfig.EncodingType.RAW, ImmutableArrays.asList(), FieldConfig.CompressionCodec.LZ4, Immutablenew HashMap<>());
+      FieldConfig.EncodingType.RAW, Arrays.asList(), FieldConfig.CompressionCodec.LZ4, new HashMap<>());
   private static final FieldConfig RAW_STRING_COLUMN_CONFIG = new FieldConfig(RAW_STRING_COLUMN,
-      FieldConfig.EncodingType.RAW, ImmutableArrays.asList(), FieldConfig.CompressionCodec.LZ4, Immutablenew HashMap<>());
+      FieldConfig.EncodingType.RAW, Arrays.asList(), FieldConfig.CompressionCodec.LZ4, new HashMap<>());
 
   private static final TableConfig TABLE_CONFIG =
       new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME)
           .setFieldConfigList(
-              ImmutableArrays.asList(RAW_JSON_COLUMN_CONFIG, RAW_BYTES_COLUMN_CONFIG, RAW_STRING_COLUMN_CONFIG))
+              Arrays.asList(RAW_JSON_COLUMN_CONFIG, RAW_BYTES_COLUMN_CONFIG, RAW_STRING_COLUMN_CONFIG))
           .build();
 
   GenericRow createRecord(int intValue, long longValue, String stringValue, String jsonValue) {

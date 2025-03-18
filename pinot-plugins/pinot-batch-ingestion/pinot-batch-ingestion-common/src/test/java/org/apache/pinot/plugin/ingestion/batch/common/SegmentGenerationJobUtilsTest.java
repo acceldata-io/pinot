@@ -20,6 +20,7 @@
 package org.apache.pinot.plugin.ingestion.batch.common;
 
 import com.google.common.collect.ImmutableMap;
+import java.util.Collections;
 import java.util.HashMap;
 import org.apache.pinot.spi.ingestion.batch.spec.SegmentNameGeneratorSpec;
 import org.testng.Assert;
@@ -35,17 +36,17 @@ public class SegmentGenerationJobUtilsTest {
     Assert.assertFalse(SegmentGenerationJobUtils.useGlobalDirectorySequenceId(spec));
     spec.setConfigs(new HashMap<>());
     Assert.assertFalse(SegmentGenerationJobUtils.useGlobalDirectorySequenceId(spec));
-    spec.setConfigs(ImmutableCollections.singletonMap("use.global.directory.sequence.id", "false"));
+    spec.setConfigs(Collections.singletonMap("use.global.directory.sequence.id", "false"));
     Assert.assertFalse(SegmentGenerationJobUtils.useGlobalDirectorySequenceId(spec));
-    spec.setConfigs(ImmutableCollections.singletonMap("use.global.directory.sequence.id", "FALSE"));
+    spec.setConfigs(Collections.singletonMap("use.global.directory.sequence.id", "FALSE"));
     Assert.assertFalse(SegmentGenerationJobUtils.useGlobalDirectorySequenceId(spec));
-    spec.setConfigs(ImmutableCollections.singletonMap("use.global.directory.sequence.id", "True"));
+    spec.setConfigs(Collections.singletonMap("use.global.directory.sequence.id", "True"));
     Assert.assertTrue(SegmentGenerationJobUtils.useGlobalDirectorySequenceId(spec));
-    spec.setConfigs(ImmutableCollections.singletonMap("local.directory.sequence.id", "true"));
+    spec.setConfigs(Collections.singletonMap("local.directory.sequence.id", "true"));
     Assert.assertFalse(SegmentGenerationJobUtils.useGlobalDirectorySequenceId(spec));
-    spec.setConfigs(ImmutableCollections.singletonMap("local.directory.sequence.id", "TRUE"));
+    spec.setConfigs(Collections.singletonMap("local.directory.sequence.id", "TRUE"));
     Assert.assertFalse(SegmentGenerationJobUtils.useGlobalDirectorySequenceId(spec));
-    spec.setConfigs(ImmutableCollections.singletonMap("local.directory.sequence.id", "False"));
+    spec.setConfigs(Collections.singletonMap("local.directory.sequence.id", "False"));
     Assert.assertTrue(SegmentGenerationJobUtils.useGlobalDirectorySequenceId(spec));
   }
 }

@@ -48,7 +48,7 @@ public class TimeSeriesSelectionOperator extends BaseOperator<TimeSeriesResultsB
 
   @Override
   public List<? extends Operator> getChildOperators() {
-    return ImmutableArrays.asList(_transformOperator);
+    return Arrays.asList(_transformOperator);
   }
 
   @Nullable

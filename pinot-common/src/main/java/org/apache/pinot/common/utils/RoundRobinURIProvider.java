@@ -44,7 +44,7 @@ public class RoundRobinURIProvider {
     if (resolveHost) {
       _uris = resolveHostsToIPAddresses(originalUris);
     } else {
-      _uris = List.copyOf(originalUris);
+      _uris = new ArrayList<>(originalUris);
     }
     _index = ThreadLocalRandom.current().nextInt(_uris.size());
   }

@@ -128,8 +128,10 @@ public final class ComplexFieldSpec extends FieldSpec {
   }
 
   public static ComplexFieldSpec fromMapFieldSpec(MapFieldSpec mapFieldSpec) {
-    return new ComplexFieldSpec(mapFieldSpec.getFieldName(), DataType.MAP, true,
-        Collections.singletonMap(KEY_FIELD, mapFieldSpec.getKeyFieldSpec(), VALUE_FIELD, mapFieldSpec.getValueFieldSpec()));
+    Map<String, FieldSpec> map = new HashMap<>();
+    map.put(KEY_FIELD, mapFieldSpec.getKeyFieldSpec());
+    map.put(VALUE_FIELD, mapFieldSpec.getValueFieldSpec());
+    return new ComplexFieldSpec(mapFieldSpec.getFieldName(), DataType.MAP, true, map);
   }
 
   /**

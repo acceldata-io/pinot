@@ -18,6 +18,8 @@
  */
 package org.apache.pinot.broker.api;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 import org.apache.pinot.common.request.BrokerRequest;
 import org.apache.pinot.spi.auth.AuthorizationResult;
@@ -41,7 +43,7 @@ public class AccessControlBackwardCompatibleTest {
   public void testBackwardCompatibleHasAccessMutliTable() {
     AccessControl accessControl = new AllFalseAccessControlImpl();
     HttpRequesterIdentity identity = new HttpRequesterIdentity();
-    Set<String> tables = Set.of("table1", "table2");
+    Set<String> tables = new HashSet<>(Arrays.asList("table1", "table2"));
     AuthorizationResult result = accessControl.authorize(identity, tables);
     assertFalse(result.hasAccess());
     assertEquals(result.getFailureMessage(), "Authorization Failed for tables: [table1, table2]");
@@ -51,7 +53,7 @@ public class AccessControlBackwardCompatibleTest {
   public void testExceptionForNoImplAccessControlMultiTable() {
     AccessControl accessControl = new NoImplAccessControl();
     HttpRequesterIdentity identity = new HttpRequesterIdentity();
-    Set<String> tables = Set.of("table1", "table2");
+    Set<String> tables = new HashSet<>(Arrays.asList("table1", "table2"));
     accessControl.hasAccess(identity, tables);
   }
 
@@ -67,7 +69,7 @@ public class AccessControlBackwardCompatibleTest {
   public void testExceptionForNoImplAccessControlAuthorizeMultiTable() {
     AccessControl accessControl = new NoImplAccessControl();
     HttpRequesterIdentity identity = new HttpRequesterIdentity();
-    Set<String> tables = Set.of("table1", "table2");
+    Set<String> tables = new HashSet<>(Arrays.asList("table1", "table2"));
     accessControl.authorize(identity, tables);
   }
 

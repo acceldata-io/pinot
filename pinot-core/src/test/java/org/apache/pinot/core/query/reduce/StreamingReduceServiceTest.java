@@ -54,7 +54,7 @@ public class StreamingReduceServiceTest {
     assertTrue(verifyException(() -> {
           StreamingReduceService.processIterativeServerResponse(mock(StreamingReducer.class),
               threadPoolService,
-              ImmutableCollections.singletonMap(routingInstance, mockedResponse),
+              Collections.singletonMap(routingInstance, mockedResponse),
               1000,
               mock(ExecutionStatsAggregator.class));
           return null;
@@ -83,7 +83,7 @@ public class StreamingReduceServiceTest {
     assertTrue(verifyException(() -> {
           StreamingReduceService.processIterativeServerResponse(mock(StreamingReducer.class),
               threadPoolService,
-              ImmutableCollections.singletonMap(routingInstance, mockedResponse),
+              Collections.singletonMap(routingInstance, mockedResponse),
               10,
               mock(ExecutionStatsAggregator.class));
           return null;

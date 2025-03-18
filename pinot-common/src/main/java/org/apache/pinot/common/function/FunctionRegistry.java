@@ -151,7 +151,7 @@ public class FunctionRegistry {
           "Function: %s is already registered", canonicalName);
     }
 
-    FUNCTION_MAP = Map.copyOf(functionMap);
+    FUNCTION_MAP = new HashMap<>(functionMap);
     LOGGER.info("Initialized FunctionRegistry with {} functions: {} in {}ms", FUNCTION_MAP.size(),
         FUNCTION_MAP.keySet(), System.currentTimeMillis() - startTimeMs);
   }

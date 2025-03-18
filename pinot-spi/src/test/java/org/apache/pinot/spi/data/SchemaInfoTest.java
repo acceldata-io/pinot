@@ -22,6 +22,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.pinot.spi.utils.CommonConstants;
@@ -83,6 +84,12 @@ public class SchemaInfoTest {
   public void testSchemaInfoSerDeserWithComplexAndVirtualColumns()
       throws IOException {
     // Mock the Schema objects
+    Map<String, FieldSpec> intMap = new HashMap<>();
+    intMap.put("key", new DimensionFieldSpec("key", FieldSpec.DataType.STRING, true));
+    intMap.put("value", new DimensionFieldSpec("value", FieldSpec.DataType.INT, true));
+    Map<String, FieldSpec> stringMap = new HashMap<>();
+    stringMap.put("key", new DimensionFieldSpec("key", FieldSpec.DataType.STRING, true));
+    stringMap.put("value", new DimensionFieldSpec("value", FieldSpec.DataType.STRING, true));
     Schema schemaMock =
         new Schema.SchemaBuilder().setSchemaName("TestSchema").addDimensionField("dim1", FieldSpec.DataType.STRING)
             .addDimensionField("dim2", FieldSpec.DataType.INT).addDimensionField("dim3", FieldSpec.DataType.INT)
@@ -91,12 +98,8 @@ public class SchemaInfoTest {
             .addDimensionField(CommonConstants.Segment.BuiltInVirtualColumn.SEGMENTNAME, FieldSpec.DataType.STRING)
             .addDateTimeField("dt1", FieldSpec.DataType.LONG, "1:HOURS:EPOCH", "1:HOURS")
             .addDateTimeField("dt2", FieldSpec.DataType.LONG, "1:HOURS:EPOCH", "1:HOURS").addMetricField("metric", INT)
-            .addComplex("intMap", FieldSpec.DataType.MAP,
-                Collections.singletonMap("key", new DimensionFieldSpec("key", FieldSpec.DataType.STRING, true), "value",
-                    new DimensionFieldSpec("value", FieldSpec.DataType.INT, true)))
-            .addComplex("stringMap", FieldSpec.DataType.MAP,
-                Collections.singletonMap("key", new DimensionFieldSpec("key", FieldSpec.DataType.STRING, true), "value",
-                    new DimensionFieldSpec("value", FieldSpec.DataType.STRING, true))).build();
+            .addComplex("intMap", FieldSpec.DataType.MAP, intMap)
+            .addComplex("stringMap", FieldSpec.DataType.MAP, stringMap).build();
     SchemaInfo schemaInfo = new SchemaInfo(schemaMock);
     List<SchemaInfo> schemaInfoList = new ArrayList<>();
     schemaInfoList.add(schemaInfo);

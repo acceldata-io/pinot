@@ -239,7 +239,7 @@ public class StagesTestBase {
     default SimpleChildBuilder<P> withHints(String key, Map<String, String> values) {
       return (stageId, dataSchema, hints1) -> {
         PlanNode.NodeHint myHints = hints1 == null
-            ? new PlanNode.NodeHint(ImmutableCollections.singletonMap(key, values))
+            ? new PlanNode.NodeHint(Collections.singletonMap(key, values))
             : hints1.with(key, values);
         return build(stageId, dataSchema, myHints);
       };

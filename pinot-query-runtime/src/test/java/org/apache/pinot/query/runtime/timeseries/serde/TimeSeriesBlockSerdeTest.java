@@ -121,7 +121,7 @@ public class TimeSeriesBlockSerdeTest {
     Object[] seriesValues = new Object[0];
     long seriesHash = TimeSeries.hash(seriesValues);
     Map<Long, List<TimeSeries>> seriesMap = new HashMap<>();
-    seriesMap.put(seriesHash, ImmutableArrays.asList(new TimeSeries(Long.toString(seriesHash), null, timeBuckets,
+    seriesMap.put(seriesHash, Arrays.asList(new TimeSeries(Long.toString(seriesHash), null, timeBuckets,
         new Double[]{null, 123.0, 0.0, 1.0}, tagNames, seriesValues)));
     return new TimeSeriesBlock(timeBuckets, seriesMap);
   }
@@ -129,15 +129,15 @@ public class TimeSeriesBlockSerdeTest {
   private static TimeSeriesBlock buildBlockWithSingleTag() {
     TimeBuckets timeBuckets = TIME_BUCKETS;
     // Series are: [cityId=Chicago] and [cityId=San Francisco]
-    List<String> tagNames = ImmutableArrays.asList("cityId");
+    List<String> tagNames = Arrays.asList("cityId");
     Object[] seriesOneValues = new Object[]{"Chicago"};
     Object[] seriesTwoValues = new Object[]{"San Francisco"};
     long seriesOneHash = TimeSeries.hash(seriesOneValues);
     long seriesTwoHash = TimeSeries.hash(seriesTwoValues);
     Map<Long, List<TimeSeries>> seriesMap = new HashMap<>();
-    seriesMap.put(seriesOneHash, ImmutableArrays.asList(new TimeSeries(Long.toString(seriesOneHash), null, timeBuckets,
+    seriesMap.put(seriesOneHash, Arrays.asList(new TimeSeries(Long.toString(seriesOneHash), null, timeBuckets,
         new Double[]{null, 123.0, 0.0, 1.0}, tagNames, seriesOneValues)));
-    seriesMap.put(seriesTwoHash, ImmutableArrays.asList(new TimeSeries(Long.toString(seriesTwoHash), null, timeBuckets,
+    seriesMap.put(seriesTwoHash, Arrays.asList(new TimeSeries(Long.toString(seriesTwoHash), null, timeBuckets,
         new Double[]{null, null, null, null}, tagNames, seriesTwoValues)));
     return new TimeSeriesBlock(timeBuckets, seriesMap);
   }
@@ -145,15 +145,15 @@ public class TimeSeriesBlockSerdeTest {
   private static TimeSeriesBlock buildBlockWithMultipleTags() {
     TimeBuckets timeBuckets = TIME_BUCKETS;
     // Series are: [cityId=Chicago, zip=60605] and [cityId=San Francisco, zip=94107]
-    List<String> tagNames = ImmutableArrays.asList("cityId", "zip");
+    List<String> tagNames = Arrays.asList("cityId", "zip");
     Object[] seriesOneValues = new Object[]{"Chicago", "60605"};
     Object[] seriesTwoValues = new Object[]{"San Francisco", "94107"};
     long seriesOneHash = TimeSeries.hash(seriesOneValues);
     long seriesTwoHash = TimeSeries.hash(seriesTwoValues);
     Map<Long, List<TimeSeries>> seriesMap = new HashMap<>();
-    seriesMap.put(seriesOneHash, ImmutableArrays.asList(new TimeSeries(Long.toString(seriesOneHash), null, timeBuckets,
+    seriesMap.put(seriesOneHash, Arrays.asList(new TimeSeries(Long.toString(seriesOneHash), null, timeBuckets,
         new Double[]{null, 123.0, Double.NaN, 1.0}, tagNames, seriesOneValues)));
-    seriesMap.put(seriesTwoHash, ImmutableArrays.asList(new TimeSeries(Long.toString(seriesTwoHash), null, timeBuckets,
+    seriesMap.put(seriesTwoHash, Arrays.asList(new TimeSeries(Long.toString(seriesTwoHash), null, timeBuckets,
         new Double[]{Double.NaN, -1.0, -1231231.0, 3.14}, tagNames, seriesTwoValues)));
     return new TimeSeriesBlock(timeBuckets, seriesMap);
   }
@@ -161,15 +161,15 @@ public class TimeSeriesBlockSerdeTest {
   private static TimeSeriesBlock buildBlockWithByteValues() {
     TimeBuckets timeBuckets = TIME_BUCKETS;
     // Series are: [cityId=Chicago, zip=60605] and [cityId=San Francisco, zip=94107]
-    List<String> tagNames = ImmutableArrays.asList("cityId", "zip");
+    List<String> tagNames = Arrays.asList("cityId", "zip");
     Object[] seriesOneValues = new Object[]{"Chicago", "60605"};
     Object[] seriesTwoValues = new Object[]{"San Francisco", "94107"};
     long seriesOneHash = TimeSeries.hash(seriesOneValues);
     long seriesTwoHash = TimeSeries.hash(seriesTwoValues);
     Map<Long, List<TimeSeries>> seriesMap = new HashMap<>();
-    seriesMap.put(seriesOneHash, ImmutableArrays.asList(new TimeSeries(Long.toString(seriesOneHash), null, timeBuckets,
+    seriesMap.put(seriesOneHash, Arrays.asList(new TimeSeries(Long.toString(seriesOneHash), null, timeBuckets,
         new byte[][]{{0x13}, {0x1b}, {0x12}, {0x00}}, tagNames, seriesOneValues)));
-    seriesMap.put(seriesTwoHash, ImmutableArrays.asList(new TimeSeries(Long.toString(seriesTwoHash), null, timeBuckets,
+    seriesMap.put(seriesTwoHash, Arrays.asList(new TimeSeries(Long.toString(seriesTwoHash), null, timeBuckets,
         new byte[][]{{0x00}, {0x00}, {Byte.MIN_VALUE}, {0x7f}}, tagNames, seriesTwoValues)));
     return new TimeSeriesBlock(timeBuckets, seriesMap);
   }

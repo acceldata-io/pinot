@@ -255,7 +255,7 @@ public enum TransformFunctionType {
       List<String> names = new ArrayList<>(numAlternativeNames + 1);
       names.add(name);
       names.addAll(Arrays.asList(alternativeNames));
-      _names = List.copyOf(names);
+      _names = new ArrayList<>(names);
     }
     _returnTypeInference = returnTypeInference;
     _operandTypeChecker = operandTypeChecker;

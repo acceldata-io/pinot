@@ -97,12 +97,12 @@ public class ParquetRecordReaderTest extends AbstractRecordReaderTest {
     ParquetNativeRecordReader nativeRecordReader = new ParquetNativeRecordReader();
     nativeRecordReader.init(
         new File(getClass().getClassLoader().getResource("test-file-with-int96-and-decimal.snappy.parquet").getFile()),
-        ImmutableSet.of(), new ParquetRecordReaderConfig());
+        ImmutableCollections.emptySet(), new ParquetRecordReaderConfig());
     testReadParquetFile(nativeRecordReader, 1965);
     nativeRecordReader.init(new File(getClass().getClassLoader().getResource("airlineStats.zstd.parquet").getFile()),
-        ImmutableSet.of(), new ParquetRecordReaderConfig());
+        ImmutableCollections.emptySet(), new ParquetRecordReaderConfig());
     testReadParquetFile(nativeRecordReader, 19492);
-    nativeRecordReader.init(_dataFile, ImmutableSet.of(), new ParquetRecordReaderConfig());
+    nativeRecordReader.init(_dataFile, ImmutableCollections.emptySet(), new ParquetRecordReaderConfig());
     testReadParquetFile(nativeRecordReader, SAMPLE_RECORDS_SIZE);
   }
 

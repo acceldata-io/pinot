@@ -683,7 +683,7 @@ public class PinotHelixResourceManagerStatelessTest extends ControllerTest {
 
     // Minion instance tag set but no minion present
     realtimeTableConfig.setTaskConfig(new TableTaskConfig(
-        ImmutableCollections.singletonMap(MinionConstants.RealtimeToOfflineSegmentsTask.TASK_TYPE, upsertCompactionTask)));
+        Collections.singletonMap(MinionConstants.RealtimeToOfflineSegmentsTask.TASK_TYPE, upsertCompactionTask)));
 
     assertThrows(InvalidTableConfigException.class, () -> {
       try {
@@ -702,11 +702,11 @@ public class PinotHelixResourceManagerStatelessTest extends ControllerTest {
     //Untag minion instance
     untagMinions();
     realtimeTableConfig.setTaskConfig(new TableTaskConfig(
-        ImmutableCollections.singletonMap(MinionConstants.RealtimeToOfflineSegmentsTask.TASK_TYPE, segmentGenerationAndPushTaskConfig)));
+        Collections.singletonMap(MinionConstants.RealtimeToOfflineSegmentsTask.TASK_TYPE, segmentGenerationAndPushTaskConfig)));
     _helixResourceManager.validateTableTaskMinionInstanceTagConfig(realtimeTableConfig);
 
     realtimeTableConfig.setTaskConfig(new TableTaskConfig(
-        ImmutableCollections.singletonMap(MinionConstants.RealtimeToOfflineSegmentsTask.TASK_TYPE, segmentGenerationAndPushTaskConfig2)));
+        Collections.singletonMap(MinionConstants.RealtimeToOfflineSegmentsTask.TASK_TYPE, segmentGenerationAndPushTaskConfig2)));
     assertThrows(InvalidTableConfigException.class, () -> {
       try {
         _helixResourceManager.validateTableTaskMinionInstanceTagConfig(realtimeTableConfig);

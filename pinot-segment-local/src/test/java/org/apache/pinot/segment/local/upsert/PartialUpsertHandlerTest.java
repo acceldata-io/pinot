@@ -71,11 +71,11 @@ public class PartialUpsertHandlerTest {
   @Test
   public void testCustomPartialUpsertMergerWithNonNullResult() {
     GenericRow newRecord = initGenericRow(new GenericRow(),
-        ImmutableCollections.singletonMap("pk", "pk1", "field1", 3L, "field2", "inc", "hoursSinceEpoch", 2L));
+        Collections.singletonMap("pk", "pk1", "field1", 3L, "field2", "inc", "hoursSinceEpoch", 2L));
     LazyRow prevRecord = mock(LazyRow.class);
-    mockLazyRow(prevRecord, ImmutableCollections.singletonMap("pk", "pk1", "field1", 5L, "field2", "set", "hoursSinceEpoch", 2L));
+    mockLazyRow(prevRecord, Collections.singletonMap("pk", "pk1", "field1", 5L, "field2", "set", "hoursSinceEpoch", 2L));
     GenericRow expectedRecord = initGenericRow(new GenericRow(),
-        ImmutableCollections.singletonMap("pk", "pk1", "field1", 8L, "field2", "inc", "hoursSinceEpoch", 2L));
+        Collections.singletonMap("pk", "pk1", "field1", 8L, "field2", "inc", "hoursSinceEpoch", 2L));
 
     testCustomMerge(prevRecord, newRecord, expectedRecord, getCustomMerger());
   }

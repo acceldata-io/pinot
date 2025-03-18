@@ -153,7 +153,7 @@ public class TimeSeriesAggregationOperator extends BaseOperator<TimeSeriesResult
   @Override
   @SuppressWarnings("rawtypes")
   public List<? extends Operator> getChildOperators() {
-    return ImmutableArrays.asList(_projectOperator);
+    return Arrays.asList(_projectOperator);
   }
 
   @Nullable

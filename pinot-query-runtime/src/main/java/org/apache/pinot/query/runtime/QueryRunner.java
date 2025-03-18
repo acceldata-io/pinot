@@ -310,7 +310,7 @@ public class QueryRunner {
             TimeSeriesBlock seriesBlock = fragmentOpChain.nextBlock();
             Worker.TimeSeriesResponse response = Worker.TimeSeriesResponse.newBuilder()
                 .setPayload(TimeSeriesBlockSerde.serializeTimeSeriesBlock(seriesBlock))
-                .putAllMetadata(ImmutableCollections.singletonMap(WorkerResponseMetadataKeys.PLAN_ID, currentPlanId))
+                .putAllMetadata(Collections.singletonMap(WorkerResponseMetadataKeys.PLAN_ID, currentPlanId))
                 .build();
             responseObserver.onNext(response);
           }

@@ -21,6 +21,8 @@ package org.apache.pinot.plugin.inputformat.avro;
 import com.google.common.collect.Maps;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,9 +51,9 @@ public class AvroRecordExtractor extends BaseRecordExtractor<GenericRecord> {
     }
     if (fields == null || fields.isEmpty()) {
       _extractAll = true;
-      _fields = Set.of();
+      _fields = Collections.emptySet();
     } else {
-      _fields = Set.copyOf(fields);
+      _fields = new HashSet<>(fields);
     }
   }
 

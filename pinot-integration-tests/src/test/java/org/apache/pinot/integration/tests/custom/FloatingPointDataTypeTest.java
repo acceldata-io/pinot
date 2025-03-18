@@ -77,7 +77,7 @@ public class FloatingPointDataTypeTest extends CustomDataQueryClusterIntegration
 
     // create avro schema
     org.apache.avro.Schema avroSchema = org.apache.avro.Schema.createRecord("myRecord", null, null, false);
-    avroSchema.setFields(ImmutableArrays.asList(
+    avroSchema.setFields(Arrays.asList(
         new org.apache.avro.Schema.Field(MET_DOUBLE_SORTED,
             org.apache.avro.Schema.create(org.apache.avro.Schema.Type.DOUBLE), null, null),
         // Please do not use FLOAT type in Avro schema, it is lossy.
@@ -140,7 +140,7 @@ public class FloatingPointDataTypeTest extends CustomDataQueryClusterIntegration
 
   @Override
   protected List<String> getNoDictionaryColumns() {
-    return ImmutableArrays.asList(MET_DOUBLE_SORTED_NO_DIC, MET_FLOAT_SORTED_NO_DIC, MET_DOUBLE_UNSORTED_NO_DIC,
+    return Arrays.asList(MET_DOUBLE_SORTED_NO_DIC, MET_FLOAT_SORTED_NO_DIC, MET_DOUBLE_UNSORTED_NO_DIC,
         MET_FLOAT_UNSORTED_NO_DIC);
   }
 

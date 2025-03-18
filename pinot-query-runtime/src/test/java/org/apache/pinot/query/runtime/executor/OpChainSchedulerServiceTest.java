@@ -77,10 +77,10 @@ public class OpChainSchedulerServiceTest {
     MailboxService mailboxService = mock(MailboxService.class);
     when(mailboxService.getHostname()).thenReturn("localhost");
     when(mailboxService.getPort()).thenReturn(1234);
-    WorkerMetadata workerMetadata = new WorkerMetadata(0, Immutablenew HashMap<>(), Immutablenew HashMap<>());
+    WorkerMetadata workerMetadata = new WorkerMetadata(0, new HashMap<>(), new HashMap<>());
     OpChainExecutionContext context =
-        new OpChainExecutionContext(mailboxService, 123L, Long.MAX_VALUE, Immutablenew HashMap<>(),
-            new StageMetadata(0, ImmutableArrays.asList(workerMetadata), Immutablenew HashMap<>()), workerMetadata, null, null);
+        new OpChainExecutionContext(mailboxService, 123L, Long.MAX_VALUE, new HashMap<>(),
+            new StageMetadata(0, Arrays.asList(workerMetadata), new HashMap<>()), workerMetadata, null, null);
     return new OpChain(context, operator);
   }
 

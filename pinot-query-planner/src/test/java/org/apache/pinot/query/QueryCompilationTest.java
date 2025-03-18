@@ -172,7 +172,7 @@ public class QueryCompilationTest extends QueryEnvironmentTestBase {
     // Assert that no project of filter node for any intermediate stage because all should've been pushed down.
     for (DispatchablePlanFragment dispatchablePlanFragment : intermediateStages) {
       PlanNode roots = dispatchablePlanFragment.getPlanFragment().getFragmentRoot();
-      assertNodeTypeNotIn(roots, ImmutableArrays.asList(ProjectNode.class, FilterNode.class));
+      assertNodeTypeNotIn(roots, Arrays.asList(ProjectNode.class, FilterNode.class));
     }
   }
 

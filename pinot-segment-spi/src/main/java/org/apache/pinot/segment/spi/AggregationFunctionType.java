@@ -19,7 +19,6 @@
 package org.apache.pinot.segment.spi;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -116,7 +115,8 @@ public enum AggregationFunctionType {
       OperandTypes.family(Arrays.asList(SqlTypeFamily.ANY, SqlTypeFamily.NUMERIC, SqlTypeFamily.INTEGER), i -> i == 2),
       SqlTypeName.OTHER),
   PERCENTILESMARTTDIGEST("percentileSmartTDigest", ReturnTypes.DOUBLE,
-      OperandTypes.family(Arrays.asList(SqlTypeFamily.ANY, SqlTypeFamily.NUMERIC, SqlTypeFamily.CHARACTER), i -> i == 2),
+      OperandTypes.family(Arrays.asList(SqlTypeFamily.ANY, SqlTypeFamily.NUMERIC, SqlTypeFamily.CHARACTER),
+          i -> i == 2),
       SqlTypeName.OTHER),
   PERCENTILEKLL("percentileKLL", ReturnTypes.DOUBLE,
       OperandTypes.family(Arrays.asList(SqlTypeFamily.ANY, SqlTypeFamily.NUMERIC, SqlTypeFamily.INTEGER), i -> i == 2),
@@ -167,7 +167,8 @@ public enum AggregationFunctionType {
 
   // Array aggregate functions
   ARRAYAGG("arrayAgg", ReturnTypes.TO_ARRAY,
-      OperandTypes.family(Arrays.asList(SqlTypeFamily.ANY, SqlTypeFamily.CHARACTER, SqlTypeFamily.BOOLEAN), i -> i == 2),
+      OperandTypes.family(Arrays.asList(SqlTypeFamily.ANY, SqlTypeFamily.CHARACTER, SqlTypeFamily.BOOLEAN),
+          i -> i == 2),
       SqlTypeName.OTHER),
   LISTAGG("listAgg", SqlTypeName.OTHER, SqlTypeName.VARCHAR),
 
@@ -210,16 +211,20 @@ public enum AggregationFunctionType {
   PERCENTILERAWESTMV("percentileRawEstMV", ReturnTypes.VARCHAR,
       OperandTypes.family(Arrays.asList(SqlTypeFamily.ARRAY, SqlTypeFamily.NUMERIC)), SqlTypeName.OTHER),
   PERCENTILETDIGESTMV("percentileTDigestMV", ReturnTypes.DOUBLE,
-      OperandTypes.family(Arrays.asList(SqlTypeFamily.ARRAY, SqlTypeFamily.NUMERIC, SqlTypeFamily.INTEGER), i -> i == 2),
+      OperandTypes.family(Arrays.asList(SqlTypeFamily.ARRAY, SqlTypeFamily.NUMERIC, SqlTypeFamily.INTEGER),
+          i -> i == 2),
       SqlTypeName.OTHER),
   PERCENTILERAWTDIGESTMV("percentileRawTDigestMV", ReturnTypes.VARCHAR,
-      OperandTypes.family(Arrays.asList(SqlTypeFamily.ARRAY, SqlTypeFamily.NUMERIC, SqlTypeFamily.INTEGER), i -> i == 2),
+      OperandTypes.family(Arrays.asList(SqlTypeFamily.ARRAY, SqlTypeFamily.NUMERIC, SqlTypeFamily.INTEGER),
+          i -> i == 2),
       SqlTypeName.OTHER),
   PERCENTILEKLLMV("percentileKLLMV", ReturnTypes.DOUBLE,
-      OperandTypes.family(Arrays.asList(SqlTypeFamily.ARRAY, SqlTypeFamily.NUMERIC, SqlTypeFamily.INTEGER), i -> i == 2),
+      OperandTypes.family(Arrays.asList(SqlTypeFamily.ARRAY, SqlTypeFamily.NUMERIC, SqlTypeFamily.INTEGER),
+          i -> i == 2),
       SqlTypeName.OTHER),
   PERCENTILERAWKLLMV("percentileRawKLLMV", ReturnTypes.VARCHAR,
-      OperandTypes.family(Arrays.asList(SqlTypeFamily.ARRAY, SqlTypeFamily.NUMERIC, SqlTypeFamily.INTEGER), i -> i == 2),
+      OperandTypes.family(Arrays.asList(SqlTypeFamily.ARRAY, SqlTypeFamily.NUMERIC, SqlTypeFamily.INTEGER),
+          i -> i == 2),
       SqlTypeName.OTHER);
 
   private static final Set<String> NAMES = Arrays.stream(values())

@@ -143,7 +143,7 @@ public class DynamicBrokerSelectorTest {
 
   @Test
   public void testGetBrokers() {
-    assertEquals(_dynamicBrokerSelectorUnderTest.getBrokers(), ImmutableArrays.asList("broker1"));
+    assertEquals(_dynamicBrokerSelectorUnderTest.getBrokers(), Arrays.asList("broker1"));
   }
 
   @Test

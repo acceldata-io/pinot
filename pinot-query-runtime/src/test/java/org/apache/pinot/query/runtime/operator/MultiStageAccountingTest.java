@@ -224,7 +224,7 @@ public class MultiStageAccountingTest implements ITest {
         .thenReturn(OperatorTestUtil.block(schema, new Object[]{1, "AA"}, new Object[]{2, "BB"}, new Object[]{4, "DD"}))
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
 
-    return new IntersectOperator(OperatorTestUtil.getTracingContext(), ImmutableArrays.asList(leftOperator, rightOperator),
+    return new IntersectOperator(OperatorTestUtil.getTracingContext(), Arrays.asList(leftOperator, rightOperator),
         schema);
   }
 

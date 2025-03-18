@@ -18,6 +18,7 @@
  */
 package org.apache.pinot.spi.utils.builder;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -526,8 +527,12 @@ public class ControllerRequestURLBuilder {
   }
 
   public String forIngestFromFile(String tableNameWithType, String batchConfigMapStr) {
-    return StringUtil.join("/", _baseUrl, "ingestFromFile") + "?tableNameWithType=" + tableNameWithType
-        + "&batchConfigMapStr=" + URLEncoder.encode(batchConfigMapStr, StandardCharsets.UTF_8);
+    try {
+      return StringUtil.join("/", _baseUrl, "ingestFromFile") + "?tableNameWithType=" + tableNameWithType
+          + "&batchConfigMapStr=" + URLEncoder.encode(batchConfigMapStr, StandardCharsets.UTF_8.toString());
+    } catch (UnsupportedEncodingException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public String forIngestFromFile(String tableNameWithType, Map<String, String> batchConfigMap) {
@@ -538,9 +543,13 @@ public class ControllerRequestURLBuilder {
   }
 
   public String forIngestFromURI(String tableNameWithType, String batchConfigMapStr, String sourceURIStr) {
-    return StringUtil.join("/", _baseUrl, "ingestFromURI") + "?tableNameWithType=" + tableNameWithType
-        + "&batchConfigMapStr=" + URLEncoder.encode(batchConfigMapStr, StandardCharsets.UTF_8) + "&sourceURIStr="
-        + URLEncoder.encode(sourceURIStr, StandardCharsets.UTF_8);
+    try {
+      return StringUtil.join("/", _baseUrl, "ingestFromURI") + "?tableNameWithType=" + tableNameWithType
+          + "&batchConfigMapStr=" + URLEncoder.encode(batchConfigMapStr, StandardCharsets.UTF_8.toString())
+          + "&sourceURIStr=" + URLEncoder.encode(sourceURIStr, StandardCharsets.UTF_8.toString());
+    } catch (UnsupportedEncodingException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public String forIngestFromURI(String tableNameWithType, Map<String, String> batchConfigMap, String sourceURIStr) {
@@ -604,7 +613,11 @@ public class ControllerRequestURLBuilder {
   }
 
   private static String encode(String s) {
-    return URLEncoder.encode(s, StandardCharsets.UTF_8);
+    try {
+      return URLEncoder.encode(s, StandardCharsets.UTF_8.toString());
+    } catch (UnsupportedEncodingException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public String forSegmentUpload() {

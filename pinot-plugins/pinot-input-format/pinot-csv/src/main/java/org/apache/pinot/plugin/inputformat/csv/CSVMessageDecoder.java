@@ -166,7 +166,7 @@ public class CSVMessageDecoder implements StreamMessageDecoder<byte[]> {
       recordExtractorConfig.setMultiValueDelimiter(multiValueDelimiter.charAt(0));
     }
 
-    recordExtractorConfig.setColumnNames(ImmutableSet.copyOf(
+    recordExtractorConfig.setColumnNames(new HashSet<>(
         Objects.requireNonNull(_format.getHeader())));
     _recordExtractor.init(fieldsToRead, recordExtractorConfig);
   }

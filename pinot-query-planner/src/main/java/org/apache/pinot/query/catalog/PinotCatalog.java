@@ -91,17 +91,17 @@ public class PinotCatalog implements Schema {
 
   @Override
   public Set<String> getTypeNames() {
-    return Set.of();
+    return Collections.emptySet();
   }
 
   @Override
   public Collection<Function> getFunctions(String name) {
-    return Set.of();
+    return Collections.emptySet();
   }
 
   @Override
   public Set<String> getFunctionNames() {
-    return Set.of();
+    return Collections.emptySet();
   }
 
   @Override
@@ -111,7 +111,7 @@ public class PinotCatalog implements Schema {
 
   @Override
   public Set<String> getSubSchemaNames() {
-    return Set.of();
+    return Collections.emptySet();
   }
 
   @Override

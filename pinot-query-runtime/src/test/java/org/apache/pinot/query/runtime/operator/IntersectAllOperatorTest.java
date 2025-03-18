@@ -73,7 +73,7 @@ public class IntersectAllOperatorTest {
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
 
     IntersectAllOperator intersectOperator =
-        new IntersectAllOperator(OperatorTestUtil.getTracingContext(), ImmutableArrays.asList(_leftOperator, _rightOperator),
+        new IntersectAllOperator(OperatorTestUtil.getTracingContext(), Arrays.asList(_leftOperator, _rightOperator),
             schema);
 
     TransferableBlock result = intersectOperator.nextBlock();
@@ -102,7 +102,7 @@ public class IntersectAllOperatorTest {
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
 
     IntersectAllOperator intersectOperator =
-        new IntersectAllOperator(OperatorTestUtil.getTracingContext(), ImmutableArrays.asList(_leftOperator, _rightOperator),
+        new IntersectAllOperator(OperatorTestUtil.getTracingContext(), Arrays.asList(_leftOperator, _rightOperator),
             schema);
 
     TransferableBlock result = intersectOperator.nextBlock();

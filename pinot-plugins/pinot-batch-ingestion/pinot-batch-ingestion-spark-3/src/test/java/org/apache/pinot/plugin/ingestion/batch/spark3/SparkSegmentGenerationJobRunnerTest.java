@@ -24,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
@@ -234,7 +235,7 @@ public class SparkSegmentGenerationJobRunnerTest {
     File outputDir = new File(testDir, "output");
     File[] files = outputDir.listFiles();
     Set<String> fileNames = Arrays.stream(files).map(File::getName).collect(Collectors.toSet());
-    Set<String> expectedNames = Set.of(expectedSegmentName0, expectedSegmentName1);
+    Set<String> expectedNames = new HashSet<>(Arrays.asList(expectedSegmentName0, expectedSegmentName1));
     Assert.assertEquals(fileNames, expectedNames);
   }
 

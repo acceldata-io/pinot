@@ -131,14 +131,14 @@ public class AccessControlTest {
   @Test
   public void testGrpcBasicAuth() {
     testBasicAuth(new GrpcRequesterIdentity(
-        ImmutableCollections.singletonMap("authorization", BasicAuthUtils.toBasicAuthToken("admin123", "verysecret"))), true);
+        Collections.singletonMap("authorization", BasicAuthUtils.toBasicAuthToken("admin123", "verysecret"))), true);
     testBasicAuth(new GrpcRequesterIdentity(
-        ImmutableCollections.singletonMap("authorization", BasicAuthUtils.toBasicAuthToken("user456", "kindasecret"))), false);
+        Collections.singletonMap("authorization", BasicAuthUtils.toBasicAuthToken("user456", "kindasecret"))), false);
 
     testBasicAuth(new GrpcRequesterIdentity(
-        ImmutableCollections.singletonMap("authorization", "Basic YWRtaW4xMjM6dmVyeXNlY3JldA")), true);
+        Collections.singletonMap("authorization", "Basic YWRtaW4xMjM6dmVyeXNlY3JldA")), true);
     testBasicAuth(new GrpcRequesterIdentity(
-        ImmutableCollections.singletonMap("authorization", "Basic dXNlcjQ1NjpraW5kYXNlY3JldA==")), false);
+        Collections.singletonMap("authorization", "Basic dXNlcjQ1NjpraW5kYXNlY3JldA==")), false);
   }
 
   @Test
@@ -159,7 +159,7 @@ public class AccessControlTest {
 
   public void testBasicAuth(RequesterIdentity requesterIdentity, boolean isAdmin) {
     final BasicAuthAccessFactory basicAuthAccessFactory = new BasicAuthAccessFactory();
-    PinotConfiguration config = new PinotConfiguration(ImmutableCollections.singletonMap("principals", "admin123,user456",
+    PinotConfiguration config = new PinotConfiguration(Collections.singletonMap("principals", "admin123,user456",
         "principals.admin123.password", "verysecret", "principals.user456.password", "kindasecret",
         "principals.user456.tables", "stuff,lessImportantStuff"));
     basicAuthAccessFactory.init(config);

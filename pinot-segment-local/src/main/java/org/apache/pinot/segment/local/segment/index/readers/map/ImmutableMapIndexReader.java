@@ -82,7 +82,7 @@ public class ImmutableMapIndexReader implements MapIndexReader<ForwardIndexReade
 
   @Override
   public Set<String> getKeys() {
-    return Set.of();
+    return Collections.emptySet();
   }
 
   @Override

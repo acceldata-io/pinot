@@ -34,6 +34,7 @@ import io.swagger.annotations.Authorization;
 import io.swagger.annotations.SecurityDefinition;
 import io.swagger.annotations.SwaggerDefinition;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -456,16 +457,18 @@ public class PinotClientRequest {
       return new BrokerResponseNative(QueryException.getException(QueryException.SQL_PARSING_ERROR, e));
     }
     if (forceUseMultiStage) {
-      sqlNodeAndOptions.setExtraOptions(ImmutableCollections.singletonMap(Request.QueryOptionKey.USE_MULTISTAGE_ENGINE, "true"));
+      sqlNodeAndOptions.setExtraOptions(
+          Collections.singletonMap(Request.QueryOptionKey.USE_MULTISTAGE_ENGINE, "true"));
     }
     if (getCursor) {
       if (numRows == 0) {
         numRows = _brokerConf.getProperty(CommonConstants.CursorConfigs.CURSOR_FETCH_ROWS,
             CommonConstants.CursorConfigs.DEFAULT_CURSOR_FETCH_ROWS);
       }
-      sqlNodeAndOptions.setExtraOptions(
-          ImmutableCollections.singletonMap(Request.QueryOptionKey.GET_CURSOR, "true", Request.QueryOptionKey.CURSOR_NUM_ROWS,
-              Integer.toString(numRows)));
+      Map<String, String> map = new HashMap<>();
+      map.put(Request.QueryOptionKey.GET_CURSOR, "true");
+      map.put(Request.QueryOptionKey.CURSOR_NUM_ROWS, Integer.toString(numRows));
+      sqlNodeAndOptions.setExtraOptions(map);
       _brokerMetrics.addMeteredGlobalValue(BrokerMeter.CURSOR_QUERIES_GLOBAL, 1);
     }
     PinotSqlType sqlType = sqlNodeAndOptions.getSqlType();

@@ -66,8 +66,8 @@ public class HashExchangeTest {
       throws Exception {
     // Given:
     TestSelector selector = new TestSelector(Iterators.forArray(2, 0, 1));
-    Mockito.when(_block.getContainer()).thenReturn(ImmutableArrays.asList(new Object[]{0}, new Object[]{1}, new Object[]{2}));
-    ImmutableList<SendingMailbox> destinations = ImmutableArrays.asList(_mailbox1, _mailbox2);
+    Mockito.when(_block.getContainer()).thenReturn(Arrays.asList(new Object[]{0}, new Object[]{1}, new Object[]{2}));
+    ImmutableList<SendingMailbox> destinations = Arrays.asList(_mailbox1, _mailbox2);
 
     // When:
     new HashExchange(destinations, selector, TransferableBlockUtils::splitBlock).route(destinations, _block);

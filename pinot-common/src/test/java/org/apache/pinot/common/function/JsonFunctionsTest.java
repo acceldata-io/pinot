@@ -241,16 +241,16 @@ public class JsonFunctionsTest {
     // Object[] doesn't work with default JsonPath, where "$.commits[*].sha" would return empty,
     // and "$.commits[1].sha" led to exception `Filter: [1]['sha'] can only be applied to arrays`.
     // Those failure could be reproduced by using the default JacksonJsonProvider for JsonPath.
-    Map<String, Object> rawData = ImmutableCollections.singletonMap("commits",
-        ImmutableArrays.asList(ImmutableCollections.singletonMap("sha", 123, "name", "k"), ImmutableCollections.singletonMap("sha", 456, "name", "j")));
+    Map<String, Object> rawData = Collections.singletonMap("commits",
+        Arrays.asList(Collections.singletonMap("sha", 123, "name", "k"), Collections.singletonMap("sha", 456, "name", "j")));
     assertTrue(JsonFunctions.jsonPathExists(rawData, "$.commits[*].sha"));
     assertEquals(JsonFunctions.jsonPathArray(rawData, "$.commits[*].sha"), new Integer[]{123, 456});
     assertTrue(JsonFunctions.jsonPathExists(rawData, "$.commits[1].sha"));
     assertEquals(JsonFunctions.jsonPathArray(rawData, "$.commits[1].sha"), new Integer[]{456});
 
     // ArrayAwareJacksonJsonProvider should fix this issue.
-    rawData = ImmutableCollections.singletonMap("commits",
-        new Object[]{ImmutableCollections.singletonMap("sha", 123, "name", "k"), ImmutableCollections.singletonMap("sha", 456, "name", "j")});
+    rawData = Collections.singletonMap("commits",
+        new Object[]{Collections.singletonMap("sha", 123, "name", "k"), Collections.singletonMap("sha", 456, "name", "j")});
     assertEquals(JsonFunctions.jsonPathArray(rawData, "$.commits[*].sha"), new Integer[]{123, 456});
     assertEquals(JsonFunctions.jsonPathArray(rawData, "$.commits[1].sha"), new Integer[]{456});
   }
@@ -269,7 +269,7 @@ public class JsonFunctionsTest {
     // ArrayAwareJacksonJsonProvider can work with Array directly, thus no need to serialize
     // Object[] any more.
     Object[] rawDataInAry =
-        new Object[]{ImmutableCollections.singletonMap("sha", 123, "name", "kk"), ImmutableCollections.singletonMap("sha", 456, "name", "jj")};
+        new Object[]{Collections.singletonMap("sha", 123, "name", "kk"), Collections.singletonMap("sha", 456, "name", "jj")};
     assertEquals(JsonFunctions.jsonPathArray(rawDataInAry, "$.[*].sha"), new Integer[]{123, 456});
     assertEquals(JsonFunctions.jsonPathArray(rawDataInAry, "$.[1].sha"), new Integer[]{456});
   }
@@ -330,9 +330,9 @@ public class JsonFunctionsTest {
   public void testJsonFunctionOnObjectArray()
       throws JsonProcessingException {
     Object[] rawData = new Object[]{
-        ImmutableCollections.singletonMap("name", "maths", "grade", "A", "score", 90, "homework_grades",
+        Collections.singletonMap("name", "maths", "grade", "A", "score", 90, "homework_grades",
             Arrays.asList(80, 85, 90, 95, 100)),
-        ImmutableCollections.singletonMap("name", "english", "grade", "B", "score", 50, "homework_grades",
+        Collections.singletonMap("name", "english", "grade", "B", "score", 50, "homework_grades",
             Arrays.asList(60, 65, 70, 85, 90))
     };
     assertTrue(JsonFunctions.jsonPathExists(rawData, "$.[*].name"));
@@ -349,9 +349,9 @@ public class JsonFunctionsTest {
   @DataProvider
   public static Object[][] jsonPathStringTestCases() {
     return new Object[][]{
-        {ImmutableCollections.singletonMap("foo", "x", "bar", ImmutableCollections.singletonMap("foo", "y")), "$.foo", "x"},
-        {ImmutableCollections.singletonMap("foo", "x", "bar", ImmutableCollections.singletonMap("foo", "y")), "$.qux", null},
-        {ImmutableCollections.singletonMap("foo", "x", "bar", ImmutableCollections.singletonMap("foo", "y")), "$.bar", "{\"foo\":\"y\"}"},
+        {Collections.singletonMap("foo", "x", "bar", Collections.singletonMap("foo", "y")), "$.foo", "x"},
+        {Collections.singletonMap("foo", "x", "bar", Collections.singletonMap("foo", "y")), "$.qux", null},
+        {Collections.singletonMap("foo", "x", "bar", Collections.singletonMap("foo", "y")), "$.bar", "{\"foo\":\"y\"}"},
     };
   }
 
@@ -372,11 +372,11 @@ public class JsonFunctionsTest {
   @DataProvider
   public static Object[][] jsonPathArrayTestCases() {
     return new Object[][]{
-        {ImmutableCollections.singletonMap("foo", "x", "bar", ImmutableCollections.singletonMap("foo", "y")), "$.foo", new Object[]{"x"}},
-        {ImmutableCollections.singletonMap("foo", "x", "bar", ImmutableCollections.singletonMap("foo", "y")), "$.qux", null},
+        {Collections.singletonMap("foo", "x", "bar", Collections.singletonMap("foo", "y")), "$.foo", new Object[]{"x"}},
+        {Collections.singletonMap("foo", "x", "bar", Collections.singletonMap("foo", "y")), "$.qux", null},
         {
-            ImmutableCollections.singletonMap("foo", "x", "bar", ImmutableCollections.singletonMap("foo", "y")), "$.bar", new Object[]{
-            ImmutableCollections.singletonMap("foo", "y")
+            Collections.singletonMap("foo", "x", "bar", Collections.singletonMap("foo", "y")), "$.bar", new Object[]{
+            Collections.singletonMap("foo", "y")
         }
         },
     };

@@ -272,7 +272,7 @@ public class PluginManager {
         throw new UncheckedIOException(e);
       }
 
-      final ClassLoader baseClassLoader = ClassLoader.getPlatformClassLoader();
+      final ClassLoader baseClassLoader = ClassLoader.getSystemClassLoader();
 
       Collection<URL> urlList;
       try (Stream<Path> pluginClasspathEntries = Files.list(directory.toPath())) {

@@ -125,9 +125,9 @@ public class DictionaryIndexType
     ColumnConfigDeserializer<DictionaryIndexConfig> fromIndexingConfig = (tableConfig, schema) -> {
       IndexingConfig indexingConfig = tableConfig.getIndexingConfig();
       Set<String> onHeapDictionaryColumns = indexingConfig.getOnHeapDictionaryColumns() != null ? new HashSet<>(
-          indexingConfig.getOnHeapDictionaryColumns()) : Set.of();
+          indexingConfig.getOnHeapDictionaryColumns()) : Collections.emptySet();
       Set<String> varLengthDictionaryColumns = indexingConfig.getVarLengthDictionaryColumns() != null ? new HashSet<>(
-          indexingConfig.getVarLengthDictionaryColumns()) : Set.of();
+          indexingConfig.getVarLengthDictionaryColumns()) : Collections.emptySet();
       Set<String> allColumns = new HashSet<>();
       allColumns.addAll(onHeapDictionaryColumns);
       allColumns.addAll(varLengthDictionaryColumns);

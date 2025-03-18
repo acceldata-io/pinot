@@ -19,12 +19,12 @@
 package org.apache.pinot.spi.utils;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -576,9 +576,10 @@ public class JsonUtilsTest {
       throws Exception {
     ClassLoader classLoader = JsonUtilsTest.class.getClassLoader();
     File file = new File(Objects.requireNonNull(classLoader.getResource(JSON_FILE)).getFile());
-    Map<String, FieldSpec.FieldType> fieldSpecMap =
-        ImmutableCollections.singletonMap("d1", FieldSpec.FieldType.DIMENSION, "hoursSinceEpoch", FieldSpec.FieldType.DATE_TIME, "m1",
-            FieldSpec.FieldType.METRIC);
+    Map<String, FieldSpec.FieldType> fieldSpecMap = new HashMap<>();
+    fieldSpecMap.put("d1", FieldSpec.FieldType.DIMENSION);
+    fieldSpecMap.put("hoursSinceEpoch", FieldSpec.FieldType.DATE_TIME);
+    fieldSpecMap.put("m1", FieldSpec.FieldType.METRIC);
     Schema inferredPinotSchema =
         JsonUtils.getPinotSchemaFromJsonFile(file, fieldSpecMap, TimeUnit.HOURS, new ArrayList<>(), ".",
             ComplexTypeConfig.CollectionNotUnnestedToJson.NON_PRIMITIVE);

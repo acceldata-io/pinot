@@ -95,6 +95,6 @@ public class SystemResourceInfo {
     map.put(NUM_CORES_KEY, Integer.toString(_numCores));
     map.put(TOTAL_MEMORY_MB_KEY, Long.toString(_totalMemoryMB));
     map.put(MAX_HEAP_SIZE_MB_KEY, Long.toString(_maxHeapSizeMB));
-    return ImmutableMap.copyOf(map);
+    return new HashMap<>(map);
   }
 }

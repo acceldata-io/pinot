@@ -72,7 +72,7 @@ public class QueryOptionsUtils {
       classLoadError = e;
     }
 
-    CONFIG_RESOLVER = configResolver == null ? null : ImmutableMap.copyOf(configResolver);
+    CONFIG_RESOLVER = configResolver == null ? null : new HashMap<>(configResolver);
     CLASS_LOAD_ERROR = classLoadError == null ? null
         : new RuntimeException("Failure to build case insensitive mapping.", classLoadError);
   }

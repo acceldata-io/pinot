@@ -18,6 +18,7 @@
  */
 package org.apache.pinot.segment.spi.index.startree;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;

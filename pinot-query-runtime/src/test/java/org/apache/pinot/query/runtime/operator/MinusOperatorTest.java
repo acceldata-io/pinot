@@ -73,7 +73,7 @@ public class MinusOperatorTest {
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
 
     MinusOperator minusOperator =
-        new MinusOperator(OperatorTestUtil.getTracingContext(), ImmutableArrays.asList(_leftOperator, _rightOperator),
+        new MinusOperator(OperatorTestUtil.getTracingContext(), Arrays.asList(_leftOperator, _rightOperator),
             schema);
 
     TransferableBlock result = minusOperator.nextBlock();
@@ -104,7 +104,7 @@ public class MinusOperatorTest {
         .thenReturn(TransferableBlockTestUtils.getEndOfStreamTransferableBlock(0));
 
     MinusOperator minusOperator =
-        new MinusOperator(OperatorTestUtil.getTracingContext(), ImmutableArrays.asList(_leftOperator, _rightOperator),
+        new MinusOperator(OperatorTestUtil.getTracingContext(), Arrays.asList(_leftOperator, _rightOperator),
             schema);
 
     TransferableBlock result = minusOperator.nextBlock();

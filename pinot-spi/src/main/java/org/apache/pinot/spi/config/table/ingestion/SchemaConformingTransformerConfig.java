@@ -21,6 +21,7 @@ package org.apache.pinot.spi.config.table.ingestion;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -59,7 +60,7 @@ public class SchemaConformingTransformerConfig extends BaseJsonConfig {
 
   @JsonPropertyDescription("Array of flattened (dot-delimited) object paths not to store but only build "
       + "mergedTextIndex for the field.")
-  private Set<String> _fieldPathsToSkipStorage = Set.of("message");
+  private Set<String> _fieldPathsToSkipStorage = new HashSet<>(Arrays.asList("message"));
 
   @JsonPropertyDescription("Map from customized meaningful column name to json key path")
   private Map<String, String> _columnNameToJsonKeyPathMap = new HashMap<>();

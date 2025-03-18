@@ -363,7 +363,7 @@ public class PinotAggregateExchangeNodeInsertRule {
       int numArguments = argList.size();
       List<RexNode> rexList;
       if (numArguments <= 1) {
-        rexList = ImmutableArrays.asList(inputRef);
+        rexList = Arrays.asList(inputRef);
       } else {
         rexList = new ArrayList<>(numArguments);
         rexList.add(inputRef);
@@ -395,9 +395,9 @@ public class PinotAggregateExchangeNodeInsertRule {
       int numArguments = argList.size();
       List<RexNode> rexList;
       if (numArguments == 0) {
-        rexList = ImmutableArrays.asList();
+        rexList = Arrays.asList();
       } else if (numArguments == 1) {
-        rexList = ImmutableArrays.asList(RexInputRef.of(argList.get(0), input.getRowType()));
+        rexList = Arrays.asList(RexInputRef.of(argList.get(0), input.getRowType()));
       } else {
         rexList = new ArrayList<>(numArguments);
         rexList.add(RexInputRef.of(argList.get(0), input.getRowType()));
@@ -452,7 +452,7 @@ public class PinotAggregateExchangeNodeInsertRule {
     SqlAggFunction sqlAggFunction =
         new PinotSqlAggFunction(functionName, kind, returnTypeInference, operandTypeChecker, functionCategory);
     return AggregateCall.create(sqlAggFunction, false, orgAggCall.isApproximate(), orgAggCall.ignoreNulls(), rexList,
-        ImmutableArrays.asList(), aggType.isInputIntermediateFormat() ? -1 : orgAggCall.filterArg, orgAggCall.distinctKeys,
+        Arrays.asList(), aggType.isInputIntermediateFormat() ? -1 : orgAggCall.filterArg, orgAggCall.distinctKeys,
         orgAggCall.collation, numGroups, input, returnType, null);
   }
 

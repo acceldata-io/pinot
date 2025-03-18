@@ -226,8 +226,8 @@ public class PinotTableRestletResourceTest extends ControllerTest {
     DEFAULT_INSTANCE.addDummySchema(rawTableName);
     // Failed to create a table
     TableConfig tableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(rawTableName).setTaskConfig(
-        new TableTaskConfig(ImmutableCollections.singletonMap(MinionConstants.SegmentGenerationAndPushTask.TASK_TYPE,
-            ImmutableCollections.singletonMap(PinotTaskManager.SCHEDULE_KEY, "* * * * * * *")))).build();
+        new TableTaskConfig(Collections.singletonMap(MinionConstants.SegmentGenerationAndPushTask.TASK_TYPE,
+            Collections.singletonMap(PinotTaskManager.SCHEDULE_KEY, "* * * * * * *")))).build();
     try {
       sendPostRequest(_createTableUrl, tableConfig.toJsonString());
       fail("Creation of an OFFLINE table with an invalid cron expression does not fail");
@@ -238,8 +238,8 @@ public class PinotTableRestletResourceTest extends ControllerTest {
 
     // Succeed to create a table
     tableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(rawTableName).setTaskConfig(
-        new TableTaskConfig(ImmutableCollections.singletonMap(MinionConstants.SegmentGenerationAndPushTask.TASK_TYPE,
-            ImmutableCollections.singletonMap(PinotTaskManager.SCHEDULE_KEY, "0 */10 * ? * * *")))).build();
+        new TableTaskConfig(Collections.singletonMap(MinionConstants.SegmentGenerationAndPushTask.TASK_TYPE,
+            Collections.singletonMap(PinotTaskManager.SCHEDULE_KEY, "0 */10 * ? * * *")))).build();
     try {
       String response = sendPostRequest(_createTableUrl, tableConfig.toJsonString());
       assertEquals(response,
@@ -251,8 +251,8 @@ public class PinotTableRestletResourceTest extends ControllerTest {
 
     // Failed to update the table
     tableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(rawTableName).setTaskConfig(
-        new TableTaskConfig(ImmutableCollections.singletonMap(MinionConstants.SegmentGenerationAndPushTask.TASK_TYPE,
-            ImmutableCollections.singletonMap(PinotTaskManager.SCHEDULE_KEY, "5 5 5 5 5 5 5")))).build();
+        new TableTaskConfig(Collections.singletonMap(MinionConstants.SegmentGenerationAndPushTask.TASK_TYPE,
+            Collections.singletonMap(PinotTaskManager.SCHEDULE_KEY, "5 5 5 5 5 5 5")))).build();
     try {
       sendPutRequest(DEFAULT_INSTANCE.getControllerRequestURLBuilder().forUpdateTableConfig(rawTableName),
           tableConfig.toJsonString());

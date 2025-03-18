@@ -45,9 +45,9 @@ public class ProtoBufRecordExtractor extends BaseRecordExtractor<Message> {
   public void init(@Nullable Set<String> fields, RecordExtractorConfig recordExtractorConfig) {
     if (fields == null || fields.isEmpty()) {
       _extractAll = true;
-      _fields = Set.of();
+      _fields = Collections.emptySet();
     } else {
-      _fields = Set.copyOf(fields);
+      _fields = new HashSet<>(fields);
     }
   }
 

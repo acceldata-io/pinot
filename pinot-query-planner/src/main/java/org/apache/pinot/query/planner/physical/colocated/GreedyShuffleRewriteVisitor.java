@@ -275,7 +275,7 @@ public class GreedyShuffleRewriteVisitor implements PlanNodeVisitor<Set<Colocati
 
   @Override
   public Set<ColocationKey> visitSetOp(SetOpNode setOpNode, GreedyShuffleRewriteContext context) {
-    return ImmutableSet.of();
+    return ImmutableCollections.emptySet();
   }
 
   @Override

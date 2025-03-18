@@ -24,6 +24,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -821,7 +822,7 @@ public abstract class BaseSingleStageBrokerRequestHandler extends BaseBrokerRequ
             offlineRoutingTable, realtimeBrokerRequest, realtimeRoutingTable, remainingTimeMs, serverStats,
             requestContext);
       }
-      brokerResponse.setTablesQueried(Set.of(rawTableName));
+      brokerResponse.setTablesQueried(new HashSet<>(Arrays.asList(rawTableName)));
 
       for (ProcessingException exception : exceptions) {
         brokerResponse.addException(exception);

@@ -877,7 +877,7 @@ public class ArrayTest extends CustomDataQueryClusterIntegrationTest {
       throws Exception {
     // create avro schema
     org.apache.avro.Schema avroSchema = org.apache.avro.Schema.createRecord("myRecord", null, null, false);
-    avroSchema.setFields(ImmutableArrays.asList(
+    avroSchema.setFields(Arrays.asList(
         new org.apache.avro.Schema.Field(BOOLEAN_COLUMN,
             org.apache.avro.Schema.create(org.apache.avro.Schema.Type.BOOLEAN),
             null, null),
@@ -943,11 +943,11 @@ public class ArrayTest extends CustomDataQueryClusterIntegrationTest {
               record.put(STRING_COLUMN, RandomStringUtils.random(finalI));
               record.put(TIMESTAMP_COLUMN, finalI);
               record.put(GROUP_BY_COLUMN, String.valueOf(finalI % 10));
-              record.put(BOOLEAN_ARRAY_COLUMN, ImmutableArrays.asList(true, true, false, false));
-              record.put(BOOLEAN_FROM_INT_ARRAY_COLUMN, ImmutableArrays.asList(1, 1, 0, 0));
-              record.put(BOOLEAN_FROM_STRING_ARRAY_COLUMN, ImmutableArrays.asList("true", "true", "false", "false"));
-              record.put(LONG_ARRAY_COLUMN, ImmutableArrays.asList(0, 1, 2, 3));
-              record.put(DOUBLE_ARRAY_COLUMN, ImmutableArrays.asList(0.0, 0.1, 0.2, 0.3));
+              record.put(BOOLEAN_ARRAY_COLUMN, Arrays.asList(true, true, false, false));
+              record.put(BOOLEAN_FROM_INT_ARRAY_COLUMN, Arrays.asList(1, 1, 0, 0));
+              record.put(BOOLEAN_FROM_STRING_ARRAY_COLUMN, Arrays.asList("true", "true", "false", "false"));
+              record.put(LONG_ARRAY_COLUMN, Arrays.asList(0, 1, 2, 3));
+              record.put(DOUBLE_ARRAY_COLUMN, Arrays.asList(0.0, 0.1, 0.2, 0.3));
               return record;
             }
         ));

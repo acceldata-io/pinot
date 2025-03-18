@@ -92,7 +92,7 @@ public class BytesTypeTest extends CustomDataQueryClusterIntegrationTest {
       throws Exception {
     // create avro schema
     org.apache.avro.Schema avroSchema = org.apache.avro.Schema.createRecord("myRecord", null, null, false);
-    avroSchema.setFields(ImmutableArrays.asList(
+    avroSchema.setFields(Arrays.asList(
         new org.apache.avro.Schema.Field(HEX_STR, org.apache.avro.Schema.create(org.apache.avro.Schema.Type.STRING),
             null, null),
         new org.apache.avro.Schema.Field(HEX_BYTES, org.apache.avro.Schema.create(org.apache.avro.Schema.Type.BYTES),

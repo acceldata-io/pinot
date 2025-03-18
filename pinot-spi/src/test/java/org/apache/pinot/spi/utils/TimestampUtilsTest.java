@@ -23,6 +23,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
@@ -40,7 +41,8 @@ public class TimestampUtilsTest {
         TimestampUtils.toTimestamp("2024-07-12 15:32:36.111Z"),
         Timestamp.from(LocalDateTime.of(2024, 7, 12, 15, 32, 36, 111000000).atZone(ZoneOffset.UTC).toInstant()));
     for (int i = 1; i < 7; i++) {
-      int fraction = Integer.parseInt("1".repeat(i) + "0".repeat(9 - i));
+      int fraction = Integer.parseInt(String.join("", Collections.nCopies(i, "1"))
+          + String.join("", Collections.nCopies(9 - i, "0")));
       assertEquals(
           TimestampUtils.toTimestamp("2024-07-12T15:32:36." + fraction),
           Timestamp.valueOf("2024-07-12 15:32:36." + fraction));
@@ -68,7 +70,7 @@ public class TimestampUtilsTest {
         Timestamp.valueOf("2024-07-12 15:32:36.111").toLocalDateTime().atZone(ZoneOffset.UTC).toInstant()
             .toEpochMilli());
     for (int i = 1; i < 7; i++) {
-      String fraction = "1".repeat(i);
+      String fraction = String.join("", Collections.nCopies(i, "1"));
       assertEquals(TimestampUtils.toMillisSinceEpoch("2024-07-12 15:32:36." + fraction),
           Timestamp.valueOf("2024-07-12 15:32:36." + fraction).getTime());
       assertEquals(

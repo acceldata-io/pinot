@@ -96,32 +96,32 @@ public class ServiceStatusTest {
   public void testMultipleServiceStatusCallback() {
     // Only good should return good
     ServiceStatus.MultipleCallbackServiceStatusCallback onlyGood =
-        new ServiceStatus.MultipleCallbackServiceStatusCallback(ImmutableArrays.asList(ALWAYS_GOOD));
+        new ServiceStatus.MultipleCallbackServiceStatusCallback(Arrays.asList(ALWAYS_GOOD));
 
     assertEquals(onlyGood.getServiceStatus(), ServiceStatus.Status.GOOD);
 
     // Only bad should return bad
     ServiceStatus.MultipleCallbackServiceStatusCallback onlyBad =
-        new ServiceStatus.MultipleCallbackServiceStatusCallback(ImmutableArrays.asList(ALWAYS_BAD));
+        new ServiceStatus.MultipleCallbackServiceStatusCallback(Arrays.asList(ALWAYS_BAD));
 
     assertEquals(onlyBad.getServiceStatus(), ServiceStatus.Status.BAD);
 
     // Only starting should return starting
     ServiceStatus.MultipleCallbackServiceStatusCallback onlyStarting =
-        new ServiceStatus.MultipleCallbackServiceStatusCallback(ImmutableArrays.asList(ALWAYS_STARTING));
+        new ServiceStatus.MultipleCallbackServiceStatusCallback(Arrays.asList(ALWAYS_STARTING));
 
     assertEquals(onlyStarting.getServiceStatus(), ServiceStatus.Status.STARTING);
 
     // Good + starting = starting
     ServiceStatus.MultipleCallbackServiceStatusCallback goodAndStarting =
-        new ServiceStatus.MultipleCallbackServiceStatusCallback(ImmutableArrays.asList(ALWAYS_GOOD, ALWAYS_STARTING));
+        new ServiceStatus.MultipleCallbackServiceStatusCallback(Arrays.asList(ALWAYS_GOOD, ALWAYS_STARTING));
 
     assertEquals(goodAndStarting.getServiceStatus(), ServiceStatus.Status.STARTING);
 
     // Good + starting + bad = starting (check for left-to-right evaluation)
     ServiceStatus.MultipleCallbackServiceStatusCallback goodStartingAndBad =
         new ServiceStatus.MultipleCallbackServiceStatusCallback(
-            ImmutableArrays.asList(ALWAYS_GOOD, ALWAYS_STARTING, ALWAYS_BAD));
+            Arrays.asList(ALWAYS_GOOD, ALWAYS_STARTING, ALWAYS_BAD));
 
     assertEquals(goodStartingAndBad.getServiceStatus(), ServiceStatus.Status.STARTING);
   }

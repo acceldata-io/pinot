@@ -247,7 +247,7 @@ public class SegmentStatusChecker extends ControllerPeriodicTask<SegmentStatusCh
     ZkHelixPropertyStore<ZNRecord> propertyStore = _pinotHelixResourceManager.getPropertyStore();
     Set<String> segments;
     if (segmentsIncludingReplaced.isEmpty()) {
-      segments = Set.of();
+      segments = Collections.emptySet();
     } else {
       segments = new HashSet<>(segmentsIncludingReplaced);
       SegmentLineage segmentLineage = SegmentLineageAccessHelper.getSegmentLineage(propertyStore, tableNameWithType);

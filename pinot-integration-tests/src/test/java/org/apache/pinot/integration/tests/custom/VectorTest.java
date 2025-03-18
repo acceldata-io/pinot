@@ -256,7 +256,7 @@ public class VectorTest extends CustomDataQueryClusterIntegrationTest {
       throws Exception {
     // create avro schema
     org.apache.avro.Schema avroSchema = org.apache.avro.Schema.createRecord("myRecord", null, null, false);
-    avroSchema.setFields(ImmutableArrays.asList(
+    avroSchema.setFields(Arrays.asList(
         new org.apache.avro.Schema.Field(VECTOR_1, org.apache.avro.Schema.createArray(org.apache.avro.Schema.create(
             org.apache.avro.Schema.Type.FLOAT)), null,
             null),

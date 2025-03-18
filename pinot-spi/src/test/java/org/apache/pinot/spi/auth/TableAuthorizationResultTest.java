@@ -19,6 +19,8 @@
 
 package org.apache.pinot.spi.auth;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import org.testng.Assert;
@@ -38,7 +40,7 @@ public class TableAuthorizationResultTest {
 
   @Test
   public void testAddFailedTable() {
-    TableAuthorizationResult result = new TableAuthorizationResult(Set.of("table1"));
+    TableAuthorizationResult result = new TableAuthorizationResult(Collections.singleton("table1"));
     Assert.assertFalse(result.hasAccess());
     Assert.assertEquals(result.getFailureMessage(), "Authorization Failed for tables: [table1]");
   }
@@ -55,7 +57,8 @@ public class TableAuthorizationResultTest {
 
   @Test
   public void testGetFailureMessage() {
-    TableAuthorizationResult result = new TableAuthorizationResult(Set.of("table1", "table2"));
+    TableAuthorizationResult result = new TableAuthorizationResult(
+        new HashSet<>(Arrays.asList("table1", "table2")));
     Assert.assertEquals(result.getFailureMessage(), "Authorization Failed for tables: [table1, table2]");
   }
 

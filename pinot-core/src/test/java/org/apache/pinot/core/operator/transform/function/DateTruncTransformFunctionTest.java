@@ -82,8 +82,8 @@ public class DateTruncTransformFunctionTest {
       throws Exception {
     long zmillisInput = iso8601ToUtcEpochMillis(literalInput);
     GenericRow row = new GenericRow();
-    row.init(ImmutableCollections.singletonMap(TIME_COLUMN, zmillisInput));
-    List<GenericRow> rows = ImmutableArrays.asList(row);
+    row.init(Collections.singletonMap(TIME_COLUMN, zmillisInput));
+    List<GenericRow> rows = Arrays.asList(row);
     TableConfig tableConfig =
         new TableConfigBuilder(TableType.OFFLINE).setTableName("test").setTimeColumnName(TIME_COLUMN).build();
 

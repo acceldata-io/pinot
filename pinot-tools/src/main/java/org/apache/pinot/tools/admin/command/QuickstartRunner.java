@@ -250,7 +250,7 @@ public class QuickstartRunner {
 
   public static void registerDefaultPinotFS() {
     registerPinotFS("s3", "org.apache.pinot.plugin.filesystem.S3PinotFS",
-        ImmutableCollections.singletonMap("region", System.getProperty("AWS_REGION", "us-west-2")));
+        Collections.singletonMap("region", System.getProperty("AWS_REGION", "us-west-2")));
   }
 
   public static void registerPinotFS(String scheme, String fsClassName, Map<String, Object> configs) {

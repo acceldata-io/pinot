@@ -63,7 +63,7 @@ public class SingletonExchangeTest {
   public void shouldRouteSingleton()
       throws Exception {
     // Given:
-    ImmutableList<SendingMailbox> destinations = ImmutableArrays.asList(_mailbox1);
+    ImmutableList<SendingMailbox> destinations = Arrays.asList(_mailbox1);
 
     // When:
     new SingletonExchange(destinations, TransferableBlockUtils::splitBlock).route(destinations, _block);
@@ -79,7 +79,7 @@ public class SingletonExchangeTest {
   public void shouldThrowWhenSingletonWithNonLocalMailbox()
       throws Exception {
     // Given:
-    ImmutableList<SendingMailbox> destinations = ImmutableArrays.asList(_mailbox2);
+    ImmutableList<SendingMailbox> destinations = Arrays.asList(_mailbox2);
 
     // When:
     new SingletonExchange(destinations, TransferableBlockUtils::splitBlock).route(destinations, _block);
@@ -89,7 +89,7 @@ public class SingletonExchangeTest {
   public void shouldThrowWhenSingletonWithMultipleMailboxes()
       throws Exception {
     // Given:
-    ImmutableList<SendingMailbox> destinations = ImmutableArrays.asList(_mailbox1, _mailbox3);
+    ImmutableList<SendingMailbox> destinations = Arrays.asList(_mailbox1, _mailbox3);
 
     // When:
     new SingletonExchange(destinations, TransferableBlockUtils::splitBlock).route(destinations, _block);

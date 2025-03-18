@@ -38,7 +38,7 @@ import org.testng.annotations.Test;
 
 public class DataBlockTest {
   private static final List<ColumnDataType> EXCLUDE_DATA_TYPES =
-      ImmutableArrays.asList(ColumnDataType.OBJECT, ColumnDataType.JSON, ColumnDataType.BYTES, ColumnDataType.BYTES_ARRAY);
+      Arrays.asList(ColumnDataType.OBJECT, ColumnDataType.JSON, ColumnDataType.BYTES, ColumnDataType.BYTES_ARRAY);
   private static final int TEST_ROW_COUNT = 5;
 
   @Test

@@ -300,7 +300,7 @@ public class OfflineClusterIntegrationTest extends BaseClusterIntegrationTestSet
           }
         }
       }
-      _serviceStatusCallbacks.add(new ServiceStatus.MultipleCallbackServiceStatusCallback(ImmutableArrays.asList(
+      _serviceStatusCallbacks.add(new ServiceStatus.MultipleCallbackServiceStatusCallback(Arrays.asList(
           new ServiceStatus.IdealStateAndCurrentStateMatchServiceStatusCallback(_helixManager, getHelixClusterName(),
               instance, resourcesToMonitor, 100.0),
           new ServiceStatus.IdealStateAndExternalViewMatchServiceStatusCallback(_helixManager, getHelixClusterName(),

@@ -18,6 +18,7 @@
  */
 package org.apache.pinot.spi.plugin;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,10 +52,10 @@ class PinotPluginConfiguration {
       if (k.toString().startsWith("importFrom.")) {
         String realm = key.substring("importFrom.".length());
         List<String> importsFrom = Stream.of(v.toString().split(",")).collect(Collectors.toList());
-        importsFromRealm.put(realm, List.copyOf(importsFrom));
+        importsFromRealm.put(realm, new ArrayList<>(importsFrom));
       }
     });
-    _importsFromRealm = Map.copyOf(importsFromRealm);
+    _importsFromRealm = new HashMap<>(importsFromRealm);
     _parentRealmId = properties.getProperty("parent.realmId");
   }
 

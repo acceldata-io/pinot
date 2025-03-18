@@ -133,7 +133,7 @@ public class RsvpSourceGenerator implements PinotSourceDataGenerator {
         key = null;
         break;
     }
-    return ImmutableArrays.asList(new StreamDataProducer.RowWithKey(key, msg.getPayload().toString().getBytes(UTF_8)));
+    return Arrays.asList(new StreamDataProducer.RowWithKey(key, msg.getPayload().toString().getBytes(UTF_8)));
   }
 
   @Override

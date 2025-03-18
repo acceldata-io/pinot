@@ -60,7 +60,7 @@ public class NullHandlingEnabledQueriesTest extends BaseQueriesTest {
   private static final String COLUMN2 = "column2";
   private static final int NUM_OF_SEGMENT_COPIES = 4;
   private final List<GenericRow> _rows = new ArrayList<>();
-  private static final ImmutableMap<String, String> QUERY_OPTIONS = ImmutableCollections.singletonMap("enableNullHandling", "true");
+  private static final ImmutableMap<String, String> QUERY_OPTIONS = Collections.singletonMap("enableNullHandling", "true");
 
   private IndexSegment _indexSegment;
   private List<IndexSegment> _indexSegments;

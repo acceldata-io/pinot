@@ -19,7 +19,6 @@
 package org.apache.pinot.broker.broker.helix;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
@@ -568,7 +567,7 @@ public abstract class BaseBrokerStarter implements ServiceStartable {
 
     LOGGER.info("Registering service status handler");
     ServiceStatus.setServiceStatusCallback(_instanceId, new ServiceStatus.MultipleCallbackServiceStatusCallback(
-        ImmutableArrays.asList(new ServiceStatus.IdealStateAndCurrentStateMatchServiceStatusCallback(_participantHelixManager,
+        Arrays.asList(new ServiceStatus.IdealStateAndCurrentStateMatchServiceStatusCallback(_participantHelixManager,
                 _clusterName, _instanceId, resourcesToMonitor, minResourcePercentForStartup),
             new ServiceStatus.IdealStateAndExternalViewMatchServiceStatusCallback(_participantHelixManager,
                 _clusterName, _instanceId, resourcesToMonitor, minResourcePercentForStartup),

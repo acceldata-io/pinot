@@ -33,7 +33,7 @@ public class ResultRewriterFactory {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ResultRewriterFactory.class);
   // left blank intentionally to not load any result rewriter by default
-  static final List<String> DEFAULT_RESULT_REWRITERS_CLASS_NAMES = ImmutableArrays.asList();
+  static final List<String> DEFAULT_RESULT_REWRITERS_CLASS_NAMES = Arrays.asList();
 
   static AtomicReference<List<ResultRewriter>> _resultRewriters
       = new AtomicReference<>(getResultRewriter(DEFAULT_RESULT_REWRITERS_CLASS_NAMES));

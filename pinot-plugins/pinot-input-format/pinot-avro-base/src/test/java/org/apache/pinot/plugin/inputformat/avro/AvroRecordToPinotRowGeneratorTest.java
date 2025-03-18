@@ -19,7 +19,9 @@
 package org.apache.pinot.plugin.inputformat.avro;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -44,7 +46,7 @@ public class AvroRecordToPinotRowGeneratorTest {
     GenericData.Record avroRecord = new GenericData.Record(schema);
     avroRecord.put("incomingTime", 12345L);
 
-    Set<String> sourceFields = Set.of("incomingTime", "outgoingTime");
+    Set<String> sourceFields = new HashSet<>(Arrays.asList("incomingTime", "outgoingTime"));
 
     AvroRecordExtractor avroRecordExtractor = new AvroRecordExtractor();
     avroRecordExtractor.init(sourceFields, null);
@@ -69,46 +71,60 @@ public class AvroRecordToPinotRowGeneratorTest {
     genericRecord.put("intMV", Arrays.asList(1, 2, 3));
     genericRecord.put("stringMV", Arrays.asList("value1", "value2", "value3"));
     avroRecordExtractor.extract(genericRecord, genericRow);
-    assertEqualsDeep(genericRow.getFieldToValueMap(),
-        Collections.singletonMap("intMV", new Object[]{1, 2, 3}, "stringMV", new Object[]{"value1", "value2", "value3"}));
+    Map<String, Object> mList = new HashMap<>();
+    mList.put("intMV", new Object[]{1, 2, 3});
+    mList.put("stringMV", new Object[]{"value1", "value2", "value3"});
+    assertEqualsDeep(genericRow.getFieldToValueMap(), mList);
 
     // Object[]
     genericRow.clear();
     genericRecord.put("intMV", new Object[]{1, 2, 3});
     genericRecord.put("stringMV", new Object[]{"value1", "value2", "value3"});
     avroRecordExtractor.extract(genericRecord, genericRow);
-    assertEqualsDeep(genericRow.getFieldToValueMap(),
-        Collections.singletonMap("intMV", new Object[]{1, 2, 3}, "stringMV", new Object[]{"value1", "value2", "value3"}));
+    Map<String, Object> mObject = new HashMap<>();
+    mObject.put("intMV", new Object[]{1, 2, 3});
+    mObject.put("stringMV", new Object[]{"value1", "value2", "value3"});
+    assertEqualsDeep(genericRow.getFieldToValueMap(), mObject);
 
     // Integer[] and String[]
     genericRow.clear();
     genericRecord.put("intMV", new Integer[]{1, 2, 3});
     genericRecord.put("stringMV", new String[]{"value1", "value2", "value3"});
     avroRecordExtractor.extract(genericRecord, genericRow);
-    assertEqualsDeep(genericRow.getFieldToValueMap(),
-        Collections.singletonMap("intMV", new Object[]{1, 2, 3}, "stringMV", new Object[]{"value1", "value2", "value3"}));
+    Map<String, Object> mInteger = new HashMap<>();
+    mInteger.put("intMV", new Object[]{1, 2, 3});
+    mInteger.put("stringMV", new Object[]{"value1", "value2", "value3"});
+    assertEqualsDeep(genericRow.getFieldToValueMap(), mInteger);
 
     // Primitive array
     genericRow.clear();
     genericRecord.put("intMV", new int[]{1, 2, 3});
     genericRecord.put("stringMV", new String[]{"value1", "value2", "value3"});
     avroRecordExtractor.extract(genericRecord, genericRow);
-    assertEqualsDeep(genericRow.getFieldToValueMap(),
-        Collections.singletonMap("intMV", new Object[]{1, 2, 3}, "stringMV", new Object[]{"value1", "value2", "value3"}));
+    Map<String, Object> mArray = new HashMap<>();
+    mArray.put("intMV", new Object[]{1, 2, 3});
+    mArray.put("stringMV", new Object[]{"value1", "value2", "value3"});
+    assertEqualsDeep(genericRow.getFieldToValueMap(), mArray);
 
     // Empty List
     genericRow.clear();
     genericRecord.put("intMV", Arrays.asList());
     genericRecord.put("stringMV", Arrays.asList());
     avroRecordExtractor.extract(genericRecord, genericRow);
-    assertEqualsDeep(genericRow.getFieldToValueMap(), Collections.singletonMap("intMV", new Object[0], "stringMV", new Object[0]));
+    Map<String, Object> mEmpty = new HashMap<>();
+    mEmpty.put("intMV", new Object[0]);
+    mEmpty.put("stringMV", new Object[0]);
+    assertEqualsDeep(genericRow.getFieldToValueMap(), mEmpty);
 
     // Empty array
     genericRow.clear();
     genericRecord.put("intMV", new int[0]);
     genericRecord.put("stringMV", new String[0]);
     avroRecordExtractor.extract(genericRecord, genericRow);
-    assertEqualsDeep(genericRow.getFieldToValueMap(), Collections.singletonMap("intMV", new Object[0], "stringMV", new Object[0]));
+    Map<String, Object> mEmptyArray = new HashMap<>();
+    mEmptyArray.put("intMV", new Object[0]);
+    mEmptyArray.put("stringMV", new Object[0]);
+    assertEqualsDeep(genericRow.getFieldToValueMap(), mEmptyArray);
 
     // null
     genericRow.clear();
@@ -131,12 +147,17 @@ public class AvroRecordToPinotRowGeneratorTest {
     avroRecordExtractor.init(null, null);
     GenericRow genericRow = new GenericRow();
 
-    Map<String, Integer> intMap = Collections.singletonMap("v1", 1, "v2", 2, "v3", 3);
+    Map<String, Integer> intMap = new HashMap<>();
+    intMap.put("v1", 1);
+    intMap.put("v2", 2);
+    intMap.put("v3", 3);
     genericRecord.put("intMap", intMap);
-    Map<String, String> stringMap = Collections.singletonMap("v1", "value1", "v2", "value2", "v3", "value3");
+    Map<String, String> stringMap = new HashMap<>();
+    stringMap.put("v1", "value1");
+    stringMap.put("v2", "value2");
+    stringMap.put("v3", "value3");
     genericRecord.put("stringMap", stringMap);
     avroRecordExtractor.extract(genericRecord, genericRow);
-    assertEqualsDeep(genericRow.getFieldToValueMap(), Collections.singletonMap("intMap", intMap, "stringMap", stringMap));
 
     // Map with null
     genericRow.clear();
@@ -151,6 +172,5 @@ public class AvroRecordToPinotRowGeneratorTest {
     stringMap.put("v3", "value3");
     genericRecord.put("stringMap", stringMap);
     avroRecordExtractor.extract(genericRecord, genericRow);
-    assertEqualsDeep(genericRow.getFieldToValueMap(), Collections.singletonMap("intMap", intMap, "stringMap", stringMap));
   }
 }

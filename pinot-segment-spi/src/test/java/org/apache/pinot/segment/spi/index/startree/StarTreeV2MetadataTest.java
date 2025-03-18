@@ -18,6 +18,7 @@
  */
 package org.apache.pinot.segment.spi.index.startree;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -99,7 +100,8 @@ public class StarTreeV2MetadataTest {
   private static Configuration createMetadata(List<String> dimensionsSplitOrder,
       TreeMap<AggregationFunctionColumnPair, AggregationSpec> aggregationSpecs) {
     Configuration metadataProperties = new PropertiesConfiguration();
-    StarTreeV2Metadata.writeMetadata(metadataProperties, 1, dimensionsSplitOrder, aggregationSpecs, 10000, Set.of());
+    StarTreeV2Metadata.writeMetadata(metadataProperties, 1, dimensionsSplitOrder, aggregationSpecs, 10000,
+        Collections.emptySet());
     return metadataProperties;
   }
 
@@ -111,7 +113,8 @@ public class StarTreeV2MetadataTest {
     metadataProperties.setProperty(StarTreeV2Constants.MetadataKey.DIMENSIONS_SPLIT_ORDER, dimensionsSplitOrder);
     metadataProperties.setProperty(StarTreeV2Constants.MetadataKey.FUNCTION_COLUMN_PAIRS, functionColumnPairs);
     metadataProperties.setProperty(StarTreeV2Constants.MetadataKey.MAX_LEAF_RECORDS, 10000);
-    metadataProperties.setProperty(StarTreeV2Constants.MetadataKey.SKIP_STAR_NODE_CREATION_FOR_DIMENSIONS, Set.of());
+    metadataProperties.setProperty(StarTreeV2Constants.MetadataKey.SKIP_STAR_NODE_CREATION_FOR_DIMENSIONS,
+        Collections.emptySet());
     return metadataProperties;
   }
 }

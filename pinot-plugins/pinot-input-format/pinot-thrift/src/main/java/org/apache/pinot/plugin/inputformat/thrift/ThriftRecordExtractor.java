@@ -45,9 +45,9 @@ public class ThriftRecordExtractor extends BaseRecordExtractor<TBase> {
     _fieldIds = ((ThriftRecordExtractorConfig) recordExtractorConfig).getFieldIds();
     if (fields == null || fields.isEmpty()) {
       _extractAll = true;
-      _fields = Set.of();
+      _fields = Collections.emptySet();
     } else {
-      _fields = Set.copyOf(fields);
+      _fields = new HashSet<>(fields);
     }
   }
 

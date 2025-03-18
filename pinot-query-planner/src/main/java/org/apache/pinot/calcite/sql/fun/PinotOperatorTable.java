@@ -339,8 +339,8 @@ public class PinotOperatorTable implements SqlOperatorTable {
     registerTransformFunctions(operatorMap);
     registerScalarFunctions(operatorMap);
 
-    _operatorMap = Map.copyOf(operatorMap);
-    _operatorList = List.copyOf(operatorMap.values());
+    _operatorMap = new HashMap<>(operatorMap);
+    _operatorList = new ArrayList<>(operatorMap.values());
   }
 
   private void register(String name, SqlOperator sqlOperator, Map<String, SqlOperator> operatorMap) {

@@ -274,8 +274,8 @@
     <mchange-commons-java.version>0.3.1</mchange-commons-java.version>
 
     <!-- Test Libraries -->
-    <testng.version>7.10.2</testng.version>
-    <mockito-core.version>5.15.2</mockito-core.version>
+    <testng.version>7.5.1</testng.version>
+    <mockito-core.version>4.11.0</mockito-core.version>
     <equalsverifier.version>3.18.1</equalsverifier.version>
     <testcontainers.version>1.20.4</testcontainers.version>
     <h2.version>2.3.232</h2.version>

@@ -21,6 +21,7 @@ package org.apache.pinot.spi.plugin;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.regex.Pattern;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -28,7 +29,6 @@ import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertThrows;
 import static org.testng.Assert.assertTrue;
 
 
@@ -46,7 +46,7 @@ public class ClassLoaderTest {
   private static final String ORIGINAL_PLUGIN_DIR = System.getProperty(PluginManager.PLUGINS_DIR_PROPERTY_NAME);
 
   // Relative to pinot-spi/pom.xml
-  private static final Path PLUGINS_DIRECTORY = Path.of("target/test-classes/plugins").toAbsolutePath();
+  private static final Path PLUGINS_DIRECTORY = Paths.get("target/test-classes/plugins").toAbsolutePath();
 
   // MathUtils is only used in pinot framework, should not be available in limited plugins
   private static final String COMMONS_MATH_UTILS = "org.apache.commons.math3.util.MathUtils";
@@ -99,14 +99,18 @@ public class ClassLoaderTest {
         "Expected o.a.p.spi.utils.TimeUtils to be available via dropwizard-realm");
     assertEquals(pluginManager.loadClass(pluginName, SPI_TIME_UTILS)
             .getProtectionDomain().getCodeSource().getLocation(),
-        Path.of("target/classes").toUri().toURL(),
+        Paths.get("target/classes").toUri().toURL(),
         "Expected o.a.p.spi.utils.TimeUtils to be loaded from pinot-realm");
 
-    assertThrows("Class is part of a different plugin, so should not be accessible",
-        ClassNotFoundException.class, () -> pluginManager.loadClass(pluginName, YAMMER_METRICS_REGISTRY));
+    assertEquals(
+        ClassNotFoundException.class,
+        pluginManager.loadClass(pluginName, YAMMER_METRICS_REGISTRY),
+        "Class is part of a different plugin, so should not be accessible");
 
-    assertThrows("Class is dependency of pinot-spi, but is not an exported package",
-        ClassNotFoundException.class, () -> pluginManager.loadClass(pluginName, COMMONS_MATH_UTILS));
+    assertEquals(
+        ClassNotFoundException.class,
+        pluginManager.loadClass(pluginName, COMMONS_MATH_UTILS),
+        "Class is dependency of pinot-spi, but is not an exported package");
 
     assertTrue(pluginManager.loadClass(pluginName, COMMONS_IO_UTILS).getProtectionDomain()
             .getCodeSource().getLocation().getPath().endsWith("pinot-dropwizard-0.10.0-shaded.jar"),
@@ -132,7 +136,7 @@ public class ClassLoaderTest {
         "Expected o.a.p.spi.utils.TimeUtils to be available via yammer-realm");
     assertEquals(pluginManager.loadClass(pluginName, SPI_TIME_UTILS)
             .getProtectionDomain().getCodeSource().getLocation(),
-        Path.of("target/classes").toUri().toURL(),
+        Paths.get("target/classes").toUri().toURL(),
         "Expected o.a.p.spi.utils.TimeUtils to be loaded from pinot-realm");
 
     assertNotNull(pluginManager.loadClass(pluginName, COMMONS_MATH_UTILS),
@@ -142,8 +146,10 @@ public class ClassLoaderTest {
             .getCodeSource().getLocation().getPath().endsWith("pinot-yammer-0.10.0-shaded.jar"),
         "This is self-first, so class should come from pinot-yammer realm");
 
-    assertThrows("Class is part of a different plugin, so should not be accessible",
-        ClassNotFoundException.class, () -> pluginManager.loadClass(pluginName, DROPWIZARD_METRICS_REGISTRY));
+    assertEquals(
+        ClassNotFoundException.class,
+        pluginManager.loadClass(pluginName, DROPWIZARD_METRICS_REGISTRY),
+        "Class is part of a different plugin, so should not be accessible");
   }
 
   @Test
@@ -166,19 +172,21 @@ public class ClassLoaderTest {
         "Expected o.a.p.spi.utils.TimeUtils to be available via yammer-realm");
     assertEquals(pluginManager.loadClass("pinot-dropwizard", SPI_TIME_UTILS)
             .getProtectionDomain().getCodeSource().getLocation(),
-        Path.of("target/classes").toUri().toURL(),
+        Paths.get("target/classes").toUri().toURL(),
         "Expected o.a.p.spi.utils.TimeUtils to be loaded from pinot-realm");
-
-    assertThrows("Class is dependency of pinot-spi, but is not an exported package",
-        ClassNotFoundException.class, () -> pluginManager.loadClass(
-            "pinot-dropwizard", COMMONS_MATH_UTILS));
+    assertEquals(
+        ClassNotFoundException.class,
+        pluginManager.loadClass("pinot-dropwizard", COMMONS_MATH_UTILS),
+        "Class is dependency of pinot-spi, but is not an exported package");
 
     assertTrue(pluginManager.loadClass(pluginName, COMMONS_IO_UTILS).getProtectionDomain()
             .getCodeSource().getLocation().getPath().endsWith("commons-io-2.11.0.jar"),
         "This is self-first, so class should come from pinot-yammer realm");
 
-    assertThrows("Class is part of a different plugin, so should not be accessible",
-        ClassNotFoundException.class, () -> pluginManager.loadClass(pluginName, DROPWIZARD_METRICS_REGISTRY));
+    assertEquals(
+        ClassNotFoundException.class,
+        pluginManager.loadClass(pluginName, DROPWIZARD_METRICS_REGISTRY),
+        "Class is part of a different plugin, so should not be accessible");
   }
 
   @Test
@@ -203,7 +211,7 @@ public class ClassLoaderTest {
         "Expected o.a.p.spi.utils.TimeUtils to be available via yammer-realm");
     assertEquals(pluginManager.loadClass(pluginName, SPI_TIME_UTILS)
             .getProtectionDomain().getCodeSource().getLocation(),
-        Path.of("target/classes").toUri().toURL(),
+        Paths.get("target/classes").toUri().toURL(),
         "Expected o.a.p.spi.utils.TimeUtils to be loaded from pinot-realm");
 
     assertNotNull(pluginManager.loadClass(pluginName, COMMONS_MATH_UTILS),
@@ -216,8 +224,10 @@ public class ClassLoaderTest {
     assertTrue(Pattern.matches(".*/commons-io/commons-io/[^/]+/commons-io-[.\\d]+.jar$", urlPath),
         "This is using the PluginClassloader, so class should come from the system class laoder");
 
-    assertThrows("Class is part of a different plugin, so should not be accessible",
-        ClassNotFoundException.class, () -> pluginManager.loadClass(pluginName, DROPWIZARD_METRICS_REGISTRY));
+    assertEquals(
+        ClassNotFoundException.class,
+        pluginManager.loadClass(pluginName, DROPWIZARD_METRICS_REGISTRY),
+        "Class is part of a different plugin, so should not be accessible");
   }
 
   @AfterClass

@@ -101,7 +101,7 @@ public class BrokerResponseNative implements BrokerResponse {
   private long _explainPlanNumEmptyFilterSegments = 0L;
   private long _explainPlanNumMatchAllFilterSegments = 0L;
   private Map<String, String> _traceInfo = new HashMap<>();
-  private Set<String> _tablesQueried = Set.of();
+  private Set<String> _tablesQueried = Collections.emptySet();
 
   public BrokerResponseNative() {
   }

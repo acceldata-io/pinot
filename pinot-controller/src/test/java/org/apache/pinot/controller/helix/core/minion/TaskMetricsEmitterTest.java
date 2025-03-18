@@ -61,7 +61,7 @@ public class TaskMetricsEmitterTest {
 
     Mockito.when(_pinotHelixTaskResourceManager.getTaskMetadataLastUpdateTimeMs()).thenReturn(new HashMap<>());
     Mockito.when(leadControllerManager.isLeaderForTable("TaskMetricsEmitter")).thenReturn(true);
-    Mockito.when(pinotHelixResourceManager.getOnlineInstanceList()).thenReturn(ImmutableArrays.asList());
+    Mockito.when(pinotHelixResourceManager.getOnlineInstanceList()).thenReturn(Arrays.asList());
 
     _taskMetricsEmitter = new TaskMetricsEmitter(pinotHelixResourceManager,
         _pinotHelixTaskResourceManager, leadControllerManager, new ControllerConf(), _controllerMetrics);
@@ -70,7 +70,7 @@ public class TaskMetricsEmitterTest {
   @Test
   public void noTaskTypeMetrics() {
     PinotMetricsRegistry metricsRegistry = _controllerMetrics.getMetricsRegistry();
-    Mockito.when(_pinotHelixTaskResourceManager.getTaskTypes()).thenReturn(ImmutableSet.of());
+    Mockito.when(_pinotHelixTaskResourceManager.getTaskTypes()).thenReturn(ImmutableCollections.emptySet());
     _taskMetricsEmitter.runTask(null);
     Assert.assertEquals(metricsRegistry.allMetrics().size(), 1);
     Assert.assertTrue(metricsRegistry.allMetrics().containsKey(
@@ -82,7 +82,7 @@ public class TaskMetricsEmitterTest {
     PinotMetricsRegistry metricsRegistry = _controllerMetrics.getMetricsRegistry();
     String taskType = "taskType1";
     Mockito.when(_pinotHelixTaskResourceManager.getTaskTypes()).thenReturn(ImmutableSet.of(taskType));
-    Mockito.when(_pinotHelixTaskResourceManager.getTasksInProgress(taskType)).thenReturn(ImmutableSet.of());
+    Mockito.when(_pinotHelixTaskResourceManager.getTasksInProgress(taskType)).thenReturn(ImmutableCollections.emptySet());
     _taskMetricsEmitter.runTask(null);
 
     Assert.assertEquals(metricsRegistry.allMetrics().size(), 8);
@@ -124,13 +124,13 @@ public class TaskMetricsEmitterTest {
     PinotHelixTaskResourceManager.TaskCount taskCount2 = new PinotHelixTaskResourceManager.TaskCount();
     taskCount2.addTaskState(TaskPartitionState.RUNNING);
     Mockito.when(_pinotHelixTaskResourceManager.getTableTaskCount(task11)).thenReturn(
-        ImmutableCollections.singletonMap(table1, taskCount1, table2, taskCount2));
+        Collections.singletonMap(table1, taskCount1, table2, taskCount2));
     taskCount1 = new PinotHelixTaskResourceManager.TaskCount();
     taskCount1.addTaskState(null);
     taskCount2 = new PinotHelixTaskResourceManager.TaskCount();
     taskCount2.addTaskState(TaskPartitionState.TASK_ERROR);
     Mockito.when(_pinotHelixTaskResourceManager.getTableTaskCount(task12)).thenReturn(
-        ImmutableCollections.singletonMap(table1, taskCount1, table2, taskCount2));
+        Collections.singletonMap(table1, taskCount1, table2, taskCount2));
 
     runAndAssertForTaskType1WithTwoTables();
   }
@@ -224,11 +224,11 @@ public class TaskMetricsEmitterTest {
     PinotHelixTaskResourceManager.TaskCount taskCount = new PinotHelixTaskResourceManager.TaskCount();
     taskCount.addTaskState(TaskPartitionState.COMPLETED);
     Mockito.when(_pinotHelixTaskResourceManager.getTableTaskCount(taskName1))
-        .thenReturn(ImmutableCollections.singletonMap(tableName, taskCount));
+        .thenReturn(Collections.singletonMap(tableName, taskCount));
     taskCount = new PinotHelixTaskResourceManager.TaskCount();
     taskCount.addTaskState(null);
     Mockito.when(_pinotHelixTaskResourceManager.getTableTaskCount(taskName2))
-        .thenReturn(ImmutableCollections.singletonMap(tableName, taskCount));
+        .thenReturn(Collections.singletonMap(tableName, taskCount));
 
     PinotMetricsRegistry metricsRegistry = _controllerMetrics.getMetricsRegistry();
     _taskMetricsEmitter.runTask(null);

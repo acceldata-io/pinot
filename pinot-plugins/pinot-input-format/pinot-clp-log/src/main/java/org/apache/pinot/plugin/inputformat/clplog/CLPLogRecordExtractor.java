@@ -107,7 +107,7 @@ public class CLPLogRecordExtractor extends BaseRecordExtractor<Map<String, Objec
     _config = (CLPLogRecordExtractorConfig) recordExtractorConfig;
     if (fields == null || fields.isEmpty()) {
       _extractAll = true;
-      _fields = Set.of();
+      _fields = Collections.emptySet();
     } else {
       _fields = new HashSet<>(fields);
       // Remove the fields to be CLP-encoded to make it easier to work with them

@@ -92,7 +92,7 @@ public class ThetaSketchTest extends CustomDataQueryClusterIntegrationTest {
 
     // create avro schema
     org.apache.avro.Schema avroSchema = org.apache.avro.Schema.createRecord("myRecord", null, null, false);
-    avroSchema.setFields(ImmutableArrays.asList(new org.apache.avro.Schema.Field(DIM_NAME, org.apache.avro.Schema.create(
+    avroSchema.setFields(Arrays.asList(new org.apache.avro.Schema.Field(DIM_NAME, org.apache.avro.Schema.create(
             org.apache.avro.Schema.Type.STRING), null, null),
         new org.apache.avro.Schema.Field(DIM_VALUE, org.apache.avro.Schema.create(org.apache.avro.Schema.Type.STRING),
             null, null),
@@ -293,7 +293,7 @@ public class ThetaSketchTest extends CustomDataQueryClusterIntegrationTest {
       String query = "select dimValue, distinctCountThetaSketch(thetaSketchCol) from " + getTableName()
           + " where dimName = 'gender' group by dimValue";
       ImmutableMap<String, Integer> expected =
-          ImmutableCollections.singletonMap("Female", 50 + 60 + 70 + 110 + 120 + 130, "Male", 80 + 90 + 100 + 140 + 150 + 160);
+          Collections.singletonMap("Female", 50 + 60 + 70 + 110 + 120 + 130, "Male", 80 + 90 + 100 + 140 + 150 + 160);
       runAndAssert(query, expected);
     }
   }
@@ -449,7 +449,7 @@ public class ThetaSketchTest extends CustomDataQueryClusterIntegrationTest {
           + "    DISTINCT_COUNT_RAW_THETA_SKETCH(thetaSketchCol, '') FILTER (WHERE dimName != 'gender'))) "
           + "  FROM " + getTableName() + " GROUP BY dimValue";
       ImmutableMap<String, Integer> expected =
-          ImmutableCollections.singletonMap("Female", 0, "Male", 0, "Math", 0, "History", 0, "Biology", 0);
+          Collections.singletonMap("Female", 0, "Male", 0, "Math", 0, "History", 0, "Biology", 0);
       runAndAssert(query, expected);
     }
 
@@ -458,7 +458,7 @@ public class ThetaSketchTest extends CustomDataQueryClusterIntegrationTest {
       String query = "select dimValue, distinctCountThetaSketch(thetaSketchCol) from " + getTableName()
           + " where dimName = 'gender' group by dimValue";
       ImmutableMap<String, Integer> expected =
-          ImmutableCollections.singletonMap("Female", 50 + 60 + 70 + 110 + 120 + 130, "Male", 80 + 90 + 100 + 140 + 150 + 160);
+          Collections.singletonMap("Female", 50 + 60 + 70 + 110 + 120 + 130, "Male", 80 + 90 + 100 + 140 + 150 + 160);
       runAndAssert(query, expected);
     }
 
@@ -474,7 +474,7 @@ public class ThetaSketchTest extends CustomDataQueryClusterIntegrationTest {
           + ") "
           + "GROUP BY dimValue";
       ImmutableMap<String, Integer> expected =
-          ImmutableCollections.singletonMap("Female", 50 + 60 + 70 + 110 + 120 + 130, "Male", 80 + 90 + 100 + 140 + 150 + 160);
+          Collections.singletonMap("Female", 50 + 60 + 70 + 110 + 120 + 130, "Male", 80 + 90 + 100 + 140 + 150 + 160);
       runAndAssert(query, expected);
     }
 
@@ -490,7 +490,7 @@ public class ThetaSketchTest extends CustomDataQueryClusterIntegrationTest {
           + "ON a.dimName = b.dimName "
           + "GROUP BY a.dimValue";
       ImmutableMap<String, Integer> expected =
-          ImmutableCollections.singletonMap("Female", 80 + 90 + 100 + 140 + 150 + 160);
+          Collections.singletonMap("Female", 80 + 90 + 100 + 140 + 150 + 160);
       runAndAssert(query, expected);
     }
     {
@@ -504,7 +504,7 @@ public class ThetaSketchTest extends CustomDataQueryClusterIntegrationTest {
           + "ON a.dimName = b.dimName "
           + "GROUP BY b.dimValue";
       ImmutableMap<String, Integer> expected =
-          ImmutableCollections.singletonMap("Male", 50 + 60 + 70 + 110 + 120 + 130);
+          Collections.singletonMap("Male", 50 + 60 + 70 + 110 + 120 + 130);
       runAndAssert(query, expected);
     }
     {

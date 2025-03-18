@@ -124,17 +124,17 @@ public class RealtimeNonReplicaGroupSegmentAssignmentTest {
         SegmentAssignmentFactory.getSegmentAssignment(createHelixManager(), tableConfig, null);
 
     Map<InstancePartitionsType, InstancePartitions> onlyCompletedInstancePartitionMap =
-        ImmutableCollections.singletonMap(InstancePartitionsType.COMPLETED, _instancePartitionsMap.get(InstancePartitionsType.COMPLETED));
+        Collections.singletonMap(InstancePartitionsType.COMPLETED, _instancePartitionsMap.get(InstancePartitionsType.COMPLETED));
     Map<String, Map<String, String>> currentAssignment = new TreeMap<>();
 
-    Map<String, List<String>> expectedUploadedSegmentToInstances = ImmutableCollections.singletonMap("uploadedSegment_0",
-        ImmutableArrays.asList("completedInstance_0", "completedInstance_1", "completedInstance_2", "completedInstance_3"),
+    Map<String, List<String>> expectedUploadedSegmentToInstances = Collections.singletonMap("uploadedSegment_0",
+        Arrays.asList("completedInstance_0", "completedInstance_1", "completedInstance_2", "completedInstance_3"),
         "uploadedSegment_1",
-        ImmutableArrays.asList("completedInstance_4", "completedInstance_5", "completedInstance_6", "completedInstance_7"),
+        Arrays.asList("completedInstance_4", "completedInstance_5", "completedInstance_6", "completedInstance_7"),
         "uploadedSegment_2",
-        ImmutableArrays.asList("completedInstance_8", "completedInstance_9", "completedInstance_0", "completedInstance_1"),
+        Arrays.asList("completedInstance_8", "completedInstance_9", "completedInstance_0", "completedInstance_1"),
         "uploadedSegment_3",
-        ImmutableArrays.asList("completedInstance_2", "completedInstance_3", "completedInstance_4", "completedInstance_5"));
+        Arrays.asList("completedInstance_2", "completedInstance_3", "completedInstance_4", "completedInstance_5"));
 
     expectedUploadedSegmentToInstances.forEach((segmentName, expectedInstances) -> {
       List<String> actualInstances =
@@ -148,7 +148,7 @@ public class RealtimeNonReplicaGroupSegmentAssignmentTest {
   @Test
   public void testAssignSegment() {
     Map<InstancePartitionsType, InstancePartitions> onlyConsumingInstancePartitionMap =
-        ImmutableCollections.singletonMap(InstancePartitionsType.CONSUMING, _instancePartitionsMap.get(InstancePartitionsType.CONSUMING));
+        Collections.singletonMap(InstancePartitionsType.CONSUMING, _instancePartitionsMap.get(InstancePartitionsType.CONSUMING));
     Map<String, Map<String, String>> currentAssignment = new TreeMap<>();
     for (int segmentId = 0; segmentId < NUM_SEGMENTS; segmentId++) {
       String segmentName = _segments.get(segmentId);
@@ -176,7 +176,7 @@ public class RealtimeNonReplicaGroupSegmentAssignmentTest {
   @Test
   public void testRelocateCompletedSegments() {
     Map<InstancePartitionsType, InstancePartitions> onlyConsumingInstancePartitionMap =
-        ImmutableCollections.singletonMap(InstancePartitionsType.CONSUMING, _instancePartitionsMap.get(InstancePartitionsType.CONSUMING));
+        Collections.singletonMap(InstancePartitionsType.CONSUMING, _instancePartitionsMap.get(InstancePartitionsType.CONSUMING));
     Map<String, Map<String, String>> currentAssignment = new TreeMap<>();
     for (int segmentId = 0; segmentId < NUM_SEGMENTS; segmentId++) {
       String segmentName = _segments.get(segmentId);
@@ -200,10 +200,10 @@ public class RealtimeNonReplicaGroupSegmentAssignmentTest {
     currentAssignment.put(offlineSegmentName, offlineSegmentInstanceStateMap);
 
     // Add an UPLOADED segment to the CONSUMING instances (i.e. no separation between CONSUMING & COMPLETED)
-    List<String> uploadedSegments = ImmutableArrays.asList("UploadedSegment1", "UploadedSegment2");
+    List<String> uploadedSegments = Arrays.asList("UploadedSegment1", "UploadedSegment2");
     int numUploadedSegments = uploadedSegments.size();
     onlyConsumingInstancePartitionMap =
-        ImmutableCollections.singletonMap(InstancePartitionsType.CONSUMING, _instancePartitionsMap.get(InstancePartitionsType.CONSUMING));
+        Collections.singletonMap(InstancePartitionsType.CONSUMING, _instancePartitionsMap.get(InstancePartitionsType.CONSUMING));
     for (String segmentName : uploadedSegments) {
       List<String> instancesAssigned =
           _segmentAssignment.assignSegment(segmentName, currentAssignment, onlyConsumingInstancePartitionMap);
@@ -224,7 +224,7 @@ public class RealtimeNonReplicaGroupSegmentAssignmentTest {
 
     // Rebalance without COMPLETED instance partitions should not change the segment assignment
     Map<InstancePartitionsType, InstancePartitions> noRelocationInstancePartitionsMap =
-        ImmutableCollections.singletonMap(InstancePartitionsType.CONSUMING, _instancePartitionsMap.get(InstancePartitionsType.CONSUMING));
+        Collections.singletonMap(InstancePartitionsType.CONSUMING, _instancePartitionsMap.get(InstancePartitionsType.CONSUMING));
     assertEquals(_segmentAssignment.rebalanceTable(currentAssignment, noRelocationInstancePartitionsMap, null, null,
         new RebalanceConfig()), currentAssignment);
 
@@ -311,16 +311,16 @@ public class RealtimeNonReplicaGroupSegmentAssignmentTest {
   public void testAssignSegmentForUploadedSegments() {
     // CONSUMING instance partition has been tested in previous method, only test COMPLETED here
     Map<InstancePartitionsType, InstancePartitions> onlyCompletedInstancePartitionMap =
-        ImmutableCollections.singletonMap(InstancePartitionsType.COMPLETED, _instancePartitionsMap.get(InstancePartitionsType.COMPLETED));
+        Collections.singletonMap(InstancePartitionsType.COMPLETED, _instancePartitionsMap.get(InstancePartitionsType.COMPLETED));
     Map<String, Map<String, String>> currentAssignment = new TreeMap<>();
 
     //@formatter:off
-    Map<String, List<String>> expectedUploadedSegmentToInstances = ImmutableCollections.singletonMap(
-        "uploadedSegment_0", ImmutableArrays.asList("completedInstance_0", "completedInstance_1", "completedInstance_2"),
-        "uploadedSegment_1", ImmutableArrays.asList("completedInstance_3", "completedInstance_4", "completedInstance_5"),
-        "uploadedSegment_2", ImmutableArrays.asList("completedInstance_6", "completedInstance_7", "completedInstance_8"),
-        "uploadedSegment_3", ImmutableArrays.asList("completedInstance_9", "completedInstance_0", "completedInstance_1"),
-        "uploadedSegment_4", ImmutableArrays.asList("completedInstance_2", "completedInstance_3", "completedInstance_4")
+    Map<String, List<String>> expectedUploadedSegmentToInstances = Collections.singletonMap(
+        "uploadedSegment_0", Arrays.asList("completedInstance_0", "completedInstance_1", "completedInstance_2"),
+        "uploadedSegment_1", Arrays.asList("completedInstance_3", "completedInstance_4", "completedInstance_5"),
+        "uploadedSegment_2", Arrays.asList("completedInstance_6", "completedInstance_7", "completedInstance_8"),
+        "uploadedSegment_3", Arrays.asList("completedInstance_9", "completedInstance_0", "completedInstance_1"),
+        "uploadedSegment_4", Arrays.asList("completedInstance_2", "completedInstance_3", "completedInstance_4")
     );
     //@formatter:on
     expectedUploadedSegmentToInstances.forEach((segmentName, expectedInstances) -> {

@@ -20,6 +20,7 @@ package org.apache.pinot.spi.eventlistener.query;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
+import java.util.Collections;
 import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.pinot.spi.env.PinotConfiguration;
@@ -84,7 +85,7 @@ public class BrokerQueryEventListenerFactory {
       LOGGER.info("Initialized tracked headers: {}", _trackedHeaders);
     } else {
       LOGGER.info("No tracked headers configured");
-      _trackedHeaders = Set.of();
+      _trackedHeaders = Collections.emptySet();
     }
   }
 

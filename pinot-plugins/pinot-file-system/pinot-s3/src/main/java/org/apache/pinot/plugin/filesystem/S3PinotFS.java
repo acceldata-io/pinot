@@ -720,7 +720,7 @@ public class S3PinotFS extends BasePinotFS {
 
       String path = sanitizePath(uri.getPath());
       CopyObjectRequest request = generateCopyObjectRequest(encodedUrl, uri, path,
-          ImmutableCollections.singletonMap("lastModified", String.valueOf(System.currentTimeMillis())));
+          Collections.singletonMap("lastModified", String.valueOf(System.currentTimeMillis())));
       _s3Client.copyObject(request);
       long newUpdateTime = getS3ObjectMetadata(uri).lastModified().toEpochMilli();
       return newUpdateTime > s3ObjectMetadata.lastModified().toEpochMilli();

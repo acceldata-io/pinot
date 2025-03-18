@@ -126,10 +126,12 @@ public class LeafTimeSeriesPlanNode extends BaseTimeSeriesPlanNode {
 
   public String getEffectiveFilter(TimeBuckets timeBuckets) {
     String filter = _filterExpression == null ? "" : _filterExpression;
-    long startTime = _timeUnit.convert(Duration.ofSeconds(timeBuckets.getTimeRangeStartExclusive() - _offsetSeconds));
-    long endTime = _timeUnit.convert(Duration.ofSeconds(timeBuckets.getTimeRangeEndInclusive() - _offsetSeconds));
+    long millis = Duration.ofSeconds(timeBuckets.getTimeRangeStartExclusive() - _offsetSeconds).toMillis();
+    long startTime = _timeUnit.convert(millis, TimeUnit.MILLISECONDS);
+    millis = Duration.ofSeconds(timeBuckets.getTimeRangeEndInclusive() - _offsetSeconds).toMillis();
+    long endTime = _timeUnit.convert(millis, TimeUnit.MILLISECONDS);
     String timeFilter = String.format("%s > %d AND %s <= %d", _timeColumn, startTime, _timeColumn, endTime);
-    if (filter.strip().isEmpty()) {
+    if (filter.trim().isEmpty()) {
       return timeFilter;
     }
     return String.format("(%s) AND (%s)", filter, timeFilter);

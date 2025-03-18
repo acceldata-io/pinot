@@ -338,7 +338,7 @@ public class ComplexTypeTransformerTest {
     GenericRow genericRow = new GenericRow();
     Map<String, Object> map = new HashMap<>();
     Object[] array1 = new Object[1];
-    array1[0] = ImmutableCollections.singletonMap("b", "v1");
+    array1[0] = Collections.singletonMap("b", "v1");
     map.put("array1", array1);
     Object[] array = new Object[1];
     array[0] = map;
@@ -411,7 +411,7 @@ public class ComplexTypeTransformerTest {
     genericRow = new GenericRow();
     map = new HashMap<>();
     array1 = new Object[1];
-    array1[0] = ImmutableCollections.singletonMap("b", "v1");
+    array1[0] = Collections.singletonMap("b", "v1");
     map.put("array1", array1);
     genericRow.putValue("t", map);
     transformer = new ComplexTypeTransformer(Arrays.asList(), ".",

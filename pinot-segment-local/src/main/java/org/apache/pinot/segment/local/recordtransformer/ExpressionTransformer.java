@@ -117,7 +117,7 @@ public class ExpressionTransformer implements RecordTransformer {
   @Override
   public Set<String> getInputColumns() {
     if (_expressionEvaluators.isEmpty()) {
-      return Set.of();
+      return Collections.emptySet();
     }
     Set<String> inputColumns = new HashSet<>();
     for (Map.Entry<String, FunctionEvaluator> entry : _expressionEvaluators.entrySet()) {

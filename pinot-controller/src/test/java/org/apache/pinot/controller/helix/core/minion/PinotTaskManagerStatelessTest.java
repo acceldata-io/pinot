@@ -107,7 +107,7 @@ public class PinotTaskManagerStatelessTest extends ControllerTest {
     // Add Table with one task.
     TableConfig tableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME).setTaskConfig(
         new TableTaskConfig(
-            ImmutableCollections.singletonMap("SegmentGenerationAndPushTask", ImmutableCollections.singletonMap("schedule", "0 * * ? * * *")))).build();
+            Collections.singletonMap("SegmentGenerationAndPushTask", Collections.singletonMap("schedule", "0 * * ? * * *")))).build();
     waitForEVToDisappear(tableConfig.getTableName());
     addTableConfig(tableConfig, "TASK");
     waitForJobGroupNames(_controllerStarter.getTaskManager(),
@@ -143,7 +143,7 @@ public class PinotTaskManagerStatelessTest extends ControllerTest {
     // Add Table
     TableConfig tableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME).setTaskConfig(
         new TableTaskConfig(
-            ImmutableCollections.singletonMap(segmentGenerationAndPushTask, ImmutableCollections.singletonMap("schedule", "0 */10 * ? * * *")))).build();
+            Collections.singletonMap(segmentGenerationAndPushTask, Collections.singletonMap("schedule", "0 */10 * ? * * *")))).build();
     waitForEVToDisappear(tableConfig.getTableName());
     addTableConfig(tableConfig, "TASK");
     waitForJobGroupNames(taskManager, jgn -> jgn.size() == 1 && jgn.contains(segmentGenerationAndPushTask),
@@ -237,7 +237,7 @@ public class PinotTaskManagerStatelessTest extends ControllerTest {
     // 1. Add Table
     TableConfig tableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME).setTaskConfig(
         new TableTaskConfig(
-            ImmutableCollections.singletonMap("SegmentGenerationAndPushTask", ImmutableCollections.singletonMap("schedule", "0 */10 * ? * * *")))).build();
+            Collections.singletonMap("SegmentGenerationAndPushTask", Collections.singletonMap("schedule", "0 */10 * ? * * *")))).build();
     waitForEVToDisappear(tableConfig.getTableName());
     addTableConfig(tableConfig, "TASK");
     waitForJobGroupNames(_controllerStarter.getTaskManager(),
@@ -247,7 +247,7 @@ public class PinotTaskManagerStatelessTest extends ControllerTest {
 
     // 2. Update table to new schedule
     tableConfig.setTaskConfig(new TableTaskConfig(
-        ImmutableCollections.singletonMap("SegmentGenerationAndPushTask", ImmutableCollections.singletonMap("schedule", "0 */20 * ? * * *"))));
+        Collections.singletonMap("SegmentGenerationAndPushTask", Collections.singletonMap("schedule", "0 */20 * ? * * *"))));
     updateTableConfig(tableConfig, "TASK");
     waitForJobGroupNames(_controllerStarter.getTaskManager(),
         jgn -> jgn.size() == 1 && jgn.contains(MinionConstants.SegmentGenerationAndPushTask.TASK_TYPE),
@@ -256,8 +256,8 @@ public class PinotTaskManagerStatelessTest extends ControllerTest {
 
     // 3. Update table to new task and schedule
     tableConfig.setTaskConfig(new TableTaskConfig(
-        ImmutableCollections.singletonMap("SegmentGenerationAndPushTask", ImmutableCollections.singletonMap("schedule", "0 */30 * ? * * *"),
-            "MergeRollupTask", ImmutableCollections.singletonMap("schedule", "0 */10 * ? * * *"))));
+        Collections.singletonMap("SegmentGenerationAndPushTask", Collections.singletonMap("schedule", "0 */30 * ? * * *"),
+            "MergeRollupTask", Collections.singletonMap("schedule", "0 */10 * ? * * *"))));
     updateTableConfig(tableConfig, "TASK");
     waitForJobGroupNames(_controllerStarter.getTaskManager(),
         jgn -> jgn.size() == 2 && jgn.contains(MinionConstants.SegmentGenerationAndPushTask.TASK_TYPE) && jgn.contains(
@@ -268,7 +268,7 @@ public class PinotTaskManagerStatelessTest extends ControllerTest {
 
     // 4. Remove one task from the table
     tableConfig.setTaskConfig(
-        new TableTaskConfig(ImmutableCollections.singletonMap("MergeRollupTask", ImmutableCollections.singletonMap("schedule", "0 */10 * ? * * *"))));
+        new TableTaskConfig(Collections.singletonMap("MergeRollupTask", Collections.singletonMap("schedule", "0 */10 * ? * * *"))));
     updateTableConfig(tableConfig, "TASK");
     waitForJobGroupNames(_controllerStarter.getTaskManager(),
         jgn -> jgn.size() == 1 && jgn.contains(MinionConstants.MergeRollupTask.TASK_TYPE),
@@ -304,7 +304,7 @@ public class PinotTaskManagerStatelessTest extends ControllerTest {
     // Add Table with one task.
     TableConfig tableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(RAW_TABLE_NAME).setTaskConfig(
         new TableTaskConfig(
-            ImmutableCollections.singletonMap("SegmentGenerationAndPushTask", ImmutableCollections.singletonMap("schedule", "0 */10 * ? * * *")))).build();
+            Collections.singletonMap("SegmentGenerationAndPushTask", Collections.singletonMap("schedule", "0 */10 * ? * * *")))).build();
     waitForEVToDisappear(tableConfig.getTableName());
     addTableConfig(tableConfig, "TASK");
     waitForJobGroupNames(_controllerStarter.getTaskManager(),
@@ -325,8 +325,8 @@ public class PinotTaskManagerStatelessTest extends ControllerTest {
 
     // Update table to add a new task
     tableConfig.setTaskConfig(new TableTaskConfig(
-        ImmutableCollections.singletonMap("SegmentGenerationAndPushTask", ImmutableCollections.singletonMap("schedule", "0 */10 * ? * * *"),
-            "MergeRollupTask", ImmutableCollections.singletonMap("schedule", "0 */20 * ? * * *"))));
+        Collections.singletonMap("SegmentGenerationAndPushTask", Collections.singletonMap("schedule", "0 */10 * ? * * *"),
+            "MergeRollupTask", Collections.singletonMap("schedule", "0 */20 * ? * * *"))));
     updateTableConfig(tableConfig, "TASK");
 
     // Task is put into table config.

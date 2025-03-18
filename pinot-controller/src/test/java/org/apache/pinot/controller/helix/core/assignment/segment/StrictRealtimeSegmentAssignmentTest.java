@@ -135,7 +135,7 @@ public class StrictRealtimeSegmentAssignmentTest {
   public void testAssignSegment() {
     assertTrue(_segmentAssignment instanceof StrictRealtimeSegmentAssignment);
     Map<InstancePartitionsType, InstancePartitions> onlyConsumingInstancePartitionMap =
-        ImmutableCollections.singletonMap(InstancePartitionsType.CONSUMING, _instancePartitionsMap.get(InstancePartitionsType.CONSUMING));
+        Collections.singletonMap(InstancePartitionsType.CONSUMING, _instancePartitionsMap.get(InstancePartitionsType.CONSUMING));
     int numInstancesPerReplicaGroup = NUM_CONSUMING_INSTANCES / NUM_REPLICAS;
     Map<String, Map<String, String>> currentAssignment = new TreeMap<>();
     // Add segments for partition 0/1/2, but add no segment for partition 3.
@@ -164,7 +164,7 @@ public class StrictRealtimeSegmentAssignmentTest {
     }
     // Use new instancePartition to assign the new segments below.
     ImmutableMap<InstancePartitionsType, InstancePartitions> newConsumingInstancePartitionMap =
-        ImmutableCollections.singletonMap(InstancePartitionsType.CONSUMING, _newConsumingInstancePartitions);
+        Collections.singletonMap(InstancePartitionsType.CONSUMING, _newConsumingInstancePartitions);
 
     // No existing segments for partition 3, so use the assignment decided by new instancePartition.
     // So segment 3 (partition 3) should be assigned to instance new_0, new_3, new_6
@@ -201,7 +201,7 @@ public class StrictRealtimeSegmentAssignmentTest {
   public void testAssignSegmentWithOfflineSegment() {
     assertTrue(_segmentAssignment instanceof StrictRealtimeSegmentAssignment);
     Map<InstancePartitionsType, InstancePartitions> onlyConsumingInstancePartitionMap =
-        ImmutableCollections.singletonMap(InstancePartitionsType.CONSUMING, _instancePartitionsMap.get(InstancePartitionsType.CONSUMING));
+        Collections.singletonMap(InstancePartitionsType.CONSUMING, _instancePartitionsMap.get(InstancePartitionsType.CONSUMING));
     int numInstancesPerReplicaGroup = NUM_CONSUMING_INSTANCES / NUM_REPLICAS;
     Map<String, Map<String, String>> currentAssignment = new TreeMap<>();
     // Add segments for partition 0/1/2, but add no segment for partition 3.
@@ -231,7 +231,7 @@ public class StrictRealtimeSegmentAssignmentTest {
     }
     // Use new instancePartition to assign the new segments below.
     ImmutableMap<InstancePartitionsType, InstancePartitions> newConsumingInstancePartitionMap =
-        ImmutableCollections.singletonMap(InstancePartitionsType.CONSUMING, _newConsumingInstancePartitions);
+        Collections.singletonMap(InstancePartitionsType.CONSUMING, _newConsumingInstancePartitions);
 
     // No existing segments for partition 3, so use the assignment decided by new instancePartition. All existing
     // segments for partition 0/1/2 are offline, thus skipped, so use the assignment decided by new instancePartition.

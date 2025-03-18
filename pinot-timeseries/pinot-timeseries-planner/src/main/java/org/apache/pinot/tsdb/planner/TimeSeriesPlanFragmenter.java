@@ -94,7 +94,7 @@ public class TimeSeriesPlanFragmenter {
     Context context = new Context();
     if (isSingleServerQuery) {
       final String id = rootNode.getId();
-      return ImmutableArrays.asList(new TimeSeriesExchangeNode(id, Collections.emptyList(), null), rootNode);
+      return Arrays.asList(new TimeSeriesExchangeNode(id, Collections.emptyList(), null), rootNode);
     }
     result.add(fragmentRecursively(rootNode, context));
     result.addAll(context._fragments);

@@ -59,7 +59,7 @@ public class RandomExchangeTest {
   public void shouldRouteRandomly()
       throws Exception {
     // Given:
-    ImmutableList<SendingMailbox> destinations = ImmutableArrays.asList(_mailbox1, _mailbox2);
+    ImmutableList<SendingMailbox> destinations = Arrays.asList(_mailbox1, _mailbox2);
 
     // When:
     new RandomExchange(destinations, size -> 1, TransferableBlockUtils::splitBlock).route(destinations, _block);

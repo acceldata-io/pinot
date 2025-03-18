@@ -465,7 +465,7 @@ public class TimestampTest extends CustomDataQueryClusterIntegrationTest {
       throws Exception {
     // create avro schema
     org.apache.avro.Schema avroSchema = org.apache.avro.Schema.createRecord("myRecord", null, null, false);
-    avroSchema.setFields(ImmutableArrays.asList(
+    avroSchema.setFields(Arrays.asList(
         new Field(TIMESTAMP_BASE, create(Type.LONG), null, null),
         new Field(TIMESTAMP_HALF_DAY_AFTER, create(Type.LONG), null, null),
         new Field(TIMESTAMP_ONE_DAY_AFTER, create(Type.LONG), null, null),

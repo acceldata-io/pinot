@@ -318,7 +318,7 @@ public final class IngestionUtils {
     if (ingestionConfig != null && ingestionConfig.getSchemaConformingTransformerConfig() != null) {
       // The SchemaConformingTransformer requires that all fields are extracted, indicated by returning an empty set
       // here. Compared to extracting the fields specified below, extracting all fields should be a superset.
-      return Set.of();
+      return Collections.emptySet();
     }
 
     Set<String> fields = new HashSet<>();

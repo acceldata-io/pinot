@@ -87,7 +87,7 @@ public class KinesisStreamMetadataProviderTest {
     Shard shard1 = Shard.builder().shardId(SHARD_ID_1)
         .sequenceNumberRange(SequenceNumberRange.builder().startingSequenceNumber("1").build()).build();
 
-    when(_kinesisConnectionHandler.getShards()).thenReturn(ImmutableArrays.asList(shard0, shard1));
+    when(_kinesisConnectionHandler.getShards()).thenReturn(Arrays.asList(shard0, shard1));
 
     List<PartitionGroupMetadata> result =
         _kinesisStreamMetadataProvider.computePartitionGroupMetadata(CLIENT_ID, getStreamConfig(), new ArrayList<>(),
@@ -119,7 +119,7 @@ public class KinesisStreamMetadataProviderTest {
         SequenceNumberRange.builder().startingSequenceNumber("1").endingSequenceNumber("1").build()).build();
     Shard shard1 = Shard.builder().shardId(SHARD_ID_1)
         .sequenceNumberRange(SequenceNumberRange.builder().startingSequenceNumber("1").build()).build();
-    when(_kinesisConnectionHandler.getShards()).thenReturn(ImmutableArrays.asList(shard0, shard1));
+    when(_kinesisConnectionHandler.getShards()).thenReturn(Arrays.asList(shard0, shard1));
     when(_streamConsumerFactory.createPartitionGroupConsumer(stringCapture.capture(),
         partitionGroupMetadataCapture.capture())).thenReturn(_partitionGroupConsumer);
     when(_partitionGroupConsumer.fetchMessages(checkpointArgs.capture(), intArguments.capture())).thenReturn(
@@ -158,7 +158,7 @@ public class KinesisStreamMetadataProviderTest {
     Shard shard1 = Shard.builder().shardId(SHARD_ID_1).sequenceNumberRange(
         SequenceNumberRange.builder().startingSequenceNumber("1").endingSequenceNumber("1").build()).build();
 
-    when(_kinesisConnectionHandler.getShards()).thenReturn(ImmutableArrays.asList(shard0, shard1));
+    when(_kinesisConnectionHandler.getShards()).thenReturn(Arrays.asList(shard0, shard1));
     when(_streamConsumerFactory.createPartitionGroupConsumer(stringCapture.capture(),
         partitionGroupMetadataCapture.capture())).thenReturn(_partitionGroupConsumer);
     when(_partitionGroupConsumer.fetchMessages(checkpointArgs.capture(), intArguments.capture())).thenReturn(

@@ -2284,15 +2284,15 @@ public class TableConfigUtilsTest {
 
     TableConfig tableConfigWithInstancePartitionsMap =
         new TableConfigBuilder(TableType.OFFLINE).setTableName(TABLE_NAME)
-            .setInstancePartitionsMap(ImmutableCollections.singletonMap(InstancePartitionsType.OFFLINE, "test_OFFLINE")).build();
+            .setInstancePartitionsMap(Collections.singletonMap(InstancePartitionsType.OFFLINE, "test_OFFLINE")).build();
 
     // Call validate with a table-config with instance partitions set but not instance assignment config
     TableConfigUtils.validateInstancePartitionsTypeMapConfig(tableConfigWithInstancePartitionsMap);
 
     TableConfig invalidTableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(TABLE_NAME)
-        .setInstancePartitionsMap(ImmutableCollections.singletonMap(InstancePartitionsType.OFFLINE, "test_OFFLINE"))
+        .setInstancePartitionsMap(Collections.singletonMap(InstancePartitionsType.OFFLINE, "test_OFFLINE"))
         .setInstanceAssignmentConfigMap(
-            ImmutableCollections.singletonMap(InstancePartitionsType.OFFLINE.toString(), instanceAssignmentConfig)).build();
+            Collections.singletonMap(InstancePartitionsType.OFFLINE.toString(), instanceAssignmentConfig)).build();
     try {
       // Call validate with instance partitions and config set for the same type
       TableConfigUtils.validateInstancePartitionsTypeMapConfig(invalidTableConfig);
@@ -2431,7 +2431,7 @@ public class TableConfigUtilsTest {
         .getReplicaGroupPartitionConfig();
 
     TableConfig invalidTableConfig = new TableConfigBuilder(TableType.OFFLINE).setTableName(TABLE_NAME)
-        .setInstanceAssignmentConfigMap(ImmutableCollections.singletonMap(TableType.OFFLINE.toString(), instanceAssignmentConfig))
+        .setInstanceAssignmentConfigMap(Collections.singletonMap(TableType.OFFLINE.toString(), instanceAssignmentConfig))
         .build();
     invalidTableConfig.getValidationConfig().setReplicaGroupStrategyConfig(replicaGroupStrategyConfig);
 

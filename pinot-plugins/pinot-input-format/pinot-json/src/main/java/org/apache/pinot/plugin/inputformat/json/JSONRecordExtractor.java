@@ -38,9 +38,9 @@ public class JSONRecordExtractor extends BaseRecordExtractor<Map<String, Object>
   public void init(Set<String> fields, @Nullable RecordExtractorConfig recordExtractorConfig) {
     if (fields == null || fields.isEmpty()) {
       _extractAll = true;
-      _fields = Set.of();
+      _fields = Collections.emptySet();
     } else {
-      _fields = Set.copyOf(fields);
+      _fields = new HashSet<>(fields);
     }
   }
 

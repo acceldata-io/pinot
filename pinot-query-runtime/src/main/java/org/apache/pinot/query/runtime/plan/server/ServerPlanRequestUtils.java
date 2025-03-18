@@ -70,7 +70,7 @@ public class ServerPlanRequestUtils {
 
   private static final int DEFAULT_LEAF_NODE_LIMIT = Integer.MAX_VALUE;
   private static final List<String> QUERY_REWRITERS_CLASS_NAMES =
-      ImmutableArrays.asList(PredicateComparisonRewriter.class.getName(),
+      Arrays.asList(PredicateComparisonRewriter.class.getName(),
           NonAggregationGroupByToDistinctQueryRewriter.class.getName());
   private static final List<QueryRewriter> QUERY_REWRITERS =
       new ArrayList<>(QueryRewriterFactory.getQueryRewriters(QUERY_REWRITERS_CLASS_NAMES));
