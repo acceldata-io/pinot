@@ -30,6 +30,7 @@ import org.apache.pinot.spi.stream.StreamConfig;
 import org.apache.pinot.spi.stream.StreamConfigProperties;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+import java.util.Arrays;
 
 
 public class PulsarConfigTest {

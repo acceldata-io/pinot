@@ -249,7 +249,10 @@ public class AvroSchemaUtilTest {
       colorAttribute.put("attributeValue", "red");
       colorAttribute.put("isVerified", false);
 
-      record.put("attributes", Collections.singletonMap("size", sizeAttribute, "color", colorAttribute));
+      Map<String, Object> attributes = new HashMap<>();
+      attributes.put("size", sizeAttribute);
+      attributes.put("color", colorAttribute);
+      record.put("attributes", attributes);
 
       // add avro record to file
       fileWriter.append(record);

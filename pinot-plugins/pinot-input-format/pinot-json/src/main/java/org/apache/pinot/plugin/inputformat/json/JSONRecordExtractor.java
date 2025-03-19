@@ -25,6 +25,8 @@ import org.apache.pinot.spi.data.readers.BaseRecordExtractor;
 import org.apache.pinot.spi.data.readers.GenericRow;
 import org.apache.pinot.spi.data.readers.RecordExtractorConfig;
 
+import java.util.Collections;
+import java.util.HashSet;
 
 /**
  * Extractor for JSON records

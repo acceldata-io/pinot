@@ -37,6 +37,7 @@ import org.apache.pinot.spi.data.readers.GenericRow;
 import org.apache.pinot.spi.stream.StreamMessageDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.util.HashSet;
 
 
 public class CSVMessageDecoder implements StreamMessageDecoder<byte[]> {
@@ -167,7 +168,7 @@ public class CSVMessageDecoder implements StreamMessageDecoder<byte[]> {
     }
 
     recordExtractorConfig.setColumnNames(new HashSet<>(
-        Objects.requireNonNull(_format.getHeader())));
+        Arrays.asList(Objects.requireNonNull(_format.getHeader()))));
     _recordExtractor.init(fieldsToRead, recordExtractorConfig);
   }
 

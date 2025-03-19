@@ -84,6 +84,7 @@ import software.amazon.awssdk.services.s3.model.UploadPartResponse;
 import software.amazon.awssdk.services.sts.StsClient;
 import software.amazon.awssdk.services.sts.auth.StsAssumeRoleCredentialsProvider;
 import software.amazon.awssdk.services.sts.model.AssumeRoleRequest;
+import java.util.Collections;
 
 
 /**
@@ -347,7 +348,7 @@ public class S3PinotFS extends BasePinotFS {
   private boolean copyFile(URI srcUri, URI dstUri)
       throws IOException {
     try {
-      String encodedUrl = URLEncoder.encode(srcUri.getHost() + srcUri.getPath(), StandardCharsets.UTF_8);
+      String encodedUrl = URLEncoder.encode(srcUri.getHost() + srcUri.getPath(), "UTF-8");
 
       String dstPath = sanitizePath(dstUri.getPath());
       CopyObjectRequest copyReq = generateCopyObjectRequest(encodedUrl, dstUri, dstPath, null);
@@ -716,7 +717,7 @@ public class S3PinotFS extends BasePinotFS {
       throws IOException {
     try {
       HeadObjectResponse s3ObjectMetadata = getS3ObjectMetadata(uri);
-      String encodedUrl = URLEncoder.encode(uri.getHost() + uri.getPath(), StandardCharsets.UTF_8);
+      String encodedUrl = URLEncoder.encode(srcUri.getHost() + srcUri.getPath(), "UTF-8");
 
       String path = sanitizePath(uri.getPath());
       CopyObjectRequest request = generateCopyObjectRequest(encodedUrl, uri, path,

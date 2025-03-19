@@ -36,6 +36,8 @@ import org.apache.pinot.spi.data.readers.AbstractRecordReaderTest;
 import org.apache.pinot.spi.data.readers.GenericRow;
 import org.apache.pinot.spi.data.readers.RecordReader;
 import org.testng.annotations.Test;
+import java.util.Arrays;
+
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;

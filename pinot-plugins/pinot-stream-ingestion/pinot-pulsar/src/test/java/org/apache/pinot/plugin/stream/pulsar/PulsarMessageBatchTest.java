@@ -30,6 +30,7 @@ import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.common.api.EncryptionContext;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import java.util.Arrays;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;

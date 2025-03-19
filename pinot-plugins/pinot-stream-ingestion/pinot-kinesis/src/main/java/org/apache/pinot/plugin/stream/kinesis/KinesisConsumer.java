@@ -38,6 +38,9 @@ import software.amazon.awssdk.services.kinesis.model.ProvisionedThroughputExceed
 import software.amazon.awssdk.services.kinesis.model.Record;
 import software.amazon.awssdk.services.kinesis.model.ShardIteratorType;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 
 /**
  * A {@link PartitionGroupConsumer} implementation for the Kinesis stream
@@ -154,8 +157,11 @@ public class KinesisConsumer extends KinesisConnectionHandler implements Partiti
         new StreamMessageMetadata.Builder().setRecordIngestionTimeMs(timestamp).setSerializedValueSize(value.length)
             .setOffset(offset, offset);
     if (_config.isPopulateMetadata()) {
-      builder.setMetadata(Collections.singletonMap(KinesisStreamMessageMetadata.APPRX_ARRIVAL_TIMESTAMP_KEY, String.valueOf(timestamp),
-          KinesisStreamMessageMetadata.SEQUENCE_NUMBER_KEY, sequenceNumber));
+    	Map<String, String> metadataMap = new HashMap<>();
+	metadataMap.put(KinesisStreamMessageMetadata.APPRX_ARRIVAL_TIMESTAMP_KEY, String.valueOf(timestamp));
+	metadataMap.put(KinesisStreamMessageMetadata.SEQUENCE_NUMBER_KEY, sequenceNumber);
+	builder.setMetadata(metadataMap);
+
     }
     StreamMessageMetadata metadata = builder.build();
     return new BytesStreamMessage(key, value, metadata);

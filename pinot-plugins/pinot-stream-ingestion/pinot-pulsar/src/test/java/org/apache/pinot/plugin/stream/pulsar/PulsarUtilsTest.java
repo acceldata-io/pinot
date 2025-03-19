@@ -36,6 +36,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
+import java.util.HashSet;
+import java.util.Arrays;
 
 
 public class PulsarUtilsTest {
@@ -45,7 +47,8 @@ public class PulsarUtilsTest {
       throws Exception {
     PulsarConfig config = mock(PulsarConfig.class);
     when(config.isPopulateMetadata()).thenReturn(true);
-    when(config.getMetadataFields()).thenReturn(Set.of(MESSAGE_ID, MESSAGE_ID_BYTES_B64, MESSAGE_KEY));
+    when(config.getMetadataFields()).thenReturn(new HashSet<>(Arrays.asList(MESSAGE_ID, MESSAGE_ID_BYTES_B64, MESSAGE_KEY)));
+
     DummyPulsarMessage pulsarMessage =
         new DummyPulsarMessage("key".getBytes(StandardCharsets.UTF_8), "value".getBytes(StandardCharsets.UTF_8));
     pulsarMessage.getProperties().put("test_key", "test_value");
