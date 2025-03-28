@@ -127,7 +127,7 @@ public class PinotSinkIntegrationTestUpsertTable extends BaseClusterIntegrationT
       throws Exception {
     Configuration config = new Configuration();
     config.set(HeartbeatManagerOptions.HEARTBEAT_TIMEOUT,
-        Duration.ofMillis(120000)); // Set heartbeat timeout to 60 seconds
+        Duration.ofMillis(120000).toMillis()); // Set heartbeat timeout to 60 seconds
     StreamExecutionEnvironment execEnv = StreamExecutionEnvironment.getExecutionEnvironment(config);
 
     // Single-thread write
