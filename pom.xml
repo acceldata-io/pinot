@@ -1331,8 +1331,8 @@
           <exclusion>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-reload4j</artifactId>
-    </exclusion>
-    <exclusion>
+          </exclusion>
+          <exclusion>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
           </exclusion>
@@ -1375,8 +1375,8 @@
           <exclusion>
             <groupId>ch.qos.reload4j</groupId>
             <artifactId>reload4j</artifactId>
-    </exclusion>
-    <exclusion>
+          </exclusion>
+          <exclusion>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
           </exclusion>
@@ -1680,7 +1680,7 @@
       <dependency>
         <groupId>org.jboss.logging</groupId>
         <artifactId>jboss-logging</artifactId>
-        <version>3.5.0.Final</version> <!-- Or choose 3.3.1.Final if more compatible -->
+        <version>3.5.0.Final</version>
       </dependency>
       <!-- AWS SDK -->
       <dependency>
