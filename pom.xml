@@ -211,6 +211,7 @@
     <circe.version>0.14.10</circe.version>
 
     <spark3.version>3.5.1.3.3.6.1-1</spark3.version>
+    <kafka2.version>2.8.2.3.3.6.1-1</kafka2.version>
     <kafka3.version>3.7.1.3.3.6.1-1</kafka3.version>
     <confluent.version>7.7.0</confluent.version>
     <pulsar.version>3.3.1</pulsar.version>
@@ -545,11 +546,6 @@
       <dependency>
         <groupId>org.apache.pinot</groupId>
         <artifactId>pinot-batch-ingestion-spark-base</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.pinot</groupId>
-        <artifactId>pinot-batch-ingestion-spark-2.4</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -1717,12 +1713,12 @@
       <dependency>
         <groupId>org.apache.kafka</groupId>
         <artifactId>kafka-clients</artifactId>
-        <version>${kafka3.version}</version>
+        <version>${kafka2.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.kafka</groupId>
         <artifactId>kafka_${scala.compat.version}</artifactId>
-        <version>${kafka3.version}</version>
+        <version>${kafka2.version}</version>
       </dependency>
 
       <dependency>
