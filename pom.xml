@@ -61,6 +61,19 @@
     <module>pinot-timeseries</module>
   </modules>
 
+  <distributionManagement>
+    <repository>
+      <id>nexus-releases</id>
+      <name>Releases</name>
+     <url>https://repo1.acceldata.dev/repository/odp-release/</url>
+   </repository>
+   <snapshotRepository>
+     <id>nexus-snapshots</id>
+     <name>Snapshot</name>
+     <url>https://repo1.acceldata.dev/repository/odp-snapshot/</url>
+   </snapshotRepository>
+ </distributionManagement>
+
   <licenses>
     <license>
       <name>Apache License, Version 2.0</name>
