@@ -61,6 +61,20 @@
     <module>pinot-query-runtime</module>
     <module>pinot-timeseries</module>
   </modules>
+  
+  <distributionManagement>
+    <repository>
+      <id>nexus-releases</id>
+      <name>Releases</name>
+     <url>https://repo1.acceldata.dev/repository/odp-staging-release/</url>
+   </repository>
+   <snapshotRepository>
+     <id>nexus-snapshots</id>
+     <name>Snapshot</name>
+     <url>https://repo1.acceldata.dev/repository/odp-staging-snapshot/</url>
+   </snapshotRepository>
+ </distributionManagement>
+
 
   <licenses>
     <license>
@@ -2227,15 +2241,30 @@
         <artifactId>jdom2</artifactId>
         <version>${jdom2.version}</version>
       </dependency>
+        <dependency>
+            <groupId>org.codehaus.plexus</groupId>
+            <artifactId>plexus-component-annotations</artifactId>
+            <version>${plexus-component-annotations.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.plexus</groupId>
+            <artifactId>plexus-utils</artifactId>
+            <version>${plexus-utils.version}</version>
+        </dependency>
       <dependency>
-        <groupId>org.codehaus.plexus</groupId>
-        <artifactId>plexus-component-annotations</artifactId>
-        <version>${plexus-component-annotations.version}</version>
+        <groupId>net.sourceforge.fmpp</groupId>
+        <artifactId>fmpp</artifactId>
+        <version>${fmpp.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.codehaus.plexus</groupId>
-        <artifactId>plexus-utils</artifactId>
-        <version>${plexus-utils.version}</version>
+        <groupId>org.apache.kafka</groupId>
+        <artifactId>kafka-raft</artifactId>
+        <version>${kafka3.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.kafka</groupId>
+        <artifactId>kafka-metadata</artifactId>
+        <version>${kafka3.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
