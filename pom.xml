@@ -143,6 +143,19 @@
     </repository>
 </repositories>
 
+  <distributionManagement>
+    <repository>
+      <id>nexus-releases</id>
+      <name>Releases</name>
+      <url>https://repo1.acceldata.dev/repository/odp-staging-release/</url>
+    </repository>
+    <snapshotRepository>
+      <id>nexus-snapshots</id>
+      <name>Snapshot</name>
+      <url>https://repo1.acceldata.dev/repository/odp-staging-snapshot/</url>
+    </snapshotRepository>
+  </distributionManagement>
+
   <properties>
     <pinot.root>${basedir}</pinot.root>
     <build.profile.id>dev</build.profile.id>
@@ -2105,6 +2118,16 @@
         <groupId>net.sourceforge.fmpp</groupId>
         <artifactId>fmpp</artifactId>
         <version>${fmpp.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.kafka</groupId>
+        <artifactId>kafka-raft</artifactId>
+        <version>${kafka3.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.kafka</groupId>
+        <artifactId>kafka-metadata</artifactId>
+        <version>${kafka3.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
