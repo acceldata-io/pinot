@@ -31,7 +31,7 @@
 
   <groupId>org.apache.pinot</groupId>
   <artifactId>pinot</artifactId>
-  <version>1.3.0.3.3.6.1-SNAPSHOT</version>
+  <version>1.3.0.3.3.6.2-1</version>
   <packaging>pom</packaging>
   <name>Pinot</name>
   <description>A realtime distributed OLAP datastore</description>
@@ -119,7 +119,7 @@
 <repository>
       <id>acceldata-staging-repo</id>
       <name>acceldata repo</name>
-      <url>https://repo1.acceldata.dev/repository/odp-staging-central/</url>
+      <url>https://repo1.acceldata.dev/repository/odp-central/</url>
       <releases>
         <enabled>true</enabled>
       </releases>
@@ -128,6 +128,19 @@
       </snapshots>
     </repository>
 </repositories>
+
+  <distributionManagement>
+    <repository>
+      <id>nexus-releases</id>
+      <name>Releases</name>
+      <url>https://repo1.acceldata.dev/repository/odp-release/</url>
+    </repository>
+    <snapshotRepository>
+      <id>nexus-snapshots</id>
+      <name>Snapshot</name>
+      <url>https://repo1.acceldata.dev/repository/odp-snapshot/</url>
+    </snapshotRepository>
+  </distributionManagement>
 
   <properties>
     <pinot.root>${basedir}</pinot.root>
@@ -161,21 +174,21 @@
     <shade.phase.prop>none</shade.phase.prop>
 
     <avro.version>1.11.4</avro.version>
-    <parquet.version>1.15.0</parquet.version>
+    <parquet.version>1.15.2</parquet.version>
     <orc.version>1.9.5</orc.version>
     <hive.version>2.8.1</hive.version>
-    <helix.version>1.2.0</helix.version>
+    <helix.version>1.3.1</helix.version>
     <zkclient.version>0.11</zkclient.version>
     <jackson.version>2.18.2</jackson.version>
-    <zookeeper.version>3.8.4.3.3.6.1-SNAPSHOT</zookeeper.version>
-    <async-http-client.version>3.0.1</async-http-client.version>
+    <zookeeper.version>3.8.4.3.3.6.2-1</zookeeper.version>
+    <async-http-client.version>3.0.2</async-http-client.version>
     <jersey.version>2.45</jersey.version>
     <hk2.version>2.6.1</hk2.version>
     <swagger.version>1.6.14</swagger.version>
     <swagger-ui.version>5.18.2</swagger-ui.version>
-    <hadoop.version>3.3.6.3.3.6.1-SNAPSHOT</hadoop.version>
+    <hadoop.version>3.3.6.3.3.6.2-1</hadoop.version>
     <jsonpath.version>2.9.0</jsonpath.version>
-    <jsonsmart.version>2.5.1</jsonsmart.version>
+    <jsonsmart.version>2.5.2</jsonsmart.version>
     <quartz.version>2.5.0</quartz.version>
     <calcite.version>1.37.0</calcite.version>
     <immutables.version>2.10.1</immutables.version>
@@ -191,7 +204,7 @@
     <libthrift.verion>0.18.1</libthrift.verion>
     <log4j.version>2.24.3</log4j.version>
     <slf4j.version>2.0.16</slf4j.version>
-    <netty.version>4.1.116.Final</netty.version>
+    <netty.version>4.1.119.Final</netty.version>
     <reactivestreams.version>1.0.4</reactivestreams.version>
     <jts.version>1.20.0</jts.version>
     <h3.version>4.1.1</h3.version>
@@ -210,13 +223,12 @@
     <scala-xml.version>2.3.0</scala-xml.version>
     <circe.version>0.14.10</circe.version>
 
-    <spark3.version>3.5.1.3.3.6.1-SNAPSHOT</spark3.version>
-    <kafka2.version>2.8.2.3.3.6.1-SNAPSHOT</kafka2.version>
-    <kafka3.version>3.7.1.3.3.6.1-SNAPSHOT</kafka3.version>
+    <spark3.version>3.5.5.3.3.6.2-1</spark3.version>
+    <kafka2.version>2.8.2.3.3.6.2-1</kafka2.version>
+    <kafka3.version>3.7.2.3.3.6.2-1</kafka3.version>
     <confluent.version>7.7.0</confluent.version>
-    <pulsar.version>3.3.1</pulsar.version>
-    <flink.version>1.19.1.3.3.6.1-SNAPSHOT</flink.version>
-
+    <pulsar.version>4.0.5</pulsar.version>
+    <flink.version>1.19.1.3.3.6.2-1</flink.version>
 
     <!-- Apache Commons Libraries -->
     <commons-lang3.version>3.17.0</commons-lang3.version>
@@ -226,7 +238,7 @@
     <commons-math3.version>3.6.1</commons-math3.version>
     <commons-csv.version>1.12.0</commons-csv.version>
     <commons-configuration2.version>2.11.0</commons-configuration2.version>
-    <commons-beanutils.version>1.10.0</commons-beanutils.version>
+    <commons-beanutils.version>1.11.0</commons-beanutils.version>
     <commons-io.version>2.18.0</commons-io.version>
     <commons-codec.version>1.17.2</commons-codec.version>
     <commons-cli.version>1.9.0</commons-cli.version>
@@ -294,8 +306,26 @@
     <chill.version>0.10.0</chill.version>
     <HikariCP-java7.version>2.4.13</HikariCP-java7.version>
     <ivy.version>2.5.3</ivy.version>
-    <c3p0.version>0.10.1</c3p0.version>
-    <mchange-commons-java.version>0.3.1</mchange-commons-java.version>
+    <c3p0.version>0.11.0-pre2</c3p0.version>
+    <mchange-commons-java.version>0.3.2</mchange-commons-java.version>
+    <checker-qual.version>3.49.2</checker-qual.version>
+    <groovy-all.version>2.4.21</groovy-all.version>
+    <xml-apis.version>2.0.2</xml-apis.version>
+    <roaring-bitmap.version>1.3.0</roaring-bitmap.version>
+    <prometheus.jmx-exporter-javaagent.version>0.19.0</prometheus.jmx-exporter-javaagent.version>
+    <fastutil.version>8.5.15</fastutil.version>
+    <disruptor.version>4.0.0</disruptor.version>
+    <snakeyaml.version>2.4</snakeyaml.version>
+    <hadoop-shaded-protobuf_3_25.version>1.4.0</hadoop-shaded-protobuf_3_25.version>
+    <clearspring-stream-lib.version>2.9.8</clearspring-stream-lib.version>
+    <datasketches-java.version>6.2.0</datasketches-java.version>
+    <t-digest.version>3.2</t-digest.version>
+    <picocli.version>4.7.6</picocli.version>
+    <tyrus-standalone-client.version>2.2.0</tyrus-standalone-client.version>
+    <jopt-simple.version>5.0.4</jopt-simple.version>
+    <ipaddress.version>5.5.1</ipaddress.version>
+    <openhft.posix.version>2.27ea1</openhft.posix.version>
+    <openhft.chronicle-core.version>2.27ea2</openhft.chronicle-core.version>
 
     <!-- Test Libraries -->
     <testng.version>7.10.2</testng.version>
@@ -802,22 +832,22 @@
       <dependency>
         <groupId>org.checkerframework</groupId>
         <artifactId>checker-qual</artifactId>
-        <version>3.48.4</version>
+        <version>${checker-qual.version}</version>
       </dependency>
       <dependency>
         <groupId>org.codehaus.groovy</groupId>
         <artifactId>groovy-all</artifactId>
-        <version>2.4.21</version>
+        <version>${groovy-all.version}</version>
       </dependency>
       <dependency>
         <groupId>xml-apis</groupId>
         <artifactId>xml-apis</artifactId>
-        <version>2.0.2</version>
+        <version>${xml-apis.version}</version>
       </dependency>
       <dependency>
         <groupId>org.roaringbitmap</groupId>
         <artifactId>RoaringBitmap</artifactId>
-        <version>1.3.0</version>
+        <version>${roaring-bitmap.version}</version>
       </dependency>
       <dependency>
         <groupId>com.101tec</groupId>
@@ -839,7 +869,7 @@
       <dependency>
         <groupId>io.prometheus.jmx</groupId>
         <artifactId>jmx_prometheus_javaagent</artifactId>
-        <version>0.19.0</version>
+        <version>${prometheus.jmx-exporter-javaagent.version}</version>
         <scope>test</scope>
       </dependency>
 
@@ -865,7 +895,7 @@
       <dependency>
         <groupId>it.unimi.dsi</groupId>
         <artifactId>fastutil</artifactId>
-        <version>8.5.15</version>
+        <version>${fastutil.version}</version>
       </dependency>
       <dependency>
         <groupId>joda-time</groupId>
@@ -993,7 +1023,7 @@
       <dependency>
         <groupId>com.lmax</groupId>
         <artifactId>disruptor</artifactId>
-        <version>4.0.0</version>
+        <version>${disruptor.version}</version>
       </dependency>
 
       <dependency>
@@ -1004,7 +1034,7 @@
       <dependency>
         <groupId>org.yaml</groupId>
         <artifactId>snakeyaml</artifactId>
-        <version>2.3</version>
+        <version>${snakeyaml.version}</version>
       </dependency>
       <dependency>
         <groupId>org.xerial.larray</groupId>
@@ -1402,8 +1432,8 @@
       </dependency>
       <dependency>
         <groupId>org.apache.hadoop.thirdparty</groupId>
-        <artifactId>hadoop-shaded-protobuf_3_21</artifactId>
-        <version>1.2.0</version>
+        <artifactId>hadoop-shaded-protobuf_3_25</artifactId>
+        <version>${hadoop-shaded-protobuf_3_25.version}</version>
       </dependency>
 
       <!-- Metrics -->
@@ -1441,12 +1471,12 @@
       <dependency>
         <groupId>com.clearspring.analytics</groupId>
         <artifactId>stream</artifactId>
-        <version>2.9.8</version>
+        <version>${clearspring-stream-lib.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.datasketches</groupId>
         <artifactId>datasketches-java</artifactId>
-        <version>6.1.1</version>
+        <version>${datasketches-java.version}</version>
       </dependency>
       <dependency>
         <groupId>com.dynatrace.hash4j</groupId>
@@ -1456,7 +1486,7 @@
       <dependency>
         <groupId>com.tdunning</groupId>
         <artifactId>t-digest</artifactId>
-        <version>3.2</version>
+        <version>${t-digest.version}</version>
       </dependency>
       <dependency>
         <groupId>com.jayway.jsonpath</groupId>
@@ -1586,17 +1616,17 @@
       <dependency>
         <groupId>info.picocli</groupId>
         <artifactId>picocli</artifactId>
-        <version>4.7.6</version>
+        <version>${picocli.version}</version>
       </dependency>
       <dependency>
         <groupId>org.glassfish.tyrus.bundles</groupId>
         <artifactId>tyrus-standalone-client</artifactId>
-        <version>2.2.0</version>
+        <version>${tyrus-standalone-client.version}</version>
       </dependency>
       <dependency>
         <groupId>net.sf.jopt-simple</groupId>
         <artifactId>jopt-simple</artifactId>
-        <version>5.0.4</version>
+        <version>${jopt-simple.version}</version>
       </dependency>
       <dependency>
         <groupId>org.reflections</groupId>
@@ -1617,18 +1647,18 @@
       <dependency>
         <groupId>com.github.seancfoley</groupId>
         <artifactId>ipaddress</artifactId>
-        <version>5.5.1</version>
+        <version>${ipaddress.version}</version>
       </dependency>
 
       <dependency>
         <groupId>net.openhft</groupId>
         <artifactId>posix</artifactId>
-        <version>2.27ea0</version>
+        <version>${openhft.posix.version}</version>
       </dependency>
       <dependency>
         <groupId>net.openhft</groupId>
         <artifactId>chronicle-core</artifactId>
-        <version>2.27ea1</version>
+        <version>${openhft.chronicle-core.version}</version>
       </dependency>
 
       <dependency>
@@ -2085,6 +2115,16 @@
         <groupId>net.sourceforge.fmpp</groupId>
         <artifactId>fmpp</artifactId>
         <version>${fmpp.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.kafka</groupId>
+        <artifactId>kafka-raft</artifactId>
+        <version>${kafka3.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.kafka</groupId>
+        <artifactId>kafka-metadata</artifactId>
+        <version>${kafka3.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
