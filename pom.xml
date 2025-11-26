@@ -107,19 +107,6 @@
   <!-- Apache project inception year for generating correct NOTICE file for jar bundle. -->
   <inceptionYear>2018</inceptionYear>
 
-  <distributionManagement>
-    <repository>
-      <id>nexus-releases</id>
-      <name>Releases</name>
-      <url>https://repo1.acceldata.dev/repository/odp-staging-release/</url>
-    </repository>
-    <snapshotRepository>
-      <id>nexus-snapshots</id>
-      <name>Snapshot</name>
-      <url>https://repo1.acceldata.dev/repository/odp-staging-snapshot/</url>
-    </snapshotRepository>
-  </distributionManagement>
-
   <properties>
     <odp.release.version>3.4.3.0-SNAPSHOT</odp.release.version>
     <pinot.root>${basedir}</pinot.root>
@@ -1452,6 +1439,10 @@
           <exclusion>
             <groupId>ch.qos.reload4j</groupId>
             <artifactId>reload4j</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
           </exclusion>
           <!-- See hadoop-common above: drop embedded-Jetty web UI transitives (CVE-2026-2332). -->
           <exclusion>
