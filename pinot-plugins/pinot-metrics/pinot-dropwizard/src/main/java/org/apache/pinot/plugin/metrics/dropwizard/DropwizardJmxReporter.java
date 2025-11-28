@@ -20,6 +20,9 @@ package org.apache.pinot.plugin.metrics.dropwizard;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.jmx.JmxReporter;
+import com.codahale.metrics.jmx.ObjectNameFactory;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 import org.apache.pinot.spi.metrics.PinotJmxReporter;
 import org.apache.pinot.spi.metrics.PinotMetricsRegistry;
 
@@ -30,6 +33,18 @@ public class DropwizardJmxReporter implements PinotJmxReporter {
   public DropwizardJmxReporter(PinotMetricsRegistry metricsRegistry, String domainName) {
     _jmxReporter = JmxReporter.forRegistry((MetricRegistry) metricsRegistry.getMetricsRegistry())
         .inDomain(domainName)
+        .createsObjectNamesWith(new ObjectNameFactory() {
+          @Override
+          public ObjectName createName(String type, String domain, String name) {
+            try {
+              // Remove quotes and sanitize the metric name
+              String sanitizedName = name.replace("\"", "");
+              return new ObjectName(domain + ":type=" + type + ",name=" + sanitizedName);
+            } catch (MalformedObjectNameException e) {
+              throw new RuntimeException("Failed to create ObjectName for metric: " + name, e);
+            }
+          }
+        })
         .build();
   }
 
