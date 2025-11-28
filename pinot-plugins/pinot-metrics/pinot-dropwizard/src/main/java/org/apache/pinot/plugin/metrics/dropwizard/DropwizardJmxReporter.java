@@ -37,9 +37,11 @@ public class DropwizardJmxReporter implements PinotJmxReporter {
           @Override
           public ObjectName createName(String type, String domain, String name) {
             try {
+              String cleanDomain = domain.replace("\"", "");
+              String cleanType = type.replace("\"", "");
               // Remove quotes and sanitize the metric name
               String sanitizedName = name.replace("\"", "");
-              return new ObjectName(domain + ":type=" + type + ",name=" + sanitizedName);
+              return new ObjectName(cleanDomain + ":type=" + cleanType + ",name=" + sanitizedName);
             } catch (MalformedObjectNameException e) {
               throw new RuntimeException("Failed to create ObjectName for metric: " + name, e);
             }
