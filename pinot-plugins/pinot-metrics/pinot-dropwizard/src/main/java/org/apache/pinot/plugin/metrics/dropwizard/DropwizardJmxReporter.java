@@ -31,8 +31,9 @@ public class DropwizardJmxReporter implements PinotJmxReporter {
   private final JmxReporter _jmxReporter;
 
   public DropwizardJmxReporter(PinotMetricsRegistry metricsRegistry, String domainName) {
+    final String sanitizedDomain = domainName.replace("\"", "");
     _jmxReporter = JmxReporter.forRegistry((MetricRegistry) metricsRegistry.getMetricsRegistry())
-        .inDomain(domainName)
+        .inDomain(sanitizedDomain)
         .createsObjectNamesWith(new ObjectNameFactory() {
           @Override
           public ObjectName createName(String type, String domain, String name) {
