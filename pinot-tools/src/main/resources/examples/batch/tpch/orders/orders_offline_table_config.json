@@ -1,0 +1,33 @@
+{
+  "tableName": "orders",
+  "tableType": "OFFLINE",
+  "tenants": {
+  },
+  "segmentsConfig": {
+    "segmentPushType": "REFRESH",
+    "replication": "1"
+  },
+  "tableIndexConfig": {
+    "loadMode": "MMAP",
+    "invertedIndexColumns": [
+      "o_orderkey",
+      "o_custkey",
+      "o_orderstatus",
+      "o_orderdate",
+      "o_orderpriority",
+      "o_clerk",
+      "o_shippriority"
+    ],
+    "noDictionaryColumns": [
+      "o_comment"
+    ]
+  },
+  "ingestionConfig": {
+    "transformConfigs": [
+    ]
+  },
+  "metadata": {
+    "customConfigs": {
+    }
+  }
+}

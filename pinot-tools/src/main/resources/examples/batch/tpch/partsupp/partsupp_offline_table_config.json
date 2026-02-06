@@ -1,0 +1,26 @@
+{
+  "tableName": "partsupp",
+  "tableType": "OFFLINE",
+  "tenants": {
+  },
+  "segmentsConfig": {
+    "segmentPushType": "REFRESH",
+    "replication": "1"
+  },
+  "tableIndexConfig": {
+    "loadMode": "MMAP",
+    "invertedIndexColumns": [
+    ],
+    "noDictionaryColumns": [
+      "ps_comment"
+    ]
+  },
+  "ingestionConfig": {
+    "transformConfigs": [
+    ]
+  },
+  "metadata": {
+    "customConfigs": {
+    }
+  }
+}

@@ -1,0 +1,258 @@
+//
+// Licensed to the Apache Software Foundation (ASF) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+//
+
+syntax = "proto3";
+import "expressions.proto";
+
+package org.apache.pinot.common.proto;
+
+message PlanNode {
+  int32 stageId = 1;
+  DataSchema dataSchema = 2;
+  NodeHint nodeHint = 3;
+  repeated PlanNode inputs = 4;
+  oneof node {
+    AggregateNode aggregateNode = 5;
+    FilterNode filterNode = 6;
+    JoinNode joinNode = 7;
+    MailboxReceiveNode mailboxReceiveNode = 8;
+    MailboxSendNode mailboxSendNode = 9;
+    ProjectNode projectNode = 10;
+    SetOpNode setOpNode = 11;
+    SortNode sortNode = 12;
+    TableScanNode tableScanNode = 13;
+    ValueNode valueNode = 14;
+    WindowNode windowNode = 15;
+    ExplainNode explainNode = 16;
+  }
+}
+
+message DataSchema {
+  repeated string columnNames = 1;
+  repeated ColumnDataType columnDataTypes = 2;
+}
+
+message StrStrMap {
+  map<string, string> options = 1;
+}
+
+message NodeHint {
+  map<string, StrStrMap> hintOptions = 1;
+}
+
+enum AggType {
+  DIRECT = 0;
+  LEAF = 1;
+  INTERMEDIATE = 2;
+  FINAL = 3;
+}
+
+message AggregateNode {
+  repeated FunctionCall aggCalls = 1;
+  repeated int32 filterArgs = 2;
+  repeated int32 groupKeys = 3;
+  AggType aggType = 4;
+  bool leafReturnFinalResult = 5;
+  repeated Collation collations = 6;
+  int32 limit = 7;
+}
+
+message FilterNode {
+  Expression condition = 1;
+}
+
+enum JoinType {
+  INNER = 0;
+  LEFT = 1;
+  RIGHT = 2;
+  FULL = 3;
+  SEMI = 4;
+  ANTI = 5;
+  ASOF = 6;
+  LEFT_ASOF = 7;
+}
+
+enum JoinStrategy {
+  HASH = 0;
+  LOOKUP = 1;
+  AS_OF = 2;
+}
+
+message JoinNode {
+  JoinType joinType = 1;
+  repeated int32 leftKeys = 2;
+  repeated int32 rightKeys = 3;
+  repeated Expression nonEquiConditions = 4;
+  JoinStrategy joinStrategy = 5;
+  Expression matchCondition = 6;
+}
+
+enum ExchangeType {
+  STREAMING = 0;
+  SUB_PLAN = 1;
+  PIPELINE_BREAKER = 2;
+}
+
+enum DistributionType {
+  SINGLETON = 0;
+  HASH_DISTRIBUTED = 1;
+  RANGE_DISTRIBUTED = 2;
+  RANDOM_DISTRIBUTED = 3;
+  ROUND_ROBIN_DISTRIBUTED = 4;
+  BROADCAST_DISTRIBUTED = 5;
+  ANY = 6;
+}
+
+enum Direction {
+  ASCENDING = 0;
+  STRICTLY_ASCENDING = 1;
+  DESCENDING = 2;
+  STRICTLY_DESCENDING = 3;
+  CLUSTERED = 4;
+}
+
+enum NullDirection {
+  FIRST = 0;
+  LAST = 1;
+  UNSPECIFIED = 2;
+}
+
+message Collation {
+  int32 index = 1;
+  Direction direction = 2;
+  NullDirection nullDirection = 3;
+}
+
+message MailboxReceiveNode {
+  int32 senderStageId = 1;
+  ExchangeType exchangeType = 2;
+  DistributionType distributionType = 3;
+  repeated int32 keys = 4;
+  repeated Collation collations = 5;
+  bool sort = 6;
+  bool sortedOnSender = 7;
+}
+
+message MailboxSendNode {
+  // kept for backward compatibility. Brokers populate it, but servers should prioritize receiverStageIds
+  int32 receiverStageId = 1  [deprecated = true];
+  ExchangeType exchangeType = 2;
+  DistributionType distributionType = 3;
+  repeated int32 keys = 4;
+  bool prePartitioned = 5;
+  repeated Collation collations = 6;
+  bool sort = 7;
+  repeated int32 receiverStageIds = 8;
+  string hashFunction = 9;
+}
+
+message ProjectNode {
+  repeated Expression projects = 1;
+}
+
+enum SetOpType {
+  UNION = 0;
+  INTERSECT = 1;
+  MINUS = 2;
+}
+
+message SetOpNode {
+  SetOpType setOpType = 1;
+  bool all = 2;
+}
+
+message SortNode {
+  repeated Collation collations = 1;
+  int32 fetch = 2;
+  int32 offset = 3;
+}
+
+message TableScanNode {
+  string tableName = 1;
+  repeated string columns = 2;
+}
+
+message LiteralRow {
+  repeated Literal values = 1;
+}
+
+message ValueNode {
+  repeated LiteralRow literalRows = 1;
+}
+
+enum WindowFrameType {
+  ROWS = 0;
+  RANGE = 1;
+}
+
+message WindowNode {
+  repeated int32 keys = 1;
+  repeated Collation collations = 2;
+  repeated FunctionCall aggCalls = 3;
+  WindowFrameType windowFrameType = 4;
+  int32 lowerBound = 5;
+  int32 upperBound = 6;
+  repeated Literal constants = 7;
+}
+
+// A node that doesn't carry semantic information.
+// Instead it is only used to be a catch-all in a explain plan shown to the user.
+// The main reason for this node is to open the ability to represent single-stage operators in the multi-stage plan.
+// For example the single-stage operator RangeIndexBasedFilterOperator can be represented as a ExplainNode
+// with the title "FilterRangeIndex" and the attributes that are specific to this operator (like the predicate).
+//
+// Remember that this class was designed to be generated from operators and not the other way around.
+// Specifically, some important semantic information may be lost when converting an operator to a ExplainNode that
+// makes it impossible to convert it back to the original operator.
+message ExplainNode {
+  // The title (and description) of the plan node. For example, "SelectStreaming" or "FilterMatchEntireSegment".
+  // This basically will be used in the explain plan as the title of the node.
+  string title = 1;
+  // The attributes of the plan node, which are specific for each original operator.
+  map<string, AttributeValue> attributes = 2;
+
+  message AttributeValue {
+    MergeType mergeType = 1;
+
+    oneof value {
+      string string = 2;
+      int64 long = 3;
+      bool bool = 4;
+      StringList stringList = 5;
+    };
+
+    enum MergeType {
+      // Longs will be added, other types will behave like IDEMPOTENT.
+      DEFAULT = 0;
+      // When being merge, values must be the same. Otherwise cannot be merged.
+      IDEMPOTENT = 1;
+      // When being merge, if values are different, the value can be excluded from the merged result.
+      // This may be used for example to support verbose explain mode
+      // For example, a node may indicate the segment that is used. Different segments will use different values.
+      // In verbose mode, the segment information can be included in the explain plan.
+      // But in non-verbose mode, the segment information can be excluded to simplify similar plans generated from
+      // different segments.
+      IGNORABLE = 2;
+    }
+  }
+
+  message StringList {
+    repeated string values = 1;
+  }
+}

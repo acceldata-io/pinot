@@ -1,0 +1,126 @@
+<?xml version="1.0"?>
+<!--
+
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements.  See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership.  The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations
+    under the License.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <artifactId>pinot</artifactId>
+    <groupId>org.apache.pinot</groupId>
+    <version>1.4.0.3.3.6.3-101</version>
+  </parent>
+  <artifactId>pinot-plugins</artifactId>
+  <packaging>pom</packaging>
+  <name>Pinot Plugins</name>
+  <url>https://pinot.apache.org/</url>
+  <properties>
+    <pinot.root>${basedir}/..</pinot.root>
+    <plugin.type />
+    <hadoop.dependencies.scope>compile</hadoop.dependencies.scope>
+  </properties>
+
+  <modules>
+    <module>pinot-input-format</module>
+    <module>pinot-file-system</module>
+    <module>pinot-batch-ingestion</module>
+    <module>pinot-stream-ingestion</module>
+    <module>pinot-minion-tasks</module>
+    <module>pinot-metrics</module>
+    <module>pinot-segment-writer</module>
+    <module>pinot-segment-uploader</module>
+    <module>pinot-environment</module>
+    <module>assembly-descriptor</module>
+    <module>pinot-timeseries-lang</module>
+  </modules>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.pinot</groupId>
+      <artifactId>pinot-spi</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.testng</groupId>
+      <artifactId>testng</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>nl.jqno.equalsverifier</groupId>
+      <artifactId>equalsverifier</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+  <profiles>
+    <profile>
+      <id>plugin-assembly</id>
+      <activation>
+        <file>
+          <exists>src/main/resources/pinot-plugin.properties</exists>
+        </file>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <dependencies>
+              <dependency>
+                <groupId>org.apache.pinot</groupId>
+                <artifactId>assembly-descriptor</artifactId>
+                <version>${project.version}</version>
+              </dependency>
+            </dependencies>
+            <executions>
+              <execution>
+                <id>make-assembly</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>single</goal>
+                </goals>
+                <configuration>
+                  <descriptorRefs>
+                    <descriptorRef>pinot-plugin</descriptorRef>
+                  </descriptorRefs>
+                  <archiverConfig>
+                    <compress>${archiver.compress}</compress>
+                  </archiverConfig>
+                  <recompressZippedFiles>${archiver.recompressZippedFiles}</recompressZippedFiles>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>use-provided-hadoop</id>
+      <activation>
+        <property>
+          <name>useProvidedHadoop</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <properties>
+        <hadoop.dependencies.scope>provided</hadoop.dependencies.scope>
+      </properties>
+    </profile>
+  </profiles>
+</project>

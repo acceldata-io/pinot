@@ -1,0 +1,26 @@
+[
+  {
+    "event_id": "aa",
+    "description" : "first",
+    "dedupTime": 5000,
+    "secondsSinceEpoch": 1514765000
+  },
+  {
+    "event_id": "bb",
+    "description" : "first",
+    "dedupTime": 6000,
+    "secondsSinceEpoch": 1514761000
+  },
+  {
+    "event_id": "aa",
+    "description" : "second",
+    "dedupTime": 3000,
+    "secondsSinceEpoch": 1514765500
+  },
+  {
+    "event_id": "bb",
+    "description" : "second",
+    "dedupTime": 1000,
+    "secondsSinceEpoch": 1514767000
+  }
+]

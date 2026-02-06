@@ -1,0 +1,50 @@
+{
+  "metricFieldSpecs": [
+    {
+      "dataType": "INT",
+      "name": "newIntMetric",
+      "defaultNullValue": 1
+    },
+    {
+      "dataType": "LONG",
+      "name": "newLongMetric"
+    },
+    {
+      "dataType": "FLOAT",
+      "name": "newFloatMetric"
+    },
+    {
+      "dataType": "DOUBLE",
+      "name": "newDoubleMetric"
+    }
+  ],
+  "dimensionFieldSpecs": [
+    {
+      "dataType": "BOOLEAN",
+      "name": "newBooleanSVDimension",
+      "defaultNullValue": "false"
+    },
+    {
+      "dataType": "INT",
+      "name": "newIntSVDimension"
+    },
+    {
+      "dataType": "STRING",
+      "name": "newStringMVDimension",
+      "singleValueField": false
+    },
+    {
+      "dataType": "STRING",
+      "name": "newRawStringSVDimension"
+    },
+    {
+      "dataType": "STRING",
+      "name": "newNullReturnStringSVDimension",
+      "defaultNullValue": "nil"
+    },
+    {
+      "dataType": "LONG",
+      "name": "newWrongArgDateTruncDerivedColumn"
+    }
+  ]
+}

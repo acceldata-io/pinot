@@ -1,0 +1,25 @@
+{
+  "schemaName": "testTable",
+  "dimensionFieldSpecs": [
+    {
+      "name": "event_id",
+      "dataType": "STRING"
+    },
+    {
+      "name": "description",
+      "dataType": "STRING"
+    },
+    {
+      "name": "dedupTime",
+      "dataType": "LONG"
+    }
+  ],
+  "timeFieldSpec": {
+    "incomingGranularitySpec": {
+      "name": "secondsSinceEpoch",
+      "dataType": "LONG",
+      "timeType": "SECONDS"
+    }
+  },
+  "primaryKeyColumns": ["event_id"]
+}

@@ -1,0 +1,7 @@
+{
+  "streamType": "kafka",
+  "topicName": "PinotRealtimeFeatureTest2Event",
+  "partitionColumn": "longDimSV1",
+  "numPartitions": "1",
+  "stream.kafka.consumer.prop.auto.offset.reset": "smallest"
+}

@@ -1,0 +1,27 @@
+{
+  "schemaName": "testTable",
+  "dimensionFieldSpecs": [
+    {
+      "name": "event_id",
+      "dataType": "STRING"
+    },
+    {
+      "name": "description",
+      "dataType": "STRING"
+    },
+    {
+      "name": "otherComparisonColumn",
+      "dataType": "LONG"
+    }
+  ],
+  "dateTimeFieldSpecs": [
+    {
+      "name": "secondsSinceEpoch",
+      "dataType": "LONG",
+      "defaultNullValue": 1514764800,
+      "format": "EPOCH|SECONDS",
+      "granularity": "1:SECONDS"
+    }
+  ],
+  "primaryKeyColumns": ["event_id"]
+}
