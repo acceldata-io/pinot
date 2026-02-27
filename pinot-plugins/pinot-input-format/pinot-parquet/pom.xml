@@ -73,6 +73,25 @@
       <scope>${hadoop.dependencies.scope}</scope>
     </dependency>
   </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <configuration>
+          <!-- Exclude protobuf-java from shaded JAR to avoid CVE-2024-7254.
+               protobuf 2.5.0 is requested by org.apache.hadoop:hadoop-common (overridden to 3.25.5 by BOM at build time).
+               Scanners may still report 2.5.0 from transitive POM metadata. Use protobuf from runtime classpath. -->
+          <artifactSet>
+            <excludes>
+              <exclude>com.google.protobuf:protobuf-java</exclude>
+              <exclude>com.google.protobuf:protobuf-java-util</exclude>
+            </excludes>
+          </artifactSet>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 
   <profiles>
     <profile>
