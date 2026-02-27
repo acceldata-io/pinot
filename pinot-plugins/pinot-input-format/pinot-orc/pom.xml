@@ -81,6 +81,25 @@
       <artifactId>protobuf-java</artifactId>
     </dependency>
   </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <configuration>
+          <!-- Exclude Jackson from shaded JAR to avoid CVE-2020-36180; use Jackson from runtime classpath -->
+          <artifactSet>
+            <excludes>
+              <exclude>com.fasterxml.jackson.core:*</exclude>
+              <exclude>com.fasterxml.jackson.jaxrs:*</exclude>
+              <exclude>com.fasterxml.jackson.module:*</exclude>
+              <exclude>com.fasterxml.jackson.datatype:*</exclude>
+            </excludes>
+          </artifactSet>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 
   <profiles>
     <profile>
