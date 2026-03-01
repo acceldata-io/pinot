@@ -86,6 +86,8 @@
             <excludes>
               <exclude>com.google.protobuf:protobuf-java</exclude>
               <exclude>com.google.protobuf:protobuf-java-util</exclude>
+              <exclude>com.squareup.okio:okio</exclude>
+              <exclude>com.squareup.okio:okio-jvm</exclude>
             </excludes>
           </artifactSet>
         </configuration>
