@@ -1778,8 +1778,9 @@ public class MultiStageEngineIntegrationTest extends BaseClusterIntegrationTestS
   public void testValidateQueryApiSuccessfulQueries()
       throws Exception {
     JsonNode tableConfigsNode =
-        JsonUtils.stringToJsonNode(sendGetRequest(getControllerBaseApiUrl() + "/tables/mytable"));
-    JsonNode schemaNode = JsonUtils.stringToJsonNode(sendGetRequest(getControllerBaseApiUrl() + "/schemas/mytable"));
+        JsonUtils.stringToJsonNode(getOrCreateAdminClient().getTableClient().getTableConfig("mytable"));
+    JsonNode schemaNode =
+        JsonUtils.stringToJsonNode(getOrCreateAdminClient().getSchemaClient().getSchema("mytable"));
     List<String> successfulQueries = Arrays.asList("SELECT COUNT(*) FROM mytable",
         "SELECT DivAirportSeqIDs, COUNT(*) FROM mytable GROUP BY DivAirportSeqIDs",
         "SELECT DivAirportSeqIDs FROM mytable WHERE arrayToMV(DivAirportSeqIDs) > 0 LIMIT 10",
@@ -1827,8 +1828,9 @@ public class MultiStageEngineIntegrationTest extends BaseClusterIntegrationTestS
   public void testValidateQueryApiBatchMixedResults()
       throws Exception {
     JsonNode tableConfigsNode =
-        JsonUtils.stringToJsonNode(sendGetRequest(getControllerBaseApiUrl() + "/tables/mytable"));
-    JsonNode schemaNode = JsonUtils.stringToJsonNode(sendGetRequest(getControllerBaseApiUrl() + "/schemas/mytable"));
+        JsonUtils.stringToJsonNode(getOrCreateAdminClient().getTableClient().getTableConfig("mytable"));
+    JsonNode schemaNode =
+        JsonUtils.stringToJsonNode(getOrCreateAdminClient().getSchemaClient().getSchema("mytable"));
     List<String> mixedQueries = Arrays.asList("SELECT COUNT(*) FROM mytable", "SELECT invalidColumn FROM mytable",
         "SELECT DivAirportSeqIDs FROM mytable LIMIT 10", "SELECT * FROM nonExistentTable");
 
@@ -1874,8 +1876,9 @@ public class MultiStageEngineIntegrationTest extends BaseClusterIntegrationTestS
   public void testValidateQueryApiUnsuccessfulQueries()
       throws Exception {
     JsonNode tableConfigsNode =
-        JsonUtils.stringToJsonNode(sendGetRequest(getControllerBaseApiUrl() + "/tables/mytable"));
-    JsonNode schemaNode = JsonUtils.stringToJsonNode(sendGetRequest(getControllerBaseApiUrl() + "/schemas/mytable"));
+        JsonUtils.stringToJsonNode(getOrCreateAdminClient().getTableClient().getTableConfig("mytable"));
+    JsonNode schemaNode =
+        JsonUtils.stringToJsonNode(getOrCreateAdminClient().getSchemaClient().getSchema("mytable"));
 
     List<TableConfig> tableConfigs = new ArrayList<>();
     JsonNode offlineConfig = tableConfigsNode.get("OFFLINE");
@@ -2031,8 +2034,9 @@ public class MultiStageEngineIntegrationTest extends BaseClusterIntegrationTestS
   public void testValidateQueryApiWithIgnoreCaseOption()
       throws Exception {
     JsonNode tableConfigsNode =
-        JsonUtils.stringToJsonNode(sendGetRequest(getControllerBaseApiUrl() + "/tables/mytable"));
-    JsonNode schemaNode = JsonUtils.stringToJsonNode(sendGetRequest(getControllerBaseApiUrl() + "/schemas/mytable"));
+        JsonUtils.stringToJsonNode(getOrCreateAdminClient().getTableClient().getTableConfig("mytable"));
+    JsonNode schemaNode =
+        JsonUtils.stringToJsonNode(getOrCreateAdminClient().getSchemaClient().getSchema("mytable"));
 
     List<TableConfig> tableConfigs = new ArrayList<>();
     JsonNode offlineConfig = tableConfigsNode.get("OFFLINE");

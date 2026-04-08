@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import org.apache.pinot.common.restlet.resources.RebalanceConfig;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.pinot.controller.helix.core.rebalance.RebalanceConfig;
 import org.apache.pinot.spi.config.table.DisasterRecoveryMode;
