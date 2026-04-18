@@ -1879,10 +1879,22 @@
         <artifactId>flink-streaming-java</artifactId>
         <version>${flink.version}</version>
       </dependency>
+
+      <!-- Spark -->
       <dependency>
-        <groupId>org.apache.flink</groupId>
-        <artifactId>flink-java</artifactId>
-        <version>${flink.version}</version>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-core_${scala.compat.version}</artifactId>
+        <version>${spark3.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-sql_${scala.compat.version}</artifactId>
+        <version>${spark3.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-launcher_${scala.compat.version}</artifactId>
+        <version>${spark3.version}</version>
       </dependency>
 
       <!-- Lucene -->
