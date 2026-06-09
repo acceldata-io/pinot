@@ -41,6 +41,7 @@ import picocli.CommandLine;
 @CommandLine.Command(name = "StartServer", mixinStandardHelpOptions = true)
 public class StartServerCommand extends AbstractBaseAdminCommand implements Command {
   private static final Logger LOGGER = LoggerFactory.getLogger(StartServerCommand.class);
+  private StartServiceManagerCommand _startServiceManagerCommand;
   @CommandLine.Option(names = {"-serverHost"}, required = false, description = "Host name for server.")
   private String _serverHost;
 
@@ -211,6 +212,9 @@ public class StartServerCommand extends AbstractBaseAdminCommand implements Comm
 
   @Override
   public void cleanup() {
+    if (_startServiceManagerCommand != null) {
+      _startServiceManagerCommand.cleanup();
+    }
   }
 
   @Override
@@ -224,10 +228,10 @@ public class StartServerCommand extends AbstractBaseAdminCommand implements Comm
     try {
       LOGGER.info("Executing command: {}", toString());
       Map<String, Object> serverConf = getServerConf();
-      StartServiceManagerCommand startServiceManagerCommand =
+      _startServiceManagerCommand =
           new StartServiceManagerCommand().setZkAddress(_zkAddress).setClusterName(_clusterName).setPort(-1)
               .setBootstrapServices(new String[0]).addBootstrapService(ServiceRole.SERVER, serverConf);
-      if (startServiceManagerCommand.execute()) {
+      if (_startServiceManagerCommand.execute()) {
         String pidFile = ".pinotAdminServer-" + System.currentTimeMillis() + ".pid";
         savePID(System.getProperty("java.io.tmpdir") + File.separator + pidFile);
         return true;
