@@ -17,6 +17,7 @@
  * under the License.
  */
 package org.apache.pinot.integration.tests.realtime.ingestion;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import java.io.BufferedReader;
 import java.io.IOException;
