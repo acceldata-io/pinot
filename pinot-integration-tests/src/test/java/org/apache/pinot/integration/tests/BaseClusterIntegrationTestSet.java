@@ -17,6 +17,7 @@
  * under the License.
  */
 package org.apache.pinot.integration.tests;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -949,16 +950,10 @@ public abstract class BaseClusterIntegrationTestSet extends BaseClusterIntegrati
   protected void waitForTableEVISConverge(String tableName, long timeoutMs) {
     TestUtils.waitForCondition(aVoid -> {
       try {
-        String requestUrl = getControllerRequestURLBuilder().forIdealState(tableName);
-        SimpleHttpResponse httpResponse =
-            HttpClient.wrapAndThrowHttpException(getHttpClient().sendGetRequest(new URL(requestUrl).toURI(), null));
-        TableViews.TableView idealState =
-            JsonUtils.stringToObject(httpResponse.getResponse(), TableViews.TableView.class);
-
-        requestUrl = getControllerRequestURLBuilder().forExternalView(tableName);
-        httpResponse = getHttpClient().sendGetRequest(new URL(requestUrl).toURI(), null);
-        TableViews.TableView externalView =
-            JsonUtils.stringToObject(httpResponse.getResponse(), TableViews.TableView.class);
+        TableView idealState =
+            getOrCreateAdminClient().getTableClient().getIdealStateObject(tableName);
+        TableView externalView =
+            getOrCreateAdminClient().getTableClient().getExternalViewObject(tableName);
         return Objects.equals(idealState._realtime, externalView._realtime)
             && Objects.equals(idealState._offline, externalView._offline);
       } catch (Exception e) {

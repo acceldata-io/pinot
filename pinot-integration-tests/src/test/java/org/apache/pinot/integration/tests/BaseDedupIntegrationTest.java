@@ -28,7 +28,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.pinot.broker.routing.manager.BrokerRoutingManager;
 import org.apache.pinot.common.request.BrokerRequest;
 import org.apache.pinot.common.utils.PauselessConsumptionUtils;
-import org.apache.pinot.controller.helix.ControllerTest;
 import org.apache.pinot.core.routing.RoutingTable;
 import org.apache.pinot.core.routing.SegmentsToQuery;
 import org.apache.pinot.core.transport.ServerInstance;

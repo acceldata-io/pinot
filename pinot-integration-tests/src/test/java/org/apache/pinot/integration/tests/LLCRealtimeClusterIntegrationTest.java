@@ -140,11 +140,9 @@ public class LLCRealtimeClusterIntegrationTest extends BaseRealtimeClusterIntegr
         continue;
       }
       TestUtils.waitForCondition(() -> isOffline(partition, seqNum), 5000L, timeoutMs,
-          "Failed to find offline segment in partition " + partition + " seqNum ", Duration.ofMillis(timeoutMs / 10));
+          "Failed to find offline segment in partition " + partition + " seqNum ",
+          true, Duration.ofMillis(timeoutMs / 10));
       getOrCreateAdminClient().getClusterClient().runPeriodicTask("RealtimeSegmentValidationManager");
-          "Failed to find offline segment in partition " + partition + " seqNum ", true,
-          Duration.ofMillis(timeoutMs / 10));
-      getControllerRequestClient().runPeriodicTask("RealtimeSegmentValidationManager");
     }
   }
 
