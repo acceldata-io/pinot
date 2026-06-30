@@ -90,6 +90,19 @@
               <exclude>com.squareup.okio:okio-jvm</exclude>
             </excludes>
           </artifactSet>
+          <filters>
+            <!-- htrace-core4 4.1.0-incubating vendors Jackson 2.4.0 (relocated to
+                 org.apache.htrace.shaded.fasterxml.jackson) inside its own fat jar,
+                 which an artifactSet exclude cannot reach. Strip the embedded
+                 Jackson 2.4.0 classes + metadata so scanners stop flagging it. -->
+            <filter>
+              <artifact>org.apache.htrace:htrace-core4</artifact>
+              <excludes>
+                <exclude>org/apache/htrace/shaded/fasterxml/jackson/**</exclude>
+                <exclude>META-INF/maven/com.fasterxml.jackson.core/**</exclude>
+              </excludes>
+            </filter>
+          </filters>
         </configuration>
       </plugin>
     </plugins>
