@@ -96,6 +96,21 @@
               <exclude>com.fasterxml.jackson.datatype:*</exclude>
             </excludes>
           </artifactSet>
+          <filters>
+            <!-- htrace-core4 4.1.0-incubating vendors Jackson 2.4.0 (relocated to
+                 org.apache.htrace.shaded.fasterxml.jackson) and carries its
+                 META-INF/maven/com.fasterxml.jackson.core/* pom.properties. The
+                 artifactSet exclude above cannot reach a library embedded inside
+                 another jar, so scanners keep flagging jackson 2.4.0 (CVE-2020-36180
+                 et al). Strip the embedded Jackson classes + metadata from htrace. -->
+            <filter>
+              <artifact>org.apache.htrace:htrace-core4</artifact>
+              <excludes>
+                <exclude>org/apache/htrace/shaded/fasterxml/jackson/**</exclude>
+                <exclude>META-INF/maven/com.fasterxml.jackson.core/**</exclude>
+              </excludes>
+            </filter>
+          </filters>
         </configuration>
       </plugin>
     </plugins>
