@@ -38,6 +38,10 @@
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-common</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-hdfs-client</artifactId>
+    </dependency>
     <!-- Replace bcprov-jdk15on which is excluded from hadoop-common -->
     <dependency>
       <groupId>org.bouncycastle</groupId>
