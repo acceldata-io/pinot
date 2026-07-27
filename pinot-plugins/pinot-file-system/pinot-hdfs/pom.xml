@@ -41,6 +41,7 @@
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-hdfs-client</artifactId>
+      <scope>compile</scope>
     </dependency>
     <!-- Replace bcprov-jdk15on which is excluded from hadoop-common -->
     <dependency>
