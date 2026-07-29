@@ -91,6 +91,23 @@
             </excludes>
           </artifactSet>
           <filters>
+            <!-- Module-level <filters> replace the parent's list rather than adding to
+                 it, so the parent filter has to be repeated here. Without it the signed
+                 manifests survive shading and their digests no longer match, making the
+                 JVM throw SecurityException when Pinot reads the jar at startup. -->
+            <filter>
+              <artifact>*:*</artifact>
+              <excludes>
+                <!-- Exclude signed manifests -->
+                <exclude>META-INF/*.SF</exclude>
+                <exclude>META-INF/*.DSA</exclude>
+                <exclude>META-INF/*.RSA</exclude>
+
+                <!-- See https://github.com/apache/pinot/issues/11974 for details -->
+                <exclude>module-info.class</exclude>
+                <exclude>META-INF/versions/9/org/yaml/snakeyaml/internal/**</exclude>
+              </excludes>
+            </filter>
             <!-- htrace-core4 4.1.0-incubating vendors Jackson 2.4.0 (relocated to
                  org.apache.htrace.shaded.fasterxml.jackson) inside its own fat jar,
                  which an artifactSet exclude cannot reach. Strip the embedded
