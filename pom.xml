@@ -31,7 +31,7 @@
 
   <groupId>org.apache.pinot</groupId>
   <artifactId>pinot</artifactId>
-  <version>1.4.0.3.3.6.5-SNAPSHOT</version>
+  <version>1.4.0.3.3.6.6-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Pinot</name>
   <description>A realtime distributed OLAP datastore</description>
@@ -198,7 +198,7 @@
     </snapshotRepository>
   </distributionManagement>
   <properties>
-    <odp.release.version>3.3.6.5-SNAPSHOT</odp.release.version>
+    <odp.release.version>3.3.6.6-SNAPSHOT</odp.release.version>
     <pinot.root>${basedir}</pinot.root>
     <build.profile.id>dev</build.profile.id>
     <jdk.version>11</jdk.version>
