@@ -1453,6 +1453,10 @@
             <groupId>ch.qos.reload4j</groupId>
             <artifactId>reload4j</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
           <!-- See hadoop-common above: drop embedded-Jetty web UI transitives (CVE-2026-2332). -->
           <exclusion>
             <groupId>org.eclipse.jetty</groupId>
@@ -1951,6 +1955,12 @@
         <groupId>org.wildfly.common</groupId>
         <artifactId>wildfly-common</artifactId>
         <version>${wildfly.version}</version>
+      </dependency>
+      <!-- Hadoop 3.3.6 kerby/xnio pulls both 3.5.0.Final and 3.3.1.Final -->
+      <dependency>
+        <groupId>org.jboss.logging</groupId>
+        <artifactId>jboss-logging</artifactId>
+        <version>3.5.0.Final</version>
       </dependency>
       <dependency>
         <groupId>org.codehaus.jettison</groupId>
