@@ -71,7 +71,6 @@ public class EmbeddedKafkaCluster implements StreamDataServerStartable {
           .setCombined(true)
           .setNumBrokerNodes(_brokerCount)
           .setNumControllerNodes(1)
-          .setPerServerProperties(Collections.emptyMap())
           .setBootstrapMetadataVersion(MetadataVersion.latestProduction())
           .build();
 
