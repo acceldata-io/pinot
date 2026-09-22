@@ -35,6 +35,7 @@ import javax.annotation.Nullable;
 import org.apache.flink.api.connector.sink2.Sink;
 import org.apache.flink.api.connector.sink2.SinkWriter;
 import org.apache.flink.api.connector.sink2.WriterInitContext;
+import org.apache.flink.metrics.MetricGroup;
 import org.apache.pinot.connector.flink.common.PinotGenericRowConverter;
 import org.apache.pinot.plugin.segmentuploader.SegmentUploaderDefault;
 import org.apache.pinot.spi.config.table.TableConfig;
@@ -49,7 +50,7 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * A Flink 2.x {@link Sink} that converts stream records into Pinot segments and uploads them to Pinot.
+ * A Flink {@link Sink} that converts stream records into Pinot segments and uploads them to Pinot.
  *
  * <p>The sink is stateless and provides at-least-once semantics by draining in-flight uploads whenever Flink asks the
  * writer to flush.
@@ -147,7 +148,16 @@ public class PinotSink<T> implements Sink<T> {
   @Override
   public SinkWriter<T> createWriter(WriterInitContext context)
       throws IOException {
-    return new PinotSinkWriter(context);
+    return new PinotSinkWriter(context.getTaskInfo().getIndexOfThisSubtask(), context.metricGroup());
+  }
+
+  /**
+   * Flink 1.19 compatibility bridge. The runtime invokes the {@link WriterInitContext} overload above.
+   */
+  @SuppressWarnings("deprecation")
+  public SinkWriter<T> createWriter(Sink.InitContext context)
+      throws IOException {
+    return new PinotSinkWriter(context.getTaskInfo().getIndexOfThisSubtask(), context.metricGroup());
   }
 
   /**
@@ -163,16 +173,15 @@ public class PinotSink<T> implements Sink<T> {
     private final List<Future<?>> _pendingUploads = new ArrayList<>();
     private long _segmentNumRecord;
 
-    private PinotSinkWriter(WriterInitContext context)
+    private PinotSinkWriter(int subtaskIndex, MetricGroup metricGroup)
         throws IOException {
       _executor = Executors.newFixedThreadPool(_executorPoolSize);
 
       SegmentWriter segmentWriter = null;
       SegmentUploader segmentUploader = null;
       try {
-        int subtaskIndex = context.getTaskInfo().getIndexOfThisSubtask();
         segmentWriter =
-            new FlinkSegmentWriter(subtaskIndex, context.metricGroup(), _segmentNamePrefix, _segmentUploadTimeMs);
+            new FlinkSegmentWriter(subtaskIndex, metricGroup, _segmentNamePrefix, _segmentUploadTimeMs);
         segmentWriter.init(_tableConfig, _schema);
         segmentUploader = new SegmentUploaderDefault();
         segmentUploader.init(_tableConfig);
