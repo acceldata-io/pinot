@@ -107,19 +107,6 @@
   <!-- Apache project inception year for generating correct NOTICE file for jar bundle. -->
   <inceptionYear>2018</inceptionYear>
 
-  <distributionManagement>
-    <repository>
-      <id>nexus-releases</id>
-      <name>Releases</name>
-      <url>https://repo1.acceldata.dev/repository/odp-staging-release/</url>
-    </repository>
-    <snapshotRepository>
-      <id>nexus-snapshots</id>
-      <name>Snapshot</name>
-      <url>https://repo1.acceldata.dev/repository/odp-staging-snapshot/</url>
-    </snapshotRepository>
-  </distributionManagement>
-
   <properties>
     <odp.release.version>3.3.6.6-SNAPSHOT</odp.release.version>
     <pinot.root>${basedir}</pinot.root>
@@ -1957,6 +1944,11 @@
         <version>${wildfly.version}</version>
       </dependency>
       <!-- Hadoop 3.3.6 kerby/xnio pulls both 3.5.0.Final and 3.3.1.Final -->
+      <dependency>
+        <groupId>org.jboss.logging</groupId>
+        <artifactId>jboss-logging</artifactId>
+        <version>3.5.0.Final</version>
+      </dependency>
       <dependency>
         <groupId>org.jboss.logging</groupId>
         <artifactId>jboss-logging</artifactId>
