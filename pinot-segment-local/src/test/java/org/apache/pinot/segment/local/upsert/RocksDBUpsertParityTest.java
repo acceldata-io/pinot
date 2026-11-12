@@ -53,6 +53,7 @@ import org.apache.pinot.spi.data.readers.GenericRow;
 import org.apache.pinot.spi.data.readers.PrimaryKey;
 import org.apache.pinot.spi.utils.ConsumingSegmentConsistencyModeListener;
 import org.apache.pinot.spi.utils.builder.TableNameBuilder;
+import org.roaringbitmap.buffer.MutableRoaringBitmap;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -309,6 +310,8 @@ public class RocksDBUpsertParityTest {
     /// Comparison values grow by this much per segment, so that metadata TTL expires old keys.
     int _comparisonDrift;
     boolean _ttlScans;
+    /// Rows of each immutable segment, needed to preload them after a restart.
+    final Map<String, SegmentSpec> _immutableSpecs = new LinkedHashMap<>();
 
     Driver(long seed, boolean withDeletes, int numKeys, int maxComparisonValue, World expected, World actual) {
       _random = new Random(seed);
@@ -378,6 +381,7 @@ public class RocksDBUpsertParityTest {
         world._manager.replaceSegment(segment, validDocIds, queryableDocIds, recordInfos(committed._rows), oldSegment);
         world._segments.put(committed._name, segment);
       }
+      _immutableSpecs.put(committed._name, committed);
       _consuming = null;
     }
 
@@ -390,6 +394,7 @@ public class RocksDBUpsertParityTest {
         world._manager.addSegment(segment, validDocIds, queryableDocIds, recordInfos(spec._rows));
         world._segments.put(spec._name, segment);
       }
+      _immutableSpecs.put(spec._name, spec);
     }
 
     @Nullable
@@ -416,12 +421,14 @@ public class RocksDBUpsertParityTest {
         world._manager.replaceSegment(segment, validDocIds, queryableDocIds, recordInfos(rows), oldSegment);
         world._segments.put(name, segment);
       }
+      _immutableSpecs.put(name, spec);
     }
 
     void remove(String name) {
       for (World world : List.of(_expected, _actual)) {
         // Segments added through the test hooks are not tracked, so call the removal logic directly.
         world._manager.doRemoveSegment(world._segments.remove(name));
+        _immutableSpecs.remove(name);
       }
     }
 
@@ -617,6 +624,82 @@ public class RocksDBUpsertParityTest {
     manager.stop();
     manager.close();
     assertEquals(manager.getNumPrimaryKeys(), 1_000);
+  }
+
+  @DataProvider
+  public Object[][] restartCases() {
+    List<Object[]> cases = new ArrayList<>();
+    for (HashFunction hashFunction : new HashFunction[]{HashFunction.NONE, HashFunction.MURMUR3}) {
+      for (boolean withDeletes : new boolean[]{false, true}) {
+        for (boolean partial : new boolean[]{false, true}) {
+          for (long seed = 1; seed <= 2; seed++) {
+            cases.add(new Object[]{hashFunction, withDeletes, partial, seed});
+          }
+        }
+      }
+    }
+    return cases.toArray(new Object[0][]);
+  }
+
+  /// Restart: both managers are rebuilt by preloading every committed segment with its validDocIds snapshot (small
+  /// thresholds exercise SST ingest, write batches and chunking), then keep consuming in lockstep.
+  @Test(dataProvider = "restartCases")
+  public void testRestartWithPreloadParity(HashFunction hashFunction, boolean withDeletes, boolean partial,
+      long seed) {
+    UpsertContext.Builder builder = contextBuilder(hashFunction, withDeletes).setEnableSnapshot(true);
+    if (partial) {
+      builder.setPartialUpsertHandler(recordingPartialUpsertHandler());
+    }
+    UpsertContext context = builder.build();
+    RocksDBMetadataStoreConfig preloadConfig = RocksDBMetadataStoreConfig.from(null,
+        Map.of("rocksdb.dataDir", new File(TEMP_DIR, "rocksdb").getAbsolutePath(), "rocksdb.preloadSstMinKeys",
+            "10", "rocksdb.preloadBatchKeys", "16", "rocksdb.asyncTtlScan", "false"));
+
+    World expected = new World(new ConcurrentMapPartitionUpsertMetadataManager(REALTIME_TABLE_NAME, 0, context));
+    World actual =
+        new World(new RocksDBPartitionUpsertMetadataManager(REALTIME_TABLE_NAME, 0, context, preloadConfig));
+    Driver driver;
+    try {
+      driver = new Driver(seed, withDeletes, 300, 40, expected, actual);
+      driver.run(200);
+    } finally {
+      closeQuietly(expected._manager);
+      closeQuietly(actual._manager);
+    }
+
+    World restartedExpected =
+        new World(new ConcurrentMapPartitionUpsertMetadataManager(REALTIME_TABLE_NAME, 0, context));
+    World restartedActual =
+        new World(new RocksDBPartitionUpsertMetadataManager(REALTIME_TABLE_NAME, 0, context, preloadConfig));
+    try {
+      int numPreloadedKeys = 0;
+      for (SegmentSpec spec : driver._immutableSpecs.values()) {
+        MutableRoaringBitmap snapshot = expected._segments.get(spec._name).getValidDocIds().getMutableRoaringBitmap();
+        List<Row> rows = spec._rows;
+        numPreloadedKeys += snapshot.getCardinality();
+        for (World world : List.of(restartedExpected, restartedActual)) {
+          ThreadSafeMutableRoaringBitmap validDocIds = new ThreadSafeMutableRoaringBitmap();
+          ThreadSafeMutableRoaringBitmap queryableDocIds = withDeletes ? new ThreadSafeMutableRoaringBitmap() : null;
+          ImmutableSegmentImpl segment = mockImmutableSegment(spec, validDocIds, queryableDocIds);
+          List<RecordInfo> snapshotRecords = new ArrayList<>();
+          snapshot.forEach((int docId) -> snapshotRecords.add(recordInfo(rows, docId)));
+          world._manager.doPreloadSegment(segment, validDocIds, queryableDocIds, snapshotRecords.iterator());
+          world._segments.put(spec._name, segment);
+          assertEquals(validDocIds.getMutableRoaringBitmap(), snapshot, "Preload changed validDocIds of " + spec._name);
+        }
+      }
+      assertTrue(numPreloadedKeys > 0);
+      assertEquals(restartedActual._manager.getNumPrimaryKeys(), numPreloadedKeys);
+      assertSameState(restartedExpected, restartedActual, "preload");
+
+      Driver restartedDriver = new Driver(seed + 1000, withDeletes, 300, 40, restartedExpected, restartedActual);
+      restartedDriver._sequenceNumber = driver._sequenceNumber + 1;
+      restartedDriver._immutableSpecs.putAll(driver._immutableSpecs);
+      restartedDriver.run(200);
+    } finally {
+      closeQuietly(restartedExpected._manager);
+      closeQuietly(restartedActual._manager);
+    }
   }
 
   @Test(dataProvider = "fullUpsertCases")

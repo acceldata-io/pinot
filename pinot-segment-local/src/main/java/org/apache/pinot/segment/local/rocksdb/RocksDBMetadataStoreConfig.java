@@ -70,6 +70,8 @@ public final class RocksDBMetadataStoreConfig {
   public static final String ASYNC_TTL_SCAN = "asyncTtlScan";
   /// Segments with at least this many valid keys are preloaded by ingesting a sorted SST file. 0 disables it.
   public static final String PRELOAD_SST_MIN_KEYS = "preloadSstMinKeys";
+  /// Preload buffers at most this many keys of a segment on the heap before writing them to the store.
+  public static final String PRELOAD_BATCH_KEYS = "preloadBatchKeys";
   /// Use the in-memory manager if a partition store cannot be opened. Off by default: a table sized for RocksDB can
   /// exhaust the heap, so an open failure fails the table on that server instead.
   public static final String FALLBACK_TO_IN_MEMORY_ON_INIT_FAILURE = "fallbackToInMemoryOnInitFailure";
@@ -88,6 +90,7 @@ public final class RocksDBMetadataStoreConfig {
   public static final int DEFAULT_MAINTENANCE_THREADS = 2;
   public static final long DEFAULT_TTL_SCAN_MAX_KEYS_PER_SECOND = 0;
   public static final int DEFAULT_PRELOAD_SST_MIN_KEYS = 100_000;
+  public static final int DEFAULT_PRELOAD_BATCH_KEYS = 500_000;
 
   @Nullable
   private final String _dataDir;
@@ -103,6 +106,7 @@ public final class RocksDBMetadataStoreConfig {
   private final long _ttlScanMaxKeysPerSecond;
   private final boolean _asyncTtlScan;
   private final int _preloadSstMinKeys;
+  private final int _preloadBatchKeys;
   private final boolean _fallbackToInMemoryOnInitFailure;
   private final boolean _enabled;
 
@@ -122,6 +126,7 @@ public final class RocksDBMetadataStoreConfig {
     _asyncTtlScan = Boolean.parseBoolean(values.getOrDefault(normalize(ASYNC_TTL_SCAN), "true"));
     _ttlScanMaxKeysPerSecond = getLong(values, TTL_SCAN_MAX_KEYS_PER_SECOND, DEFAULT_TTL_SCAN_MAX_KEYS_PER_SECOND, 0);
     _preloadSstMinKeys = (int) getLong(values, PRELOAD_SST_MIN_KEYS, DEFAULT_PRELOAD_SST_MIN_KEYS, 0);
+    _preloadBatchKeys = (int) getLong(values, PRELOAD_BATCH_KEYS, DEFAULT_PRELOAD_BATCH_KEYS, 1);
     _fallbackToInMemoryOnInitFailure =
         Boolean.parseBoolean(values.get(normalize(FALLBACK_TO_IN_MEMORY_ON_INIT_FAILURE)));
     _enabled = Boolean.parseBoolean(values.getOrDefault(normalize(ENABLED), "true"));
@@ -222,6 +227,10 @@ public final class RocksDBMetadataStoreConfig {
 
   public long getTtlScanMaxKeysPerSecond() {
     return _ttlScanMaxKeysPerSecond;
+  }
+
+  public int getPreloadBatchKeys() {
+    return _preloadBatchKeys;
   }
 
   public int getPreloadSstMinKeys() {
