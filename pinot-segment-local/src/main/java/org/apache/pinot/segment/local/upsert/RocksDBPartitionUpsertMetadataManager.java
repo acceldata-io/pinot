@@ -20,6 +20,7 @@ package org.apache.pinot.segment.local.upsert;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -250,7 +251,51 @@ public class RocksDBPartitionUpsertMetadataManager extends BasePartitionUpsertMe
   @Override
   protected void revertAndRemoveSegment(IndexSegment segment,
       Iterator<Map.Entry<Integer, PrimaryKey>> primaryKeyIterator) {
-    throw new UnsupportedOperationException("Reverting a consuming segment is not supported yet");
+    while (primaryKeyIterator.hasNext()) {
+      Map.Entry<Integer, PrimaryKey> primaryKeyEntry = primaryKeyIterator.next();
+      PrimaryKey primaryKey = primaryKeyEntry.getValue();
+      int docId = primaryKeyEntry.getKey();
+      _store.computeIfPresent(toKey(primaryKey), (pk, recordLocation) -> {
+        Location prevLocation = _store.getPrevious(pk);
+        if (recordLocation.getSegment() == segment) {
+          if (prevLocation == null) {
+            _store.removePrevious(pk);
+            return null;
+          }
+          // Revert to previous segment location
+          IndexSegment prevSegment = prevLocation.getSegment();
+          ThreadSafeMutableRoaringBitmap prevValidDocIds = prevSegment.getValidDocIds();
+          if (prevValidDocIds != null) {
+            try (UpsertUtils.RecordInfoReader recordInfoReader = new UpsertUtils.RecordInfoReader(prevSegment,
+                _primaryKeyColumns, _comparisonColumns, _deleteRecordColumn)) {
+              int prevDocId = prevLocation.getDocId();
+              RecordInfo recordInfo = recordInfoReader.getRecordInfo(prevDocId);
+              replaceDocId(prevSegment, prevValidDocIds, prevSegment.getQueryableDocIds(), segment, docId,
+                  prevDocId, recordInfo);
+              _store.removePrevious(pk);
+              return prevLocation;
+            } catch (IOException e) {
+              _logger.warn("Failed to revert to previous segment: {}, removing key", prevSegment.getSegmentName(), e);
+              _store.removePrevious(pk);
+              return null;
+            }
+          } else {
+            _store.removePrevious(pk);
+            return null;
+          }
+        } else if (recordLocation.getSegment() instanceof ImmutableSegmentImpl) {
+          _store.removePrevious(pk);
+        } else {
+          _logger.warn(
+              "Consuming segment: {} has added the primary key for docId: {} from the segment: {}, suggesting"
+                  + " that consumption is occurring concurrently with segment replacement, which is undesirable "
+                  + "for consistency between replicas for the table: {}.",
+              recordLocation.getSegment().getSegmentName(), primaryKeyEntry.getKey(), segment.getSegmentName(),
+              _tableNameWithType);
+        }
+        return recordLocation;
+      });
+    }
   }
 
   @Override
