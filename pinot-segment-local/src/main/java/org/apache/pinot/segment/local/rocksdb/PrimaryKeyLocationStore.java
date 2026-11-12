@@ -350,7 +350,7 @@ public class PrimaryKeyLocationStore implements AutoCloseable {
     return numDeleted;
   }
 
-  private static void throttle(long numKeys, long maxKeysPerSecond, long startNs) {
+  static void throttle(long numKeys, long maxKeysPerSecond, long startNs) {
     long expectedNs = numKeys * 1_000_000_000L / maxKeysPerSecond;
     long sleepMs = (expectedNs - (System.nanoTime() - startNs)) / 1_000_000L;
     if (sleepMs > 0) {
