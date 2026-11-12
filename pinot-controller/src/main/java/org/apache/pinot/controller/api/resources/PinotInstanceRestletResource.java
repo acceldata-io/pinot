@@ -529,6 +529,7 @@ public class PinotInstanceRestletResource {
   @POST
   @Path("/instances/updateTags/validate")
   @Produces(MediaType.APPLICATION_JSON)
+  @Authenticate(AccessType.READ)
   @ApiOperation(value = "Check if it's safe to update the tags of the given instances. If not list all the reasons.")
   @ApiResponses(value = {
       @ApiResponse(code = 200, message = "Success"),

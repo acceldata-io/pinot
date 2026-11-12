@@ -107,8 +107,7 @@ public class FineGrainedAuthorizationCoverageTest {
       "POST /tables/{tableName}/copy");
 
   /** CLUSTER-scoped {@link Authorize} that carries a {@code paramName} the filter ignores. Must become empty. */
-  private static final List<String> KNOWN_CLUSTER_TARGET_WITH_PARAM = Arrays.asList(
-      "GET /v2/brokers/tables/{tableName}",
+  private static final List<String> KNOWN_CLUSTER_TARGET_WITH_PARAM = Collections.singletonList(
       "GET /logicalTables");
 
   private final List<Endpoint> _endpoints = new ArrayList<>();

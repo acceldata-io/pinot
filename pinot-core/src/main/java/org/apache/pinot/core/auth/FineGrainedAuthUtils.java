@@ -20,6 +20,7 @@
 package org.apache.pinot.core.auth;
 
 import java.lang.reflect.Method;
+import javax.annotation.Nullable;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MultivaluedMap;
@@ -59,6 +60,20 @@ public class FineGrainedAuthUtils {
   }
 
   /**
+   * Finds the raw target parameter identified by an {@link Authorize} annotation.
+   *
+   * @param auth annotation identifying the authorization target
+   * @param pathParams request path parameters
+   * @param queryParams request query parameters
+   * @return the unnormalized table parameter value, or {@code null} for a cluster target or missing table parameter
+   */
+  @Nullable
+  public static String findRawTargetId(Authorize auth, MultivaluedMap<String, String> pathParams,
+      MultivaluedMap<String, String> queryParams) {
+    return auth.targetType() == TargetType.TABLE ? findParam(auth.paramName(), pathParams, queryParams) : null;
+  }
+
+  /**
    * Validate fine-grained authorization for APIs.
    * There are 2 possible cases:
    * 1. {@link Authorize} annotation is present on the method. In this case, do the finer grain authorization using the
@@ -91,7 +106,7 @@ public class FineGrainedAuthUtils {
         }
 
         // find the paramName in the path or query params
-        targetId = findParam(auth.paramName(), uriInfo.getPathParameters(), uriInfo.getQueryParameters());
+        targetId = findRawTargetId(auth, uriInfo.getPathParameters(), uriInfo.getQueryParameters());
 
         if (StringUtils.isEmpty(targetId)) {
           throw new WebApplicationException(
