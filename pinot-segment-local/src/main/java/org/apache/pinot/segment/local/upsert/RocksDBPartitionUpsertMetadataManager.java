@@ -37,6 +37,7 @@ import org.apache.pinot.segment.local.indexsegment.immutable.ImmutableSegmentImp
 import org.apache.pinot.segment.local.rocksdb.MetadataCodec;
 import org.apache.pinot.segment.local.rocksdb.PrimaryKeyLocationStore;
 import org.apache.pinot.segment.local.rocksdb.PrimaryKeyLocationStore.Location;
+import org.apache.pinot.segment.local.rocksdb.RocksDBMetadataMetrics;
 import org.apache.pinot.segment.local.rocksdb.RocksDBMetadataStoreConfig;
 import org.apache.pinot.segment.local.segment.readers.LazyRow;
 import org.apache.pinot.segment.local.segment.readers.PrimaryKeyReader;
@@ -82,6 +83,8 @@ public class RocksDBPartitionUpsertMetadataManager extends BasePartitionUpsertMe
     _storeConfig = storeConfig;
     _store = new PrimaryKeyLocationStore(getStoreDir(tableNameWithType, partitionId, context, storeConfig),
         storeConfig);
+    RocksDBMetadataMetrics.registerPartitionGauges(_serverMetrics, tableNameWithType, partitionId,
+        _store.getPartitionStore(), _store::getNumStaleLocations);
     _logger.info("Using RocksDB upsert metadata store in: {}", _store.getPartitionStore().getDir());
   }
 
@@ -534,6 +537,7 @@ public class RocksDBPartitionUpsertMetadataManager extends BasePartitionUpsertMe
 
   @Override
   protected void doClose() {
+    RocksDBMetadataMetrics.removePartitionGauges(_serverMetrics, _tableNameWithType, _partitionId);
     _store.close();
   }
 

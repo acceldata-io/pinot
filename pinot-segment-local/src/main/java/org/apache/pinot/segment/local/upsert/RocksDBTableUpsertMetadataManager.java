@@ -28,8 +28,10 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
+import org.apache.pinot.common.metrics.ServerMetrics;
 import org.apache.pinot.common.utils.config.QueryOptionsUtils;
 import org.apache.pinot.segment.local.data.manager.TableDataManager;
+import org.apache.pinot.segment.local.rocksdb.RocksDBMetadataMetrics;
 import org.apache.pinot.segment.local.rocksdb.RocksDBMetadataStoreConfig;
 import org.apache.pinot.segment.local.utils.SegmentOperationsThrottlerSet;
 import org.apache.pinot.segment.spi.IndexSegment;
@@ -78,6 +80,7 @@ public class RocksDBTableUpsertMetadataManager extends BaseTableUpsertMetadataMa
     if (_inMemoryReason != null) {
       LOGGER.warn("Using in-memory upsert metadata for table: {} because {}", _tableNameWithType, _inMemoryReason);
     }
+    RocksDBMetadataMetrics.setInMemoryFallback(ServerMetrics.get(), _tableNameWithType, _inMemoryReason != null);
   }
 
   /**
@@ -97,6 +100,7 @@ public class RocksDBTableUpsertMetadataManager extends BaseTableUpsertMetadataMa
           LOGGER.error("Failed to open RocksDB upsert metadata for table: {}, partition: {}, using in-memory map",
               _tableNameWithType, k, e);
           _inMemoryReason = "RocksDB failed to open: " + e;
+          RocksDBMetadataMetrics.setInMemoryFallback(ServerMetrics.get(), _tableNameWithType, true);
         }
       }
       return newInMemoryPartitionManager(k);

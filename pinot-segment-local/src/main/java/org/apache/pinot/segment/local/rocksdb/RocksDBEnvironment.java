@@ -22,8 +22,11 @@ import com.google.common.annotations.VisibleForTesting;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.ToLongFunction;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
+import org.apache.pinot.common.metrics.ServerGauge;
+import org.apache.pinot.common.metrics.ServerMetrics;
 import org.rocksdb.Cache;
 import org.rocksdb.Env;
 import org.rocksdb.LRUCache;
@@ -83,6 +86,7 @@ public final class RocksDBEnvironment {
       if (_instance == null) {
         RocksDB.loadLibrary();
         _instance = new RocksDBEnvironment(config);
+        registerGlobalGauges();
         LOGGER.info("Created RocksDB environment with block cache: {} bytes, write buffer manager: {} bytes, "
                 + "background threads: {}", config.getBlockCacheSizeBytes(), config.getWriteBufferManagerBytes(),
             config.getBackgroundThreads());
@@ -99,6 +103,22 @@ public final class RocksDBEnvironment {
   }
 
   /// Decrements the reference count and frees the native resources when it reaches zero.
+  private static void registerGlobalGauges() {
+    ServerMetrics serverMetrics = ServerMetrics.get();
+    serverMetrics.setOrUpdateGlobalGauge(ServerGauge.ROCKSDB_BLOCK_CACHE_USAGE_BYTES,
+        () -> currentValue(RocksDBEnvironment::getBlockCacheUsageBytes));
+    serverMetrics.setOrUpdateGlobalGauge(ServerGauge.ROCKSDB_BLOCK_CACHE_PINNED_USAGE_BYTES,
+        () -> currentValue(RocksDBEnvironment::getBlockCachePinnedUsageBytes));
+    serverMetrics.setOrUpdateGlobalGauge(ServerGauge.ROCKSDB_BLOCK_CACHE_CAPACITY_BYTES,
+        () -> currentValue(environment -> environment._config.getBlockCacheSizeBytes()));
+  }
+
+  private static long currentValue(ToLongFunction<RocksDBEnvironment> function) {
+    synchronized (LOCK) {
+      return _instance != null ? function.applyAsLong(_instance) : 0;
+    }
+  }
+
   public void release() {
     synchronized (LOCK) {
       if (--_refCount == 0) {
@@ -128,11 +148,15 @@ public final class RocksDBEnvironment {
 
   /// Bytes held by the shared block cache, including memtables charged to it.
   public long getBlockCacheUsageBytes() {
-    return _blockCache.getUsage();
+    synchronized (LOCK) {
+      return _refCount > 0 ? _blockCache.getUsage() : 0;
+    }
   }
 
   public long getBlockCachePinnedUsageBytes() {
-    return _blockCache.getPinnedUsage();
+    synchronized (LOCK) {
+      return _refCount > 0 ? _blockCache.getPinnedUsage() : 0;
+    }
   }
 
   @VisibleForTesting

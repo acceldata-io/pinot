@@ -262,7 +262,8 @@ public class RocksDBPartitionStore implements AutoCloseable {
   }
 
   /// Returns a RocksDB integer property such as {@code rocksdb.total-sst-files-size}, or 0 if it is unavailable.
-  public long getLongProperty(int columnFamily, String property) {
+  /// Synchronized with {@link #close()}, so metrics threads never read a closed native handle.
+  public synchronized long getLongProperty(int columnFamily, String property) {
     if (_closed) {
       return 0;
     }
@@ -308,6 +309,16 @@ public class RocksDBPartitionStore implements AutoCloseable {
     _environment.release();
     FileUtils.deleteQuietly(_dir);
     LOGGER.info("Closed RocksDB metadata store in: {}", _dir);
+  }
+
+  /// SST files plus memtables of all column families.
+  public synchronized long getDiskSizeBytes() {
+    long sizeBytes = 0;
+    for (int i = 0; i < _handles.size(); i++) {
+      sizeBytes += getLongProperty(i, "rocksdb.total-sst-files-size");
+      sizeBytes += getLongProperty(i, "rocksdb.cur-size-all-mem-tables");
+    }
+    return sizeBytes;
   }
 
   private static void closeQuietly(AutoCloseable... closeables) {
