@@ -18,6 +18,7 @@
  */
 package org.apache.pinot.segment.local.rocksdb;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.io.File;
 import java.io.IOException;
@@ -152,12 +153,13 @@ public class RocksDBPartitionStore implements AutoCloseable {
   }
 
   @FunctionalInterface
-  private interface StoreOperation<T> {
+  interface StoreOperation<T> {
     T run()
         throws RocksDBException;
   }
 
-  private <T> T withRetry(String operation, StoreOperation<T> storeOperation) {
+  @VisibleForTesting
+  <T> T withRetry(String operation, StoreOperation<T> storeOperation) {
     long backoffMs = _config.getRetryBackoffMs();
     int maxRetries = _config.getMaxRetries();
     for (int attempt = 0; ; attempt++) {

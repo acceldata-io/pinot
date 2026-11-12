@@ -64,6 +64,7 @@ import org.apache.pinot.segment.local.io.writer.impl.DirectMemoryManager;
 import org.apache.pinot.segment.local.io.writer.impl.MmapMemoryManager;
 import org.apache.pinot.segment.local.realtime.converter.RealtimeSegmentConverter;
 import org.apache.pinot.segment.local.realtime.impl.RealtimeSegmentConfig;
+import org.apache.pinot.segment.local.rocksdb.RocksDBMetadataStoreException;
 import org.apache.pinot.segment.local.segment.creator.TransformPipeline;
 import org.apache.pinot.segment.local.segment.index.loader.IndexLoadingConfig;
 import org.apache.pinot.segment.local.upsert.PartitionUpsertMetadataManager;
@@ -687,6 +688,10 @@ public class RealtimeSegmentDataManager extends SegmentDataManager {
                         recordSerializedValueLength, realtimeBytesIngestedMeter);
                 _serverMetrics.addMeteredGlobalValue(ServerMeter.REALTIME_BYTES_CONSUMED, recordSerializedValueLength);
               }
+            } catch (RocksDBMetadataStoreException e) {
+              // The row may be half-applied to the segment and the metadata store, so skipping it would corrupt
+              // upsert state. Fail this consuming segment instead; it is rebuilt from the last committed offset.
+              throw e;
             } catch (Exception e) {
               _numRowsErrored++;
               _numBytesDropped += rowSizeInBytes;

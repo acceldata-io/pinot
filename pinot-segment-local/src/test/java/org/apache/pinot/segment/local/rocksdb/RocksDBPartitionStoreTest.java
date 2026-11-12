@@ -24,8 +24,10 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.io.FileUtils;
 import org.apache.pinot.spi.env.PinotConfiguration;
+import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -36,6 +38,7 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertThrows;
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.expectThrows;
 
 
 public class RocksDBPartitionStoreTest {
@@ -126,6 +129,31 @@ public class RocksDBPartitionStoreTest {
       }
       assertEquals(count, 1001);
       assertEquals(new File(_tempDir, "p0").listFiles((d, n) -> n.startsWith("ingest_")).length, 0);
+    }
+  }
+
+  @Test
+  public void testRetriesTransientErrorsAndWrapsPersistentOnes() {
+    RocksDBMetadataStoreConfig config = RocksDBMetadataStoreConfig.from(null,
+        Map.of("rocksdb.maxRetries", "2", "rocksdb.retryBackoffMs", "1"));
+    try (RocksDBPartitionStore store = new RocksDBPartitionStore(new File(_tempDir, "retry"), List.of("default"),
+        config)) {
+      AtomicInteger attempts = new AtomicInteger();
+      assertEquals(store.withRetry("op", () -> {
+        if (attempts.incrementAndGet() < 3) {
+          throw new RocksDBException("transient");
+        }
+        return "ok";
+      }), "ok");
+      assertEquals(store.getNumRetries(), 2);
+      assertEquals(store.getNumFailures(), 0);
+
+      RocksDBMetadataStoreException e = expectThrows(RocksDBMetadataStoreException.class,
+          () -> store.withRetry("op", () -> {
+            throw new RocksDBException("persistent");
+          }));
+      assertTrue(e.getMessage().contains("failed after 3 attempts"), e.getMessage());
+      assertEquals(store.getNumFailures(), 1);
     }
   }
 

@@ -70,8 +70,11 @@ public final class RocksDBMetadataStoreConfig {
   public static final String ASYNC_TTL_SCAN = "asyncTtlScan";
   /// Segments with at least this many valid keys are preloaded by ingesting a sorted SST file. 0 disables it.
   public static final String PRELOAD_SST_MIN_KEYS = "preloadSstMinKeys";
-  /// Full upsert only: use the in-memory manager if RocksDB cannot be initialized. Partial upsert never falls back.
+  /// Use the in-memory manager if a partition store cannot be opened. Off by default: a table sized for RocksDB can
+  /// exhaust the heap, so an open failure fails the table on that server instead.
   public static final String FALLBACK_TO_IN_MEMORY_ON_INIT_FAILURE = "fallbackToInMemoryOnInitFailure";
+  /// Kill switch: {@code false} at server or table level makes the RocksDB managers use the in-memory map.
+  public static final String ENABLED = "enabled";
 
   public static final String DEFAULT_DATA_DIR_NAME = "rocksdb_metadata";
   public static final long DEFAULT_BLOCK_CACHE_SIZE_BYTES = 1L << 30;
@@ -101,6 +104,7 @@ public final class RocksDBMetadataStoreConfig {
   private final boolean _asyncTtlScan;
   private final int _preloadSstMinKeys;
   private final boolean _fallbackToInMemoryOnInitFailure;
+  private final boolean _enabled;
 
   private RocksDBMetadataStoreConfig(Map<String, String> values) {
     _dataDir = values.get(normalize(DATA_DIR));
@@ -120,6 +124,7 @@ public final class RocksDBMetadataStoreConfig {
     _preloadSstMinKeys = (int) getLong(values, PRELOAD_SST_MIN_KEYS, DEFAULT_PRELOAD_SST_MIN_KEYS, 0);
     _fallbackToInMemoryOnInitFailure =
         Boolean.parseBoolean(values.get(normalize(FALLBACK_TO_IN_MEMORY_ON_INIT_FAILURE)));
+    _enabled = Boolean.parseBoolean(values.getOrDefault(normalize(ENABLED), "true"));
   }
 
   /// Matches the key normalization of {@link PinotConfiguration}, so instance and table keys compare equal.
@@ -225,5 +230,9 @@ public final class RocksDBMetadataStoreConfig {
 
   public boolean isFallbackToInMemoryOnInitFailure() {
     return _fallbackToInMemoryOnInitFailure;
+  }
+
+  public boolean isEnabled() {
+    return _enabled;
   }
 }

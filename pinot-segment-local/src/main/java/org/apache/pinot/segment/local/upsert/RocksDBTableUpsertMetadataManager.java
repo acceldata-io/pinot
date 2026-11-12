@@ -38,6 +38,8 @@ import org.apache.pinot.spi.config.table.TableConfig;
 import org.apache.pinot.spi.config.table.UpsertConfig;
 import org.apache.pinot.spi.data.Schema;
 import org.apache.pinot.spi.env.PinotConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -51,9 +53,14 @@ import org.apache.pinot.spi.env.PinotConfiguration;
  */
 @ThreadSafe
 public class RocksDBTableUpsertMetadataManager extends BaseTableUpsertMetadataManager {
+  private static final Logger LOGGER = LoggerFactory.getLogger(RocksDBTableUpsertMetadataManager.class);
+
   private final Map<Integer, BasePartitionUpsertMetadataManager> _partitionMetadataManagerMap =
       new ConcurrentHashMap<>();
   private RocksDBMetadataStoreConfig _storeConfig;
+  /// Why this table uses the in-memory map, or null when it uses RocksDB.
+  @Nullable
+  private volatile String _inMemoryReason;
 
   @Override
   public void init(PinotConfiguration instanceUpsertConfig, TableConfig tableConfig, Schema schema,
@@ -63,12 +70,48 @@ public class RocksDBTableUpsertMetadataManager extends BaseTableUpsertMetadataMa
         tableConfig.getTableName());
     _storeConfig = RocksDBMetadataStoreConfig.from(instanceUpsertConfig, upsertConfig.getMetadataManagerConfigs());
     super.init(instanceUpsertConfig, tableConfig, schema, tableDataManager, segmentOperationsThrottlerSet);
+    if (!_storeConfig.isEnabled()) {
+      _inMemoryReason = "RocksDB is disabled by config";
+    } else if (_context.isEnableDeletedKeysCompactionConsistency()) {
+      _inMemoryReason = "enableDeletedKeysCompactionConsistency is not supported by RocksDB";
+    }
+    if (_inMemoryReason != null) {
+      LOGGER.warn("Using in-memory upsert metadata for table: {} because {}", _tableNameWithType, _inMemoryReason);
+    }
   }
 
+  /**
+   * Opens the RocksDB partition manager. If the store cannot be opened, the exception fails the table on this server
+   * unless {@code fallbackToInMemoryOnInitFailure} is set; other tables and replicas are unaffected.
+   */
   @Override
   public BasePartitionUpsertMetadataManager getOrCreatePartitionManager(int partitionId) {
-    return _partitionMetadataManagerMap.computeIfAbsent(partitionId,
-        k -> new RocksDBPartitionUpsertMetadataManager(_tableNameWithType, k, _context, _storeConfig));
+    return _partitionMetadataManagerMap.computeIfAbsent(partitionId, k -> {
+      if (_inMemoryReason == null) {
+        try {
+          return new RocksDBPartitionUpsertMetadataManager(_tableNameWithType, k, _context, _storeConfig);
+        } catch (RuntimeException | LinkageError e) {
+          if (!_storeConfig.isFallbackToInMemoryOnInitFailure()) {
+            throw e;
+          }
+          LOGGER.error("Failed to open RocksDB upsert metadata for table: {}, partition: {}, using in-memory map",
+              _tableNameWithType, k, e);
+          _inMemoryReason = "RocksDB failed to open: " + e;
+        }
+      }
+      return newInMemoryPartitionManager(k);
+    });
+  }
+
+  private BasePartitionUpsertMetadataManager newInMemoryPartitionManager(int partitionId) {
+    return _context.isEnableDeletedKeysCompactionConsistency()
+        ? new ConcurrentMapPartitionUpsertMetadataManagerForConsistentDeletes(_tableNameWithType, partitionId, _context)
+        : new ConcurrentMapPartitionUpsertMetadataManager(_tableNameWithType, partitionId, _context);
+  }
+
+  /// Returns true if this table keeps (some of) its partition maps in memory instead of RocksDB.
+  public boolean isInMemoryFallback() {
+    return _inMemoryReason != null;
   }
 
   @Override
