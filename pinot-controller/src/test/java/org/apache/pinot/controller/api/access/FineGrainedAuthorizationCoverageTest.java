@@ -103,8 +103,7 @@ public class FineGrainedAuthorizationCoverageTest {
       "POST /tableConfigs/validate");
 
   /** TABLE-scoped {@link Authorize} without a {@code paramName}: the filter answers HTTP 500. Must become empty. */
-  private static final List<String> KNOWN_TABLE_TARGET_WITHOUT_PARAM = Collections.singletonList(
-      "POST /tables/{tableName}/copy");
+  private static final List<String> KNOWN_TABLE_TARGET_WITHOUT_PARAM = Collections.emptyList();
 
   /** CLUSTER-scoped {@link Authorize} that carries a {@code paramName} the filter ignores. Must become empty. */
   private static final List<String> KNOWN_CLUSTER_TARGET_WITH_PARAM = Collections.singletonList(

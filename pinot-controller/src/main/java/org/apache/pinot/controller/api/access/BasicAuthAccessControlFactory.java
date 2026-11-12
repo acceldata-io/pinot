@@ -31,19 +31,21 @@ import org.apache.pinot.core.auth.BasicAuthPrincipalUtils;
 import org.apache.pinot.spi.env.PinotConfiguration;
 
 
-/**
- * Basic Authentication based on http headers. Configured via the "controller.admin.access.control" family of
- * properties.
- *
- * <pre>
- *     Example:
- *     controller.admin.access.control.principals=admin123,user456
- *     controller.admin.access.control.principals.admin123.password=verysecret
- *     controller.admin.access.control.principals.user456.password=kindasecret
- *     controller.admin.access.control.principals.user456.tables=stuff,lessImportantStuff
- *     controller.admin.access.control.principals.user456.permissions=read,update
- * </pre>
- */
+/// Basic Authentication based on http headers. Configured via the "controller.admin.access.control" family of
+/// properties.
+///
+/// ```
+/// Example:
+/// controller.admin.access.control.principals=admin123,user456
+/// controller.admin.access.control.principals.admin123.password=verysecret
+/// controller.admin.access.control.principals.user456.password=kindasecret
+/// controller.admin.access.control.principals.user456.tables=stuff,lessImportantStuff
+/// controller.admin.access.control.principals.user456.permissions=read,update
+/// ```
+///
+/// Setting `tables` or `excludeTables` scopes a principal to those tables and withholds every endpoint that names no
+/// table, because such a request is cluster-wide. `*` means unrestricted, as does omitting the key. A principal used
+/// as a service identity — realtime segment completion, minion task callbacks — must therefore be left unrestricted.
 public class BasicAuthAccessControlFactory implements AccessControlFactory {
   private static final String PREFIX = "controller.admin.access.control.principals";
 
@@ -62,9 +64,7 @@ public class BasicAuthAccessControlFactory implements AccessControlFactory {
     return _accessControl;
   }
 
-  /**
-   * Access Control using header-based basic http authentication
-   */
+  /// Access Control using header-based basic http authentication
   private static class BasicAuthAccessControl extends BaseBasicAuthAccessControl<BasicAuthPrincipal> {
     private final Map<String, BasicAuthPrincipal> _token2principal;
 

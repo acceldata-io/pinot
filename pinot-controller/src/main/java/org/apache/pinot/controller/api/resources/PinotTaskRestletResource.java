@@ -264,7 +264,7 @@ public class PinotTaskRestletResource {
 
   @GET
   @Path("/tasks/{taskType}/{tableNameWithType}/state")
-  @Authorize(targetType = TargetType.CLUSTER, action = Actions.Cluster.GET_TASK)
+  @Authorize(targetType = TargetType.CLUSTER, action = Actions.Cluster.GET_TASK, tableScopeParam = "tableNameWithType")
   @Produces(MediaType.APPLICATION_JSON)
   @ApiOperation("List all tasks for the given task type")
   @ManagedAsync
@@ -284,7 +284,7 @@ public class PinotTaskRestletResource {
 
   @GET
   @Path("/tasks/{taskType}/{tableNameWithType}/metadata")
-  @Authorize(targetType = TargetType.CLUSTER, action = Actions.Cluster.GET_TASK)
+  @Authorize(targetType = TargetType.CLUSTER, action = Actions.Cluster.GET_TASK, tableScopeParam = "tableNameWithType")
   @Produces(MediaType.APPLICATION_JSON)
   @ApiOperation("Get task metadata for the given task type and table")
   public String getTaskMetadataByTable(
@@ -304,7 +304,8 @@ public class PinotTaskRestletResource {
   @DELETE
   @Path("/tasks/{taskType}/{tableNameWithType}/metadata")
   @Authenticate(AccessType.DELETE)
-  @Authorize(targetType = TargetType.CLUSTER, action = Actions.Cluster.DELETE_TASK)
+  @Authorize(targetType = TargetType.CLUSTER, action = Actions.Cluster.DELETE_TASK,
+      tableScopeParam = "tableNameWithType")
   @Produces(MediaType.APPLICATION_JSON)
   @ApiOperation("Delete task metadata for the given task type and table")
   public SuccessResponse deleteTaskMetadataByTable(
@@ -372,7 +373,8 @@ public class PinotTaskRestletResource {
 
   @GET
   @Path("/tasks/{taskType}/{tableNameWithType}/debug")
-  @Authorize(targetType = TargetType.CLUSTER, action = Actions.Cluster.DEBUG_TASK)
+  @Authorize(targetType = TargetType.CLUSTER, action = Actions.Cluster.DEBUG_TASK,
+      tableScopeParam = "tableNameWithType")
   @Produces(MediaType.APPLICATION_JSON)
   @ApiOperation("Fetch information for all the tasks for the given task type and table")
   @ManagedAsync
@@ -398,7 +400,7 @@ public class PinotTaskRestletResource {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/tasks/generator/{tableNameWithType}/{taskType}/debug")
-  @Authorize(targetType = TargetType.CLUSTER, action = Actions.Cluster.GET_TASK)
+  @Authorize(targetType = TargetType.CLUSTER, action = Actions.Cluster.GET_TASK, tableScopeParam = "tableNameWithType")
   @ApiOperation("Fetch task generation information for the recent runs of the given task for the given table")
   @ManagedAsync
   public void getTaskGenerationDebugInfo(
@@ -818,7 +820,7 @@ public class PinotTaskRestletResource {
 
   @POST
   @Path("/tasks/schedule")
-  @Authorize(targetType = TargetType.CLUSTER, action = Actions.Cluster.CREATE_TASK)
+  @Authorize(targetType = TargetType.CLUSTER, action = Actions.Cluster.CREATE_TASK, tableScopeParam = "tableName")
   @Produces(MediaType.APPLICATION_JSON)
   @Authenticate(AccessType.UPDATE)
   @ApiOperation("Schedule tasks and return a map from task type to task name scheduled. If task type is missing, "
