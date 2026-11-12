@@ -19,6 +19,9 @@
 package org.apache.pinot.segment.local.rocksdb;
 
 import com.google.common.annotations.VisibleForTesting;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
 import org.rocksdb.Cache;
@@ -33,7 +36,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Server-wide RocksDB resources shared by all metadata stores: the native library, one LRU block cache, one
- * {@link WriteBufferManager} that charges memtables to that cache, and the background thread pool. Sharing them bounds
+ * {@link WriteBufferManager} that charges memtables to that cache, the RocksDB background thread pool, and a small
+ * Java pool for maintenance scans. Sharing them bounds
  * the native memory of all stores together by {@link RocksDBMetadataStoreConfig#getBlockCacheSizeBytes()}, no matter
  * how many table partitions a server hosts.
  *
@@ -51,6 +55,7 @@ public final class RocksDBEnvironment {
   private final RocksDBMetadataStoreConfig _config;
   private final Cache _blockCache;
   private final WriteBufferManager _writeBufferManager;
+  private final ExecutorService _maintenanceExecutor;
   @GuardedBy("LOCK")
   private int _refCount;
 
@@ -61,6 +66,12 @@ public final class RocksDBEnvironment {
     Env env = Env.getDefault();
     env.setBackgroundThreads(config.getBackgroundThreads(), Priority.LOW);
     env.setBackgroundThreads(Math.max(1, config.getBackgroundThreads() / 4), Priority.HIGH);
+    AtomicInteger threadCounter = new AtomicInteger();
+    _maintenanceExecutor = Executors.newFixedThreadPool(config.getMaintenanceThreads(), runnable -> {
+      Thread thread = new Thread(runnable, "rocksdb-metadata-maintenance-" + threadCounter.getAndIncrement());
+      thread.setDaemon(true);
+      return thread;
+    });
   }
 
   /**
@@ -91,6 +102,7 @@ public final class RocksDBEnvironment {
   public void release() {
     synchronized (LOCK) {
       if (--_refCount == 0) {
+        _maintenanceExecutor.shutdownNow();
         _writeBufferManager.close();
         _blockCache.close();
         if (_instance == this) {
@@ -107,6 +119,11 @@ public final class RocksDBEnvironment {
 
   public WriteBufferManager getWriteBufferManager() {
     return _writeBufferManager;
+  }
+
+  /// Shared pool for long-running store maintenance, such as metadata TTL scans, off the ingestion threads.
+  public ExecutorService getMaintenanceExecutor() {
+    return _maintenanceExecutor;
   }
 
   /// Bytes held by the shared block cache, including memtables charged to it.

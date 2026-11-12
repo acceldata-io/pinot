@@ -61,8 +61,13 @@ public final class RocksDBMetadataStoreConfig {
   public static final String MAX_RETRIES = "maxRetries";
   /// Initial backoff between retries; doubles on every retry.
   public static final String RETRY_BACKOFF_MS = "retryBackoffMs";
+  /// Server-wide: threads that run metadata TTL scans for all partitions.
+  public static final String MAINTENANCE_THREADS = "maintenanceThreads";
   /// Rate limit of the metadata TTL scan, in keys per second. 0 means unlimited.
   public static final String TTL_SCAN_MAX_KEYS_PER_SECOND = "ttlScanMaxKeysPerSecond";
+  /// Run the metadata TTL scan on the maintenance pool instead of the consuming thread. A full scan of a large store
+  /// takes far longer than the in-memory map, and the consuming thread would not ingest while it runs.
+  public static final String ASYNC_TTL_SCAN = "asyncTtlScan";
   /// Segments with at least this many valid keys are preloaded by ingesting a sorted SST file. 0 disables it.
   public static final String PRELOAD_SST_MIN_KEYS = "preloadSstMinKeys";
   /// Full upsert only: use the in-memory manager if RocksDB cannot be initialized. Partial upsert never falls back.
@@ -77,6 +82,7 @@ public final class RocksDBMetadataStoreConfig {
   public static final long DEFAULT_BLOCK_SIZE_BYTES = 4L << 10;
   public static final int DEFAULT_MAX_RETRIES = 3;
   public static final long DEFAULT_RETRY_BACKOFF_MS = 100;
+  public static final int DEFAULT_MAINTENANCE_THREADS = 2;
   public static final long DEFAULT_TTL_SCAN_MAX_KEYS_PER_SECOND = 0;
   public static final int DEFAULT_PRELOAD_SST_MIN_KEYS = 100_000;
 
@@ -90,7 +96,9 @@ public final class RocksDBMetadataStoreConfig {
   private final long _blockSizeBytes;
   private final int _maxRetries;
   private final long _retryBackoffMs;
+  private final int _maintenanceThreads;
   private final long _ttlScanMaxKeysPerSecond;
+  private final boolean _asyncTtlScan;
   private final int _preloadSstMinKeys;
   private final boolean _fallbackToInMemoryOnInitFailure;
 
@@ -106,6 +114,8 @@ public final class RocksDBMetadataStoreConfig {
     _blockSizeBytes = getLong(values, BLOCK_SIZE_BYTES, DEFAULT_BLOCK_SIZE_BYTES, 1 << 10);
     _maxRetries = (int) getLong(values, MAX_RETRIES, DEFAULT_MAX_RETRIES, 0);
     _retryBackoffMs = getLong(values, RETRY_BACKOFF_MS, DEFAULT_RETRY_BACKOFF_MS, 0);
+    _maintenanceThreads = (int) getLong(values, MAINTENANCE_THREADS, DEFAULT_MAINTENANCE_THREADS, 1);
+    _asyncTtlScan = Boolean.parseBoolean(values.getOrDefault(normalize(ASYNC_TTL_SCAN), "true"));
     _ttlScanMaxKeysPerSecond = getLong(values, TTL_SCAN_MAX_KEYS_PER_SECOND, DEFAULT_TTL_SCAN_MAX_KEYS_PER_SECOND, 0);
     _preloadSstMinKeys = (int) getLong(values, PRELOAD_SST_MIN_KEYS, DEFAULT_PRELOAD_SST_MIN_KEYS, 0);
     _fallbackToInMemoryOnInitFailure =
@@ -195,6 +205,14 @@ public final class RocksDBMetadataStoreConfig {
 
   public long getRetryBackoffMs() {
     return _retryBackoffMs;
+  }
+
+  public int getMaintenanceThreads() {
+    return _maintenanceThreads;
+  }
+
+  public boolean isAsyncTtlScan() {
+    return _asyncTtlScan;
   }
 
   public long getTtlScanMaxKeysPerSecond() {

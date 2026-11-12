@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
@@ -71,6 +72,7 @@ public class RocksDBPartitionUpsertMetadataManager extends BasePartitionUpsertMe
   @VisibleForTesting
   final PrimaryKeyLocationStore _store;
   private final RocksDBMetadataStoreConfig _storeConfig;
+  private final AtomicBoolean _ttlScanRunning = new AtomicBoolean();
 
   public RocksDBPartitionUpsertMetadataManager(String tableNameWithType, int partitionId, UpsertContext context,
       RocksDBMetadataStoreConfig storeConfig) {
@@ -325,9 +327,104 @@ public class RocksDBPartitionUpsertMetadataManager extends BasePartitionUpsertMe
     _store.getSegmentRegistry().retire(segment);
   }
 
+  /**
+   * Starts the TTL scan on the shared maintenance pool and returns, unless {@code asyncTtlScan} is off. At most one
+   * scan runs per partition; a call while one is running is skipped, since the next consuming segment triggers
+   * another. The scan holds a pending operation so that {@link #close()} waits for it.
+   */
   @Override
   public void doRemoveExpiredPrimaryKeys() {
-    throw new UnsupportedOperationException("Metadata TTL is not supported yet");
+    if (!_storeConfig.isAsyncTtlScan()) {
+      removeExpiredPrimaryKeysNow();
+      return;
+    }
+    if (!_ttlScanRunning.compareAndSet(false, true)) {
+      _logger.info("Skip scheduling TTL scan because the previous scan is still running");
+      return;
+    }
+    if (!startOperation()) {
+      _ttlScanRunning.set(false);
+      return;
+    }
+    try {
+      _store.getPartitionStore().getEnvironment().getMaintenanceExecutor().execute(() -> {
+        try {
+          long startTimeMs = System.currentTimeMillis();
+          removeExpiredPrimaryKeysNow();
+          _logger.info("Finished TTL scan in {}ms", System.currentTimeMillis() - startTimeMs);
+        } catch (Exception e) {
+          _logger.error("Caught exception while removing expired primary keys", e);
+        } finally {
+          _ttlScanRunning.set(false);
+          finishOperation();
+        }
+      });
+    } catch (RejectedExecutionException e) {
+      _ttlScanRunning.set(false);
+      finishOperation();
+      throw e;
+    }
+  }
+
+  @VisibleForTesting
+  void removeExpiredPrimaryKeysNow() {
+    AtomicInteger numMetadataTTLKeysRemoved = new AtomicInteger();
+    AtomicInteger numDeletedTTLKeysRemoved = new AtomicInteger();
+    AtomicInteger numTotalKeysMarkForDeletion = new AtomicInteger();
+    AtomicInteger numDeletedKeysWithinTTLWindow = new AtomicInteger();
+    double largestSeenComparisonValue = _largestSeenComparisonValue.get();
+    double metadataTTLKeysThreshold =
+        _metadataTTL > 0 ? largestSeenComparisonValue - _metadataTTL : Double.NEGATIVE_INFINITY;
+    double deletedKeysThreshold =
+        _deletedKeysTTL > 0 ? largestSeenComparisonValue - _deletedKeysTTL : Double.NEGATIVE_INFINITY;
+    _store.scanPrimary((primaryKey, recordLocation) -> {
+      double comparisonValue = ((Number) recordLocation.getComparisonValue()).doubleValue();
+      if (_metadataTTL > 0 && comparisonValue < metadataTTLKeysThreshold) {
+        numMetadataTTLKeysRemoved.getAndIncrement();
+        return true;
+      } else if (_deletedKeysTTL > 0) {
+        ThreadSafeMutableRoaringBitmap currentQueryableDocIds = recordLocation.getSegment().getQueryableDocIds();
+        // if key not part of queryable doc id, it means it is deleted
+        if (currentQueryableDocIds != null && !currentQueryableDocIds.contains(recordLocation.getDocId())) {
+          numTotalKeysMarkForDeletion.getAndIncrement();
+          if (comparisonValue >= deletedKeysThreshold) {
+            // If key is within the TTL window, do not remove it from the primary map
+            numDeletedKeysWithinTTLWindow.getAndIncrement();
+          } else {
+            // delete key from primary map
+            removeDocId(recordLocation.getSegment(), recordLocation.getDocId());
+            numDeletedTTLKeysRemoved.getAndIncrement();
+            return true;
+          }
+        }
+      }
+      return false;
+    }, _storeConfig.getTtlScanMaxKeysPerSecond());
+
+    // Update metrics
+    updatePrimaryKeyGauge();
+    int numMetadataTTLKeys = numMetadataTTLKeysRemoved.get();
+    if (numMetadataTTLKeys > 0) {
+      _logger.info("Deleted {} primary keys based on metadataTTL", numMetadataTTLKeys);
+      _serverMetrics.addMeteredTableValue(_tableNameWithType, ServerMeter.METADATA_TTL_PRIMARY_KEYS_REMOVED,
+          numMetadataTTLKeys);
+    }
+    int numDeletedTTLKeys = numDeletedTTLKeysRemoved.get();
+    if (numDeletedTTLKeys > 0) {
+      _logger.info("Deleted {} primary keys based on deletedKeysTTL", numDeletedTTLKeys);
+      _serverMetrics.addMeteredTableValue(_tableNameWithType, ServerMeter.DELETED_KEYS_TTL_PRIMARY_KEYS_REMOVED,
+          numDeletedTTLKeys);
+    }
+    int numTotalKeysMarkedForDeletion = numTotalKeysMarkForDeletion.get();
+    if (numTotalKeysMarkedForDeletion > 0) {
+      _serverMetrics.addMeteredTableValue(_tableNameWithType, ServerMeter.TOTAL_KEYS_MARKED_FOR_DELETION,
+          numTotalKeysMarkedForDeletion);
+    }
+    int numDeletedKeysWithinTTLWindowValue = numDeletedKeysWithinTTLWindow.get();
+    if (numDeletedKeysWithinTTLWindowValue > 0) {
+      _serverMetrics.addMeteredTableValue(_tableNameWithType, ServerMeter.DELETED_KEYS_WITHIN_TTL_WINDOW,
+          numDeletedKeysWithinTTLWindowValue);
+    }
   }
 
   @Override
