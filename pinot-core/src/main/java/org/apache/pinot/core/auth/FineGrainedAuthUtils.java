@@ -87,11 +87,11 @@ public class FineGrainedAuthUtils {
   /// @param endpointMethod the resource method, used to decide which query parameters are declared
   /// @param pathParams request path parameters
   /// @param queryParams request query parameters
-  /// @return the unnormalized table parameter value, or `null` for a cluster target or missing table parameter
+  /// @return the unnormalized table or database parameter value, or `null` for a cluster target or a missing parameter
   @Nullable
   public static String findRawTargetId(Authorize auth, Method endpointMethod,
       MultivaluedMap<String, String> pathParams, MultivaluedMap<String, String> queryParams) {
-    if (auth.targetType() != TargetType.TABLE) {
+    if (auth.targetType() == TargetType.CLUSTER) {
       return null;
     }
     String targetId = pathParams.getFirst(auth.paramName());
@@ -110,6 +110,8 @@ public class FineGrainedAuthUtils {
   ///    b. The targetType is [TargetType#TABLE]. In this case, the paramName field
   ///       ([Authorize#paramName()]) is mandatory, and it must be found in the path parameters or a query
   ///       parameter the method binds as `@QueryParam`.
+  ///    c. The targetType is [TargetType#DATABASE]. As for tables, paramName is mandatory and names the database
+  ///       parameter; the database name is passed to the access control as the target.
   /// 2. [Authorize] annotation is not present on the method. In this use the default authorization.
   ///
   /// @param endpointMethod of the API
@@ -151,6 +153,21 @@ public class FineGrainedAuthUtils {
         }
 
         accessDeniedMsg = "Access denied to " + auth.action() + " for table: " + targetId;
+      } else if (auth.targetType() == TargetType.DATABASE) {
+        // paramName is mandatory for database level authorization, as for tables
+        if (StringUtils.isEmpty(auth.paramName())) {
+          throw new WebApplicationException(
+              "paramName not found for database level authorization in API: " + uriInfo.getRequestUri(),
+              Response.Status.INTERNAL_SERVER_ERROR);
+        }
+        targetId = findRawTargetId(auth, endpointMethod, uriInfo.getPathParameters(), uriInfo.getQueryParameters());
+        if (StringUtils.isBlank(targetId)) {
+          throw new WebApplicationException(
+              "Missing required database parameter '" + auth.paramName() + "' for API: " + uriInfo.getRequestUri(),
+              Response.Status.BAD_REQUEST);
+        }
+        targetId = targetId.trim();
+        accessDeniedMsg = "Access denied to " + auth.action() + " for database: " + targetId;
       } else if (auth.targetType() == TargetType.CLUSTER) {
         accessDeniedMsg = "Access denied to " + auth.action() + " in the cluster";
       } else {

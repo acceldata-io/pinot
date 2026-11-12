@@ -301,6 +301,13 @@ public class ControllerClusterBasicAuthAuthorizationTest extends ControllerTest 
     assertGetStatus(instanceUrl, adminHeaders, 404);
     assertHttpError(404, () -> sendPutRequest(instanceUrl + "/state", "DISABLE", clusterUpdateHeaders));
     assertHttpError(404, () -> sendDeleteRequest(instanceUrl, adminHeaders));
+
+    // Database endpoints name a database, not a table: a table-scoped principal stays denied, the admin is allowed.
+    String databaseQuotaUrl = _controllerBaseApiUrl + "/databases/default/quotas";
+    for (Map<String, String> tableScopedHeaders : List.of(tableReadHeaders, tableAdminHeaders)) {
+      assertGetStatus(databaseQuotaUrl, tableScopedHeaders, 403);
+    }
+    assertGetStatus(databaseQuotaUrl, adminHeaders, 200);
   }
 
   /// Endpoints that used to carry no authorization annotation: cluster-wide ones are denied to a table-scoped

@@ -191,7 +191,8 @@ public class FineGrainedAuthorizationCoverageTest {
     List<String> undeclaredParam = new ArrayList<>();
     for (Endpoint endpoint : _endpoints) {
       Authorize authorize = endpoint._method.getAnnotation(Authorize.class);
-      if (authorize == null || authorize.targetType() != TargetType.TABLE) {
+      // TABLE and DATABASE targets both name the resource through paramName
+      if (authorize == null || authorize.targetType() == TargetType.CLUSTER) {
         continue;
       }
       if (authorize.paramName().isEmpty()) {
@@ -202,9 +203,9 @@ public class FineGrainedAuthorizationCoverageTest {
       }
     }
     assertSameEndpoints(missingParam, KNOWN_TABLE_TARGET_WITHOUT_PARAM,
-        "TABLE-scoped @Authorize without paramName (the filter returns HTTP 500 for these)");
+        "TABLE- or DATABASE-scoped @Authorize without paramName (the filter returns HTTP 500 for these)");
     assertTrue(undeclaredParam.isEmpty(),
-        "TABLE-scoped @Authorize whose paramName is not a @PathParam or @QueryParam of the method: "
+        "TABLE- or DATABASE-scoped @Authorize whose paramName is not a @PathParam or @QueryParam of the method: "
             + undeclaredParam);
   }
 
@@ -223,7 +224,7 @@ public class FineGrainedAuthorizationCoverageTest {
 
   @Test
   public void testDeclaredActionsAreUniquePerTargetType() {
-    for (Class<?> actionsClass : Arrays.asList(Actions.Cluster.class, Actions.Table.class)) {
+    for (Class<?> actionsClass : Arrays.asList(Actions.Cluster.class, Actions.Database.class, Actions.Table.class)) {
       Map<String, List<String>> byValue = new HashMap<>();
       for (Field field : actionsClass.getDeclaredFields()) {
         if (isActionConstant(field)) {
@@ -245,6 +246,7 @@ public class FineGrainedAuthorizationCoverageTest {
   public static Map<TargetType, Set<String>> declaredActions() {
     Map<TargetType, Set<String>> actions = new TreeMap<>();
     actions.put(TargetType.CLUSTER, constantValues(Actions.Cluster.class));
+    actions.put(TargetType.DATABASE, constantValues(Actions.Database.class));
     actions.put(TargetType.TABLE, constantValues(Actions.Table.class));
     return actions;
   }

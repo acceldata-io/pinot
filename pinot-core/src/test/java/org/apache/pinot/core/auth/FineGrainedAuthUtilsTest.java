@@ -199,9 +199,86 @@ public class FineGrainedAuthUtilsTest {
     assertTrue(exception.getMessage().contains("Invalid table parameter 'tableName'"));
   }
 
+  @Test
+  public void testDatabaseTargetPassesTheDatabaseName() {
+    for (String database : new String[]{"sales", "default"}) {
+      FineGrainedAccessControl ac = mock(FineGrainedAccessControl.class);
+      when(ac.hasAccess(any(HttpHeaders.class), any(), any(), any())).thenReturn(true);
+      HttpHeaders headers = mock(HttpHeaders.class);
+      FineGrainedAuthUtils.validateFineGrainedAuth(getDatabaseMethod("deleteDatabase"),
+          databaseUri(pathParams(database), new MultivaluedHashMap<>()), headers, ac);
+      verify(ac).hasAccess(headers, TargetType.DATABASE, database, "deleteDatabase");
+    }
+  }
+
+  @Test
+  public void testDatabaseTargetDenied() {
+    FineGrainedAccessControl ac = mock(FineGrainedAccessControl.class);
+    when(ac.hasAccess(any(HttpHeaders.class), any(), any(), any())).thenReturn(false);
+    WebApplicationException e = expectThrows(WebApplicationException.class,
+        () -> FineGrainedAuthUtils.validateFineGrainedAuth(getDatabaseMethod("deleteDatabase"),
+            databaseUri(pathParams("sales"), new MultivaluedHashMap<>()), mock(HttpHeaders.class), ac));
+    assertEquals(e.getResponse().getStatus(), Response.Status.FORBIDDEN.getStatusCode());
+    assertTrue(e.getMessage().contains("Access denied to deleteDatabase for database: sales"), e.getMessage());
+  }
+
+  @Test
+  public void testMissingDatabaseParameterIsBadRequest() {
+    // A caller-supplied query parameter the method does not declare must not stand in for the database
+    MultivaluedHashMap<String, String> query = new MultivaluedHashMap<>();
+    query.putSingle("databaseName", "sales");
+    FineGrainedAccessControl ac = mock(FineGrainedAccessControl.class);
+    WebApplicationException e = expectThrows(WebApplicationException.class,
+        () -> FineGrainedAuthUtils.validateFineGrainedAuth(getDatabaseMethod("deleteDatabase"),
+            databaseUri(new MultivaluedHashMap<>(), query), mock(HttpHeaders.class), ac));
+    assertEquals(e.getResponse().getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
+    assertTrue(e.getMessage().contains("Missing required database parameter 'databaseName'"), e.getMessage());
+    verify(ac, never()).hasAccess(any(HttpHeaders.class), any(), any(), any());
+  }
+
+  @Test
+  public void testDatabaseTargetWithoutParamNameIsServerError() {
+    WebApplicationException e = expectThrows(WebApplicationException.class,
+        () -> FineGrainedAuthUtils.validateFineGrainedAuth(getDatabaseMethod("databaseWithoutParam"),
+            databaseUri(pathParams("sales"), new MultivaluedHashMap<>()), mock(HttpHeaders.class),
+            mock(FineGrainedAccessControl.class)));
+    assertEquals(e.getResponse().getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+  }
+
+  private static MultivaluedHashMap<String, String> pathParams(String database) {
+    MultivaluedHashMap<String, String> params = new MultivaluedHashMap<>();
+    params.putSingle("databaseName", database);
+    return params;
+  }
+
+  private static UriInfo databaseUri(MultivaluedHashMap<String, String> pathParams,
+      MultivaluedHashMap<String, String> queryParams) {
+    UriInfo uriInfo = mock(UriInfo.class);
+    when(uriInfo.getPathParameters()).thenReturn(pathParams);
+    when(uriInfo.getQueryParameters()).thenReturn(queryParams);
+    when(uriInfo.getRequestUri()).thenReturn(URI.create("http://localhost/databases/x"));
+    return uriInfo;
+  }
+
+  private static Method getDatabaseMethod(String name) {
+    try {
+      return TestResource.class.getDeclaredMethod(name);
+    } catch (NoSuchMethodException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   static class TestResource {
     @Authorize(targetType = TargetType.CLUSTER, action = "getCluster")
     void getCluster() {
+    }
+
+    @Authorize(targetType = TargetType.DATABASE, paramName = "databaseName", action = "deleteDatabase")
+    void deleteDatabase() {
+    }
+
+    @Authorize(targetType = TargetType.DATABASE, action = "deleteDatabase")
+    void databaseWithoutParam() {
     }
 
     @Authorize(targetType = TargetType.TABLE, paramName = "tableName", action = "getTable")

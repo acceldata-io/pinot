@@ -172,6 +172,11 @@ public class AuthenticationFilter implements ContainerRequestFilter {
       // Same primitive as FineGrainedAuthUtils.validateFineGrainedAuth: path first, then a declared query param.
       return FineGrainedAuthUtils.findRawTargetId(authorize, endpointMethod, pathParameters, queryParameters);
     }
+    if (authorize != null && authorize.targetType() == TargetType.DATABASE) {
+      // A database endpoint names no table: the legacy table-scoped check treats it as cluster-wide, and the
+      // database itself is passed to the fine-grained check.
+      return null;
+    }
     if (authorize != null && authorize.targetType() == TargetType.CLUSTER) {
       String parameter = authorize.tableScopeParam();
       if (parameter.isEmpty()) {

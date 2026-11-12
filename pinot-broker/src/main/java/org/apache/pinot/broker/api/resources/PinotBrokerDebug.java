@@ -324,7 +324,8 @@ public class PinotBrokerDebug {
   @GET
   @Path("debug/databases/queryQuota/{databaseName}")
   @Produces(MediaType.TEXT_PLAIN)
-  @Authorize(targetType = TargetType.CLUSTER, action = Actions.Cluster.GET_DATABASE_QUERY_QUOTA)
+  @Authorize(targetType = TargetType.DATABASE, paramName = "databaseName",
+      action = Actions.Database.GET_DATABASE_QUERY_QUOTA)
   @ApiOperation(value = "Get the active query quota being imposed on the database", notes = "This is a debug endpoint, "
       + "and won't maintain backward compatibility")
   public String getDatabaseQueryQuota(

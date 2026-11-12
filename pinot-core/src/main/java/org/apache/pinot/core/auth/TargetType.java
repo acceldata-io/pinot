@@ -20,8 +20,15 @@
 package org.apache.pinot.core.auth;
 
 /**
- * Target object types used in fine grain access control of the rest endpoints
+ * Target object types used in fine grain access control of the rest endpoints.
+ *
+ * <ul>
+ *   <li>{@link #CLUSTER}: the whole cluster; the endpoint names no table or database.</li>
+ *   <li>{@link #DATABASE}: one database, named by the endpoint parameter given in {@link Authorize#paramName()}, so an
+ *   access control can grant "all tables of database X".</li>
+ *   <li>{@link #TABLE}: one table, named by the endpoint parameter given in {@link Authorize#paramName()}.</li>
+ * </ul>
  */
 public enum TargetType {
-  CLUSTER, TABLE
+  CLUSTER, DATABASE, TABLE
 }

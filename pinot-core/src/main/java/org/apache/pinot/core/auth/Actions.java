@@ -108,6 +108,15 @@ public class Actions {
   }
 
   // Action names for table
+  /// Actions on a single database, used with [TargetType#DATABASE]. The values are the same as the database actions in
+  /// [Cluster], so an access control that decides on the action name sees the same names as before.
+  public static class Database {
+    public static final String DELETE_DATABASE = Cluster.DELETE_DATABASE;
+    public static final String GET_DATABASE_QUOTA = Cluster.GET_DATABASE_QUOTA;
+    public static final String GET_DATABASE_QUERY_QUOTA = Cluster.GET_DATABASE_QUERY_QUOTA;
+    public static final String UPDATE_DATABASE_QUOTA = Cluster.UPDATE_DATABASE_QUOTA;
+  }
+
   public static class Table {
     public static final String BUILD_ROUTING = "BuildRouting";
     public static final String CANCEL_REBALANCE = "CancelRebalance";

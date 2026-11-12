@@ -93,7 +93,7 @@ public class PinotDatabaseRestletResource {
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/databases/{databaseName}")
   @Authenticate(AccessType.DELETE)
-  @Authorize(targetType = TargetType.CLUSTER, action = Actions.Cluster.DELETE_DATABASE)
+  @Authorize(targetType = TargetType.DATABASE, paramName = "databaseName", action = Actions.Database.DELETE_DATABASE)
   @ApiOperation(value = "Delete all tables in given database name", notes = "Delete all tables in given database name")
   public DeleteDatabaseResponse deleteTablesInDatabase(
       @ApiParam(value = "Database name", required = true) @PathParam("databaseName") String databaseName,
@@ -139,7 +139,8 @@ public class PinotDatabaseRestletResource {
   @Consumes(MediaType.APPLICATION_JSON)
   @Path("/databases/{databaseName}/quotas")
   @Authenticate(AccessType.UPDATE)
-  @Authorize(targetType = TargetType.CLUSTER, action = Actions.Cluster.UPDATE_DATABASE_QUOTA)
+  @Authorize(targetType = TargetType.DATABASE, paramName = "databaseName",
+      action = Actions.Database.UPDATE_DATABASE_QUOTA)
   @ApiOperation(value = "Update database quotas", notes = "Update database quotas")
   public SuccessResponse setDatabaseQuota(
       @PathParam("databaseName") String databaseName, @QueryParam("maxQueriesPerSecond") String queryQuota,
@@ -171,7 +172,7 @@ public class PinotDatabaseRestletResource {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/databases/{databaseName}/quotas")
-  @Authorize(targetType = TargetType.CLUSTER, action = Actions.Cluster.GET_DATABASE_QUOTA)
+  @Authorize(targetType = TargetType.DATABASE, paramName = "databaseName", action = Actions.Database.GET_DATABASE_QUOTA)
   @ApiOperation(value = "Get database quota configs", notes = "Get database quota configs")
   public QuotaConfig getDatabaseQuota(
       @PathParam("databaseName") String databaseName, @Context HttpHeaders httpHeaders) {
