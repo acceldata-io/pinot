@@ -356,6 +356,9 @@ public class PinotClientRequest {
       }
     } catch (QueryException e) {
       asyncResponse.resume(TimeSeriesResponseMapper.toBrokerResponse(e));
+    } catch (WebApplicationException e) {
+      // Authentication / authorization failures keep their status (401 / 403) instead of becoming a 500
+      asyncResponse.resume(e);
     } catch (Exception e) {
       LOGGER.error("Caught exception while processing POST timeseries request", e);
       _brokerMetrics.addMeteredGlobalValue(BrokerMeter.UNCAUGHT_POST_EXCEPTIONS, 1L);
@@ -388,6 +391,10 @@ public class PinotClientRequest {
       }
     } catch (QueryException e) {
       asyncResponse.resume(PinotBrokerTimeSeriesResponse.fromException(e));
+    } catch (WebApplicationException e) {
+      // Authentication / authorization failures keep their status (401 / 403), with the usual error body
+      asyncResponse.resume(Response.status(e.getResponse().getStatus())
+          .entity(PinotBrokerTimeSeriesResponse.fromException(e)).build());
     } catch (Exception e) {
       LOGGER.error("Caught exception while processing GET request", e);
       _brokerMetrics.addMeteredGlobalValue(BrokerMeter.UNCAUGHT_POST_EXCEPTIONS, 1L);

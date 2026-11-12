@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Response;
 import org.apache.pinot.broker.api.AccessControl;
 import org.apache.pinot.broker.api.HttpRequesterIdentity;
 import org.apache.pinot.broker.broker.AccessControlFactory;
@@ -316,5 +317,13 @@ public class TimeSeriesRequestHandlerTest {
     BaseTimeSeriesPlanNode root = mock(BaseTimeSeriesPlanNode.class);
     when(root.getInputs()).thenReturn(List.of(leafA, inner));
     assertEquals(TimeSeriesRequestHandler.collectTableNames(root), Set.of("metrics_REALTIME", "other_OFFLINE"));
+  }
+
+  @Test
+  public void testOnlyAuthFailuresKeepTheirStatus() {
+    assertTrue(TimeSeriesRequestHandler.isAccessDenied(new WebApplicationException(Response.Status.UNAUTHORIZED)));
+    assertTrue(TimeSeriesRequestHandler.isAccessDenied(new WebApplicationException(Response.Status.FORBIDDEN)));
+    assertFalse(TimeSeriesRequestHandler.isAccessDenied(new WebApplicationException(Response.Status.BAD_REQUEST)));
+    assertFalse(TimeSeriesRequestHandler.isAccessDenied(new IllegalStateException("boom")));
   }
 }

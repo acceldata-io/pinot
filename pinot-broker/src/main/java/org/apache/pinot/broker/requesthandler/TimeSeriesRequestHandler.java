@@ -179,6 +179,11 @@ public class TimeSeriesRequestHandler extends BaseBrokerRequestHandler {
     } catch (Exception e) {
       QueryException qe;
       _brokerMetrics.addMeteredGlobalValue(BrokerMeter.TIME_SERIES_GLOBAL_QUERIES_FAILED, 1);
+      if (isAccessDenied(e)) {
+        // Let the caller answer with the authentication / authorization status rather than a query error
+        requestContext.setErrorCode(QueryErrorCode.ACCESS_DENIED);
+        throw (WebApplicationException) e;
+      }
       if (e instanceof QueryException) {
         qe = (QueryException) e;
       } else {
@@ -389,6 +394,17 @@ public class TimeSeriesRequestHandler extends BaseBrokerRequestHandler {
             col, expressionString, tableName));
       }
     }
+  }
+
+  /// Returns whether the exception is an authentication (401) or authorization (403) failure.
+  @VisibleForTesting
+  static boolean isAccessDenied(Exception e) {
+    if (!(e instanceof WebApplicationException)) {
+      return false;
+    }
+    int status = ((WebApplicationException) e).getResponse().getStatus();
+    return status == Response.Status.UNAUTHORIZED.getStatusCode()
+        || status == Response.Status.FORBIDDEN.getStatusCode();
   }
 
   /// Table-level access control for the tables a time-series query reads, recording a denial on the request.
