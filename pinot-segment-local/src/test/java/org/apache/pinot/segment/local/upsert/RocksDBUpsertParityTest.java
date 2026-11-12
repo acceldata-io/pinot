@@ -154,7 +154,7 @@ public class RocksDBUpsertParityTest {
   static RocksDBMetadataStoreConfig storeConfig() {
     return RocksDBMetadataStoreConfig.from(null,
         Map.of("rocksdb.dataDir", new File(TEMP_DIR, "rocksdb").getAbsolutePath(), "rocksdb.preloadSstMinKeys",
-            "50"));
+            "50", "rocksdb.asyncTtlScan", "false"));
   }
 
   static String makeKey(Random random, int keyIndex) {
@@ -168,12 +168,12 @@ public class RocksDBUpsertParityTest {
     return key.toString();
   }
 
-  static List<Row> randomRows(Random random, int numRows, int numKeys, int maxComparisonValue,
-      boolean withDeletes) {
+  static List<Row> randomRows(Random random, int numRows, int numKeys, int minComparisonValue,
+      int maxComparisonValue, boolean withDeletes) {
     List<Row> rows = new ArrayList<>(numRows);
     for (int i = 0; i < numRows; i++) {
-      rows.add(new Row(makeKey(random, random.nextInt(numKeys)), random.nextInt(maxComparisonValue),
-          withDeletes && random.nextInt(10) == 0));
+      rows.add(new Row(makeKey(random, random.nextInt(numKeys)),
+          minComparisonValue + random.nextInt(maxComparisonValue), withDeletes && random.nextInt(10) == 0));
     }
     return rows;
   }
@@ -306,6 +306,9 @@ public class RocksDBUpsertParityTest {
     /// Simulates replicas that diverged: commits may keep fewer rows than consumed, and consuming segments may be
     /// dropped. In PROTECTED mode both trigger reverting keys to their previous locations.
     boolean _divergent;
+    /// Comparison values grow by this much per segment, so that metadata TTL expires old keys.
+    int _comparisonDrift;
+    boolean _ttlScans;
 
     Driver(long seed, boolean withDeletes, int numKeys, int maxComparisonValue, World expected, World actual) {
       _random = new Random(seed);
@@ -320,7 +323,8 @@ public class RocksDBUpsertParityTest {
       int sequenceNumber = _sequenceNumber++;
       String name = new LLCSegmentName(RAW_TABLE_NAME, 0, sequenceNumber, 1_700_000_000_000L).toString();
       return new SegmentSpec(name, 1_700_000_000_000L + sequenceNumber,
-          randomRows(_random, numRows, _numKeys, _maxComparisonValue, _withDeletes));
+          randomRows(_random, numRows, _numKeys, sequenceNumber * _comparisonDrift, _maxComparisonValue,
+              _withDeletes));
     }
 
     private ThreadSafeMutableRoaringBitmap newQueryable() {
@@ -427,6 +431,12 @@ public class RocksDBUpsertParityTest {
         String description;
         int choice = _random.nextInt(100);
         if (_consuming == null) {
+          if (_ttlScans) {
+            // Like RealtimeSegmentDataManager, remove expired keys before starting the next consuming segment.
+            for (World world : List.of(_expected, _actual)) {
+              world._manager.removeExpiredPrimaryKeys();
+            }
+          }
           startConsuming();
           description = "start consuming " + _consuming._name;
         } else if (choice < 50 && _consumedRows < _consuming._rows.size()) {
@@ -452,9 +462,10 @@ public class RocksDBUpsertParityTest {
           }
           if (choice < 92) {
             List<Row> rows = new ArrayList<>();
+            int minComparisonValue = _sequenceNumber * _comparisonDrift;
             for (int i = 0; i < 5 + _random.nextInt(40); i++) {
-              rows.add(new Row(makeKey(_random, _random.nextInt(_numKeys)), _random.nextInt(_maxComparisonValue),
-                  _withDeletes && _random.nextInt(10) == 0));
+              rows.add(new Row(makeKey(_random, _random.nextInt(_numKeys)),
+                  minComparisonValue + _random.nextInt(_maxComparisonValue), _withDeletes && _random.nextInt(10) == 0));
             }
             reload(name, rows);
             description = "reload " + name;
@@ -540,6 +551,72 @@ public class RocksDBUpsertParityTest {
       closeQuietly(expected._manager);
       closeQuietly(actual._manager);
     }
+  }
+
+  @DataProvider
+  public Object[][] ttlCases() {
+    List<Object[]> cases = new ArrayList<>();
+    for (boolean partial : new boolean[]{false, true}) {
+      for (long seed = 1; seed <= 3; seed++) {
+        // metadataTTL only, deletedKeysTTL only (needs deletes)
+        cases.add(new Object[]{partial, 30.0, 0.0, false, seed});
+        cases.add(new Object[]{partial, 0.0, 20.0, true, seed});
+      }
+    }
+    return cases.toArray(new Object[0][]);
+  }
+
+  @Test(dataProvider = "ttlCases")
+  public void testTTLParity(boolean partial, double metadataTTL, double deletedKeysTTL, boolean withDeletes,
+      long seed) {
+    UpsertContext.Builder builder = contextBuilder(HashFunction.NONE, withDeletes).setEnableSnapshot(true)
+        .setMetadataTTL(metadataTTL).setDeletedKeysTTL(deletedKeysTTL);
+    if (partial) {
+      builder.setPartialUpsertHandler(recordingPartialUpsertHandler());
+    }
+    UpsertContext context = builder.build();
+    World expected = new World(new ConcurrentMapPartitionUpsertMetadataManager(REALTIME_TABLE_NAME, 0, context));
+    World actual =
+        new World(new RocksDBPartitionUpsertMetadataManager(REALTIME_TABLE_NAME, 0, context, storeConfig()));
+    try {
+      Driver driver = new Driver(seed, withDeletes, 300, 40, expected, actual);
+      driver._comparisonDrift = 4;
+      driver._ttlScans = true;
+      driver.run(400);
+      assertTrue(expected._manager.getNumPrimaryKeys() < 300, "TTL never removed keys");
+    } finally {
+      closeQuietly(expected._manager);
+      closeQuietly(actual._manager);
+    }
+  }
+
+  @Test
+  public void testAsyncTTLScanRunsOffThreadAndCloseWaitsForIt()
+      throws Exception {
+    UpsertContext context =
+        contextBuilder(HashFunction.NONE, false).setEnableSnapshot(true).setMetadataTTL(10).build();
+    RocksDBMetadataStoreConfig asyncConfig = RocksDBMetadataStoreConfig.from(null,
+        Map.of("rocksdb.dataDir", new File(TEMP_DIR, "rocksdb-async").getAbsolutePath(),
+            "rocksdb.ttlScanMaxKeysPerSecond", "20000"));
+    RocksDBPartitionUpsertMetadataManager manager =
+        new RocksDBPartitionUpsertMetadataManager(REALTIME_TABLE_NAME, 0, context, asyncConfig);
+    SegmentSpec spec = new SegmentSpec(new LLCSegmentName(RAW_TABLE_NAME, 0, 0, 1_700_000_000_000L).toString(),
+        1_700_000_000_000L, new ArrayList<>());
+    for (int i = 0; i < 10_000; i++) {
+      spec._rows.add(new Row(makeKey(null, i), i < 9_000 ? 0 : 100, false));
+    }
+    MutableSegment segment = mockMutableSegment(spec, new ThreadSafeMutableRoaringBitmap(), null);
+    for (int docId = 0; docId < spec._rows.size(); docId++) {
+      manager.addRecord(segment, recordInfo(spec._rows, docId));
+    }
+    assertEquals(manager.getNumPrimaryKeys(), 10_000);
+    long startNs = System.nanoTime();
+    manager.removeExpiredPrimaryKeys();
+    // At 20K keys/s the scan of 10K keys takes about 0.5s; scheduling it must not.
+    assertTrue(System.nanoTime() - startNs < 200_000_000L, "TTL scan blocked the caller");
+    manager.stop();
+    manager.close();
+    assertEquals(manager.getNumPrimaryKeys(), 1_000);
   }
 
   @Test(dataProvider = "fullUpsertCases")
