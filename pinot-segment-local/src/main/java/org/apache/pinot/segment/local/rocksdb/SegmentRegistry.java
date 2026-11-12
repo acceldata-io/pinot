@@ -18,10 +18,12 @@
  */
 package org.apache.pinot.segment.local.rocksdb;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
@@ -34,9 +36,10 @@ import org.apache.pinot.segment.spi.IndexSegment;
  * reloaded segment with the same name gets a new id. Ids are never reused, which keeps a stale stored id from ever
  * resolving to a different segment.
  *
- * <p>An id stays resolvable after {@link #retire} until {@link #releaseRetired} drops it, because keys can still point
- * at a removed segment until the metadata TTL scan deletes them (the base manager skips removing out-of-TTL segments).
- * The in-memory map keeps such segments reachable the same way.
+ * <p>The store reports every stored reference with {@link #addRef} and {@link #removeRef}. A retired id is released
+ * as soon as no stored entry references it, which is when the in-memory map would let the segment be garbage
+ * collected. Until then it stays resolvable, because keys can still point at a removed segment (the base manager skips
+ * removing out-of-TTL segments) until the metadata TTL scan deletes them.
  *
  * <p>Thread-safe. {@link #getOrAssignId} is on the ingestion path and is lock-free for the last used segment.
  */
@@ -44,6 +47,7 @@ import org.apache.pinot.segment.spi.IndexSegment;
 public final class SegmentRegistry {
   private final Map<Integer, IndexSegment> _idToSegment = new ConcurrentHashMap<>();
   private final Set<Integer> _retiredIds = ConcurrentHashMap.newKeySet();
+  private final Map<Integer, AtomicLong> _refCounts = new ConcurrentHashMap<>();
   @GuardedBy("this")
   private final IdentityHashMap<IndexSegment, Integer> _segmentToId = new IdentityHashMap<>();
   @GuardedBy("this")
@@ -99,13 +103,39 @@ public final class SegmentRegistry {
     return _idToSegment.get(id);
   }
 
-  /// Marks a segment as removed from the manager. Its id stays resolvable until {@link #releaseRetired} drops it.
+  /// Records that a stored entry now references {@code id}.
+  public void addRef(int id) {
+    _refCounts.computeIfAbsent(id, k -> new AtomicLong()).incrementAndGet();
+  }
+
+  /// Records that a stored entry no longer references {@code id}; releases the id if it is retired and unreferenced.
+  public void removeRef(int id) {
+    AtomicLong refCount = _refCounts.get(id);
+    if (refCount != null && refCount.decrementAndGet() <= 0 && _retiredIds.contains(id)) {
+      releaseIfUnreferenced(id);
+    }
+  }
+
+  private synchronized void releaseIfUnreferenced(int id) {
+    AtomicLong refCount = _refCounts.get(id);
+    if (_retiredIds.contains(id) && (refCount == null || refCount.get() <= 0)) {
+      _retiredIds.remove(id);
+      _idToSegment.remove(id);
+      _refCounts.remove(id);
+    }
+  }
+
+  /// Marks a segment as removed from the manager. Its id stays resolvable while stored entries reference it.
   public void retire(IndexSegment segment) {
+    Integer id;
     synchronized (this) {
-      Integer id = _segmentToId.remove(segment);
+      id = _segmentToId.remove(segment);
       if (id != null) {
         _retiredIds.add(id);
       }
+    }
+    if (id != null) {
+      releaseIfUnreferenced(id);
     }
     LastLookup lastLookup = _lastLookup;
     if (lastLookup != null && lastLookup._segment == segment) {
@@ -125,6 +155,7 @@ public final class SegmentRegistry {
       if (!referencedIds.contains(id)) {
         _retiredIds.remove(id);
         _idToSegment.remove(id);
+        _refCounts.remove(id);
         released++;
       }
     }
@@ -139,10 +170,22 @@ public final class SegmentRegistry {
     return _retiredIds.size();
   }
 
+  @VisibleForTesting
+  public Set<Integer> getRetiredIds() {
+    return Set.copyOf(_retiredIds);
+  }
+
+  @VisibleForTesting
+  public long getRefCount(int id) {
+    AtomicLong refCount = _refCounts.get(id);
+    return refCount != null ? refCount.get() : 0;
+  }
+
   public synchronized void clear() {
     _segmentToId.clear();
     _idToSegment.clear();
     _retiredIds.clear();
+    _refCounts.clear();
     _lastLookup = null;
   }
 }
