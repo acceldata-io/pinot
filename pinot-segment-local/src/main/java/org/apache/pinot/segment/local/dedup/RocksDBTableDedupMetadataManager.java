@@ -21,7 +21,9 @@ package org.apache.pinot.segment.local.dedup;
 import com.google.common.base.Preconditions;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
+import org.apache.pinot.common.metrics.ServerMetrics;
 import org.apache.pinot.segment.local.data.manager.TableDataManager;
+import org.apache.pinot.segment.local.rocksdb.RocksDBMetadataMetrics;
 import org.apache.pinot.segment.local.rocksdb.RocksDBMetadataStoreConfig;
 import org.apache.pinot.segment.local.utils.SegmentOperationsThrottlerSet;
 import org.apache.pinot.spi.config.table.DedupConfig;
@@ -62,6 +64,7 @@ public class RocksDBTableDedupMetadataManager extends BaseTableDedupMetadataMana
       _inMemoryReason = "RocksDB is disabled by config";
       LOGGER.warn("Using in-memory dedup metadata for table: {} because {}", _tableNameWithType, _inMemoryReason);
     }
+    RocksDBMetadataMetrics.setInMemoryFallback(ServerMetrics.get(), _tableNameWithType, _inMemoryReason != null);
   }
 
   @Override
@@ -76,6 +79,7 @@ public class RocksDBTableDedupMetadataManager extends BaseTableDedupMetadataMana
         LOGGER.error("Failed to open RocksDB dedup metadata for table: {}, partition: {}, using in-memory map",
             _tableNameWithType, partitionId, e);
         _inMemoryReason = "RocksDB failed to open: " + e;
+        RocksDBMetadataMetrics.setInMemoryFallback(ServerMetrics.get(), _tableNameWithType, true);
       }
     }
     return new ConcurrentMapPartitionDedupMetadataManager(_tableNameWithType, partitionId, _context);

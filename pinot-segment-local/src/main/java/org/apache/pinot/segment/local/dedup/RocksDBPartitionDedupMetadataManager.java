@@ -28,6 +28,7 @@ import javax.annotation.concurrent.ThreadSafe;
 import org.apache.pinot.segment.local.rocksdb.DedupKeyStore;
 import org.apache.pinot.segment.local.rocksdb.DedupKeyStore.Entry;
 import org.apache.pinot.segment.local.rocksdb.MetadataCodec;
+import org.apache.pinot.segment.local.rocksdb.RocksDBMetadataMetrics;
 import org.apache.pinot.segment.local.rocksdb.RocksDBMetadataStoreConfig;
 import org.apache.pinot.segment.local.utils.HashUtils;
 import org.apache.pinot.segment.spi.ImmutableSegment;
@@ -55,6 +56,8 @@ public class RocksDBPartitionDedupMetadataManager extends BasePartitionDedupMeta
     super(tableNameWithType, partitionId, dedupContext);
     _storeConfig = storeConfig;
     _store = new DedupKeyStore(getStoreDir(tableNameWithType, partitionId, dedupContext, storeConfig), storeConfig);
+    RocksDBMetadataMetrics.registerPartitionGauges(_serverMetrics, tableNameWithType, partitionId,
+        _store.getPartitionStore(), _store::getNumStaleEntries);
     _logger.info("Using RocksDB dedup metadata store in: {}", _store.getPartitionStore().getDir());
   }
 
@@ -224,6 +227,7 @@ public class RocksDBPartitionDedupMetadataManager extends BasePartitionDedupMeta
 
   @Override
   protected void doClose() {
+    RocksDBMetadataMetrics.removePartitionGauges(_serverMetrics, _tableNameWithType, _partitionId);
     _store.close();
   }
 }
