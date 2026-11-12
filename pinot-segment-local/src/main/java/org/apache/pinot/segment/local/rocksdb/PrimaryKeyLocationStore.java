@@ -133,6 +133,14 @@ public class PrimaryKeyLocationStore implements AutoCloseable {
         location.getDocId(), location.getComparisonValue());
   }
 
+  private void addRef(byte[] value) {
+    _segmentRegistry.addRef(MetadataCodec.decodeSegmentId(value));
+  }
+
+  private void removeRef(byte[] value) {
+    _segmentRegistry.removeRef(MetadataCodec.decodeSegmentId(value));
+  }
+
   /**
    * Atomically updates the primary location of {@code key}. See the class Javadoc for the contract.
    *
@@ -149,11 +157,16 @@ public class PrimaryKeyLocationStore implements AutoCloseable {
         if (currentValue != null) {
           _store.delete(PRIMARY, key);
           _numPrimaryKeys.decrementAndGet();
+          removeRef(currentValue);
         }
       } else if (updated != current) {
-        _store.put(PRIMARY, key, encode(updated));
+        byte[] updatedValue = encode(updated);
+        _store.put(PRIMARY, key, updatedValue);
+        addRef(updatedValue);
         if (currentValue == null) {
           _numPrimaryKeys.incrementAndGet();
+        } else {
+          removeRef(currentValue);
         }
       }
       return updated;
@@ -172,10 +185,15 @@ public class PrimaryKeyLocationStore implements AutoCloseable {
   public void put(byte[] key, Location location) {
     ReentrantLock lock = lock(key);
     try {
-      if (_store.get(PRIMARY, key) == null) {
+      byte[] currentValue = _store.get(PRIMARY, key);
+      byte[] value = encode(location);
+      _store.put(PRIMARY, key, value);
+      addRef(value);
+      if (currentValue == null) {
         _numPrimaryKeys.incrementAndGet();
+      } else {
+        removeRef(currentValue);
       }
-      _store.put(PRIMARY, key, encode(location));
     } finally {
       lock.unlock();
     }
@@ -190,42 +208,38 @@ public class PrimaryKeyLocationStore implements AutoCloseable {
     if (numKeys == 0) {
       return;
     }
-    List<byte[]> values = new ArrayList<>(numKeys);
-    for (Location location : locations) {
-      values.add(encode(location));
+    Integer[] order = new Integer[numKeys];
+    for (int i = 0; i < numKeys; i++) {
+      order[i] = i;
     }
-    if (sstMinKeys > 0 && numKeys >= sstMinKeys) {
-      Integer[] order = new Integer[numKeys];
-      for (int i = 0; i < numKeys; i++) {
-        order[i] = i;
+    // Stable sort, so the last value of a duplicated key wins, as consecutive puts would.
+    Arrays.sort(order, (a, b) -> Arrays.compareUnsigned(keys.get(a), keys.get(b)));
+    List<byte[]> sortedKeys = new ArrayList<>(numKeys);
+    List<byte[]> sortedValues = new ArrayList<>(numKeys);
+    for (int i = 0; i < numKeys; i++) {
+      int index = order[i];
+      if (i + 1 < numKeys && Arrays.equals(keys.get(index), keys.get(order[i + 1]))) {
+        continue;
       }
-      Arrays.sort(order, (a, b) -> Arrays.compareUnsigned(keys.get(a), keys.get(b)));
-      List<byte[]> sortedKeys = new ArrayList<>(numKeys);
-      List<byte[]> sortedValues = new ArrayList<>(numKeys);
-      for (int i = 0; i < numKeys; i++) {
-        int index = order[i];
-        // Keep the last value of a duplicated key, as consecutive puts would.
-        if (i + 1 < numKeys && Arrays.equals(keys.get(index), keys.get(order[i + 1]))) {
-          continue;
-        }
-        sortedKeys.add(keys.get(index));
-        sortedValues.add(values.get(index));
-      }
+      sortedKeys.add(keys.get(index));
+      sortedValues.add(encode(locations.get(index)));
+    }
+    if (sstMinKeys > 0 && sortedKeys.size() >= sstMinKeys) {
       _store.ingestSorted(PRIMARY, sortedKeys, sortedValues);
-      _numPrimaryKeys.addAndGet(sortedKeys.size());
     } else {
-      Set<ByteArrayKey> distinct = new HashSet<>();
       try (WriteBatch batch = _store.newWriteBatch()) {
-        for (int i = 0; i < numKeys; i++) {
-          batch.put(_store.getHandle(PRIMARY), keys.get(i), values.get(i));
-          distinct.add(new ByteArrayKey(keys.get(i)));
+        for (int i = 0; i < sortedKeys.size(); i++) {
+          batch.put(_store.getHandle(PRIMARY), sortedKeys.get(i), sortedValues.get(i));
         }
         _store.write(batch);
       } catch (RocksDBException e) {
         throw new RocksDBMetadataStoreException("Failed to build write batch", e);
       }
-      _numPrimaryKeys.addAndGet(distinct.size());
     }
+    for (byte[] value : sortedValues) {
+      addRef(value);
+    }
+    _numPrimaryKeys.addAndGet(sortedKeys.size());
   }
 
   @Nullable
@@ -234,16 +248,23 @@ public class PrimaryKeyLocationStore implements AutoCloseable {
   }
 
   public void putPrevious(byte[] key, Location location) {
-    if (_store.get(PREVIOUS, key) == null) {
+    byte[] currentValue = _store.get(PREVIOUS, key);
+    byte[] value = encode(location);
+    _store.put(PREVIOUS, key, value);
+    addRef(value);
+    if (currentValue == null) {
       _numPreviousKeys.incrementAndGet();
+    } else {
+      removeRef(currentValue);
     }
-    _store.put(PREVIOUS, key, encode(location));
   }
 
   public void removePrevious(byte[] key) {
-    if (_store.get(PREVIOUS, key) != null) {
+    byte[] currentValue = _store.get(PREVIOUS, key);
+    if (currentValue != null) {
       _store.delete(PREVIOUS, key);
       _numPreviousKeys.decrementAndGet();
+      removeRef(currentValue);
     }
   }
 
@@ -317,6 +338,7 @@ public class PrimaryKeyLocationStore implements AutoCloseable {
         if (current != null && Arrays.equals(current, expectedValues.get(i))) {
           _store.delete(PRIMARY, key);
           _numPrimaryKeys.decrementAndGet();
+          removeRef(current);
           numDeleted++;
         }
       } finally {
@@ -360,26 +382,5 @@ public class PrimaryKeyLocationStore implements AutoCloseable {
   public void close() {
     _store.close();
     _segmentRegistry.clear();
-  }
-
-  /// Hash-set wrapper for byte arrays.
-  private static final class ByteArrayKey {
-    private final byte[] _bytes;
-    private final int _hash;
-
-    ByteArrayKey(byte[] bytes) {
-      _bytes = bytes;
-      _hash = Arrays.hashCode(bytes);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      return o instanceof ByteArrayKey && Arrays.equals(_bytes, ((ByteArrayKey) o)._bytes);
-    }
-
-    @Override
-    public int hashCode() {
-      return _hash;
-    }
   }
 }

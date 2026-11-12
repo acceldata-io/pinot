@@ -21,6 +21,7 @@ package org.apache.pinot.segment.local.upsert;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -35,7 +36,10 @@ import org.apache.pinot.common.metrics.ServerMetrics;
 import org.apache.pinot.common.utils.LLCSegmentName;
 import org.apache.pinot.segment.local.data.manager.TableDataManager;
 import org.apache.pinot.segment.local.indexsegment.immutable.ImmutableSegmentImpl;
+import org.apache.pinot.segment.local.rocksdb.MetadataCodec;
+import org.apache.pinot.segment.local.rocksdb.PrimaryKeyLocationStore;
 import org.apache.pinot.segment.local.rocksdb.RocksDBMetadataStoreConfig;
+import org.apache.pinot.segment.local.rocksdb.SegmentRegistry;
 import org.apache.pinot.segment.local.segment.readers.LazyRow;
 import org.apache.pinot.segment.spi.ColumnMetadata;
 import org.apache.pinot.segment.spi.IndexSegment;
@@ -54,6 +58,7 @@ import org.apache.pinot.spi.data.readers.PrimaryKey;
 import org.apache.pinot.spi.utils.ConsumingSegmentConsistencyModeListener;
 import org.apache.pinot.spi.utils.builder.TableNameBuilder;
 import org.roaringbitmap.buffer.MutableRoaringBitmap;
+import org.rocksdb.RocksIterator;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -483,6 +488,25 @@ public class RocksDBUpsertParityTest {
         }
         assertSameState(_expected, _actual, "step " + step + ": " + description);
       }
+      assertSegmentRefCounts(_actual._manager);
+    }
+  }
+
+  /// Stored segment ids must match the registry's reference counts, and no unreferenced retired id may linger.
+  static void assertSegmentRefCounts(BasePartitionUpsertMetadataManager manager) {
+    PrimaryKeyLocationStore store = ((RocksDBPartitionUpsertMetadataManager) manager)._store;
+    Map<Integer, Long> storedRefs = new HashMap<>();
+    for (int columnFamily : new int[]{PrimaryKeyLocationStore.PRIMARY, PrimaryKeyLocationStore.PREVIOUS}) {
+      try (RocksIterator iterator = store.getPartitionStore().newIterator(columnFamily)) {
+        for (iterator.seekToFirst(); iterator.isValid(); iterator.next()) {
+          storedRefs.merge(MetadataCodec.decodeSegmentId(iterator.value()), 1L, Long::sum);
+        }
+      }
+    }
+    SegmentRegistry registry = store.getSegmentRegistry();
+    storedRefs.forEach((id, count) -> assertEquals(registry.getRefCount(id), (long) count, "refCount of " + id));
+    for (int retiredId : registry.getRetiredIds()) {
+      assertTrue(storedRefs.containsKey(retiredId), "Unreferenced retired segment id: " + retiredId);
     }
   }
 

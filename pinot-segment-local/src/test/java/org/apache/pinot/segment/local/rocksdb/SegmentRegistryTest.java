@@ -32,6 +32,34 @@ import static org.testng.Assert.assertSame;
 public class SegmentRegistryTest {
 
   @Test
+  public void testRetiredIdIsReleasedWithItsLastReference() {
+    SegmentRegistry registry = new SegmentRegistry();
+    IndexSegment referenced = mock(IndexSegment.class);
+    int referencedId = registry.getOrAssignId(referenced);
+    registry.addRef(referencedId);
+    registry.addRef(referencedId);
+    registry.retire(referenced);
+    registry.removeRef(referencedId);
+    assertSame(registry.getSegment(referencedId), referenced);
+    registry.removeRef(referencedId);
+    assertNull(registry.getSegment(referencedId));
+    assertEquals(registry.getNumRetired(), 0);
+
+    // A segment that no entry references is released when it is retired.
+    IndexSegment unreferenced = mock(IndexSegment.class);
+    int unreferencedId = registry.getOrAssignId(unreferenced);
+    registry.retire(unreferenced);
+    assertNull(registry.getSegment(unreferencedId));
+
+    // Live segments stay resolvable without references.
+    IndexSegment live = mock(IndexSegment.class);
+    int liveId = registry.getOrAssignId(live);
+    registry.addRef(liveId);
+    registry.removeRef(liveId);
+    assertSame(registry.getSegment(liveId), live);
+  }
+
+  @Test
   public void testIdsArePerObjectAndNeverReused() {
     SegmentRegistry registry = new SegmentRegistry();
     IndexSegment first = mock(IndexSegment.class);
@@ -44,8 +72,9 @@ public class SegmentRegistryTest {
     assertEquals(registry.getId(reloaded), reloadedId);
     assertEquals(registry.getId(mock(IndexSegment.class)), -1);
 
+    registry.addRef(firstId);
     registry.retire(first);
-    // Retired ids still resolve until released, so keys left behind by an out-of-TTL removal keep working.
+    // Referenced retired ids still resolve until released, so keys left behind by an out-of-TTL removal keep working.
     assertSame(registry.getSegment(firstId), first);
     assertEquals(registry.getId(first), -1);
     assertEquals(registry.releaseRetired(Set.of(firstId)), 0);
