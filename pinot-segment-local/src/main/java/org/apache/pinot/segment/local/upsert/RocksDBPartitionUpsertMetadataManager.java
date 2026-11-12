@@ -21,8 +21,10 @@ package org.apache.pinot.segment.local.upsert;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.RejectedExecutionException;
@@ -222,16 +224,30 @@ public class RocksDBPartitionUpsertMetadataManager extends BasePartitionUpsertMe
   }
 
   @Override
+  /**
+   * Preload path: the validDocIds snapshots make each key valid in exactly one segment, so keys are written without
+   * reading the store, in chunks of {@code preloadBatchKeys} that are ingested as sorted SST files when large enough.
+   */
   protected void addSegmentWithoutUpsert(ImmutableSegmentImpl segment, ThreadSafeMutableRoaringBitmap validDocIds,
       @Nullable ThreadSafeMutableRoaringBitmap queryableDocIds, Iterator<RecordInfo> recordInfoIterator) {
     segment.enableUpsert(this, validDocIds, queryableDocIds);
+    int batchSize = _storeConfig.getPreloadBatchKeys();
+    int sstMinKeys = _storeConfig.getPreloadSstMinKeys();
+    List<byte[]> keys = new ArrayList<>();
+    List<Location> locations = new ArrayList<>();
     while (recordInfoIterator.hasNext()) {
       RecordInfo recordInfo = recordInfoIterator.next();
       int newDocId = recordInfo.getDocId();
-      Comparable newComparisonValue = recordInfo.getComparisonValue();
       addDocId(segment, validDocIds, queryableDocIds, newDocId, recordInfo);
-      _store.put(toKey(recordInfo.getPrimaryKey()), new Location(segment, newDocId, newComparisonValue));
+      keys.add(toKey(recordInfo.getPrimaryKey()));
+      locations.add(new Location(segment, newDocId, recordInfo.getComparisonValue()));
+      if (keys.size() >= batchSize) {
+        _store.putAllAbsent(keys, locations, sstMinKeys);
+        keys.clear();
+        locations.clear();
+      }
     }
+    _store.putAllAbsent(keys, locations, sstMinKeys);
   }
 
   @Override
