@@ -532,6 +532,7 @@ org.locationtech.proj4j:proj4j:1.2.2
 org.lz4:lz4-java:1.8.0
 org.quartz-scheduler:quartz:2.5.2
 org.roaringbitmap:RoaringBitmap:1.6.12
+org.rocksdb:rocksdbjni:9.10.0
 org.scala-lang.modules:scala-collection-compat_2.12:2.10.0
 org.scala-lang.modules:scala-java8-compat_2.12:1.0.2
 org.scala-lang:scala-library:2.12.20
