@@ -29,6 +29,9 @@ import org.apache.pinot.common.utils.log.LocalLogFileServer;
 import org.apache.pinot.common.utils.log.LogFileServer;
 import org.apache.pinot.core.transport.ListenerConfig;
 import org.apache.pinot.core.util.ListenerConfigUtil;
+import org.apache.pinot.minion.api.MinionAdminApiAccessControlFilter;
+import org.apache.pinot.server.access.AccessControlFactory;
+import org.apache.pinot.server.access.AllowAllAccessFactory;
 import org.apache.pinot.spi.env.PinotConfiguration;
 import org.apache.pinot.spi.utils.CommonConstants;
 import org.apache.pinot.spi.utils.PinotReflectionUtils;
@@ -54,7 +57,15 @@ public class MinionAdminApiApplication extends ResourceConfig {
   private HttpServer _httpServer;
   private final boolean _useHttps;
 
+  /// Creates the app with the Minion admin API open to every caller (the behaviour before Minion access control).
   public MinionAdminApiApplication(String instanceId, PinotConfiguration minionConf) {
+    this(instanceId, minionConf, new AllowAllAccessFactory());
+  }
+
+  /// Creates the app; every route except [MinionPublicAccess] methods requires administrative access from the given
+  /// access control factory (already initialized).
+  public MinionAdminApiApplication(String instanceId, PinotConfiguration minionConf,
+      AccessControlFactory accessControlFactory) {
     packages(RESOURCE_PACKAGE);
     property(PINOT_CONFIGURATION, minionConf);
     _useHttps = Boolean.parseBoolean(minionConf.getProperty(CommonConstants.Minion.CONFIG_OF_SWAGGER_USE_HTTPS));
@@ -71,8 +82,10 @@ public class MinionAdminApiApplication extends ResourceConfig {
           bind(new DummyLogFileServer()).to(LogFileServer.class);
         }
         bind(minionStartTime).named(START_TIME);
+        bind(accessControlFactory).to(AccessControlFactory.class);
       }
     });
+    register(MinionAdminApiAccessControlFilter.class);
 
     register(SwaggerApiListingResource.class);
     register(SwaggerSerializers.class);

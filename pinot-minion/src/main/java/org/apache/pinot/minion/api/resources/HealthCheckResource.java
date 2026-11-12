@@ -44,6 +44,7 @@ import org.apache.pinot.core.auth.Actions;
 import org.apache.pinot.core.auth.Authorize;
 import org.apache.pinot.core.auth.TargetType;
 import org.apache.pinot.minion.MinionAdminApiApplication;
+import org.apache.pinot.minion.api.MinionPublicAccess;
 
 import static org.apache.pinot.spi.utils.CommonConstants.SWAGGER_AUTHORIZATION_KEY;
 
@@ -67,6 +68,7 @@ public class HealthCheckResource {
 
   @GET
   @Path("/health")
+  @MinionPublicAccess
   @Produces(MediaType.TEXT_PLAIN)
   @ApiOperation(value = "Checking minion health")
   @ApiResponses(value = {

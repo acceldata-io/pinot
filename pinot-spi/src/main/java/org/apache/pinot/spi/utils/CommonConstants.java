@@ -1583,6 +1583,11 @@ public class CommonConstants {
 
   public static class Minion {
     public static final String CONFIG_OF_METRICS_PREFIX = "pinot.minion.";
+    /// Access control for the Minion admin API (same contract as the Server admin API). Unset keeps the API open.
+    public static final String ACCESS_CONTROL_FACTORY_CLASS = "pinot.minion.admin.access.control.factory.class";
+    public static final String DEFAULT_ACCESS_CONTROL_FACTORY_CLASS =
+        "org.apache.pinot.server.access.AllowAllAccessFactory";
+    public static final String PREFIX_OF_CONFIG_OF_ACCESS_CONTROL = "pinot.minion.admin.access.control";
     public static final String CONFIG_OF_MINION_ID = "pinot.minion.instance.id";
     public static final String METADATA_EVENT_OBSERVER_PREFIX = "metadata.event.notifier";
 

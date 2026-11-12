@@ -66,6 +66,7 @@ import org.apache.pinot.minion.executor.PinotTaskExecutorFactory;
 import org.apache.pinot.minion.executor.TaskExecutorFactoryRegistry;
 import org.apache.pinot.minion.taskfactory.TaskFactoryRegistry;
 import org.apache.pinot.segment.local.utils.ClusterConfigForTable;
+import org.apache.pinot.server.access.AccessControlFactory;
 import org.apache.pinot.spi.crypt.PinotCrypterFactory;
 import org.apache.pinot.spi.env.PinotConfiguration;
 import org.apache.pinot.spi.filesystem.PinotFSFactory;
@@ -407,6 +408,23 @@ public abstract class BaseMinionStarter implements ServiceStartable {
   }
 
   protected MinionAdminApiApplication createMinionAdminApp() {
-    return new MinionAdminApiApplication(_instanceId, _config);
+    return new MinionAdminApiApplication(_instanceId, _config, createAdminAccessControlFactory());
+  }
+
+  /// Creates the access control for the Minion admin API from `pinot.minion.admin.access.control.*` (allow-all when
+  /// unset), initialized with the Helix manager so ZooKeeper-backed implementations can load their users.
+  protected AccessControlFactory createAdminAccessControlFactory() {
+    String factoryClass = _config.getProperty(CommonConstants.Minion.ACCESS_CONTROL_FACTORY_CLASS,
+        CommonConstants.Minion.DEFAULT_ACCESS_CONTROL_FACTORY_CLASS);
+    LOGGER.info("Using class: {} as the Minion admin API AccessControlFactory", factoryClass);
+    AccessControlFactory factory;
+    try {
+      factory = PluginManager.get().createInstance(factoryClass);
+    } catch (Exception e) {
+      throw new RuntimeException("Caught exception while creating the Minion admin API AccessControlFactory "
+          + "using class '" + factoryClass + "'", e);
+    }
+    factory.init(_config.subset(CommonConstants.Minion.PREFIX_OF_CONFIG_OF_ACCESS_CONTROL), _helixManager);
+    return factory;
   }
 }
