@@ -20,10 +20,12 @@ package org.apache.pinot.broker.requesthandler;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Duration;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -31,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
+import java.util.TreeSet;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -69,6 +72,7 @@ import org.apache.pinot.spi.data.Schema;
 import org.apache.pinot.spi.env.PinotConfiguration;
 import org.apache.pinot.spi.exception.QueryErrorCode;
 import org.apache.pinot.spi.exception.QueryException;
+import org.apache.pinot.spi.trace.DefaultRequestContext;
 import org.apache.pinot.spi.trace.RequestContext;
 import org.apache.pinot.spi.utils.JsonUtils;
 import org.apache.pinot.spi.utils.builder.TableNameBuilder;
@@ -164,7 +168,7 @@ public class TimeSeriesRequestHandler extends BaseBrokerRequestHandler {
       }
       TimeSeriesDispatchablePlan dispatchablePlan =
           _queryEnvironment.buildPhysicalPlan(timeSeriesRequest, requestContext, logicalPlanResult);
-      validatePhysicalPlan(httpHeaders, dispatchablePlan);
+      validatePhysicalPlan(requesterIdentity, httpHeaders, dispatchablePlan, requestContext);
 
       timeSeriesBlock = _queryDispatcher.submitAndGet(requestContext.getRequestId(), dispatchablePlan,
           timeSeriesRequest.getTimeout().toMillis(), requestContext);
@@ -302,9 +306,10 @@ public class TimeSeriesRequestHandler extends BaseBrokerRequestHandler {
     }
   }
 
-  private void validatePhysicalPlan(HttpHeaders httpHeaders, TimeSeriesDispatchablePlan dispatchablePlan) {
+  private void validatePhysicalPlan(@Nullable RequesterIdentity requesterIdentity, HttpHeaders httpHeaders,
+      TimeSeriesDispatchablePlan dispatchablePlan, RequestContext requestContext) {
     // check authorization for table
-    tableLevelAccessControlCheck(httpHeaders, dispatchablePlan.getTableNames());
+    authorizeTableAccess(requesterIdentity, httpHeaders, dispatchablePlan.getTableNames(), requestContext);
     // validate column names for all LeafTimeSeriesPlanNode in the physical plan
     validatePhysicalPlanColumns(dispatchablePlan);
   }
@@ -386,32 +391,96 @@ public class TimeSeriesRequestHandler extends BaseBrokerRequestHandler {
     }
   }
 
-  /**
-   * Table-level access control check for the request.
-   * This method checks if the requester has access to the tables in the request.
-   *
-   * @param httpHeaders The HTTP headers of the request.
-   * @param tableNames The list of table to check access for.
-   */
-  private void tableLevelAccessControlCheck(HttpHeaders httpHeaders, List<String> tableNames) {
-    AccessControl accessControl = _accessControlFactory.create();
+  /// Table-level access control for the tables a time-series query reads, recording a denial on the request.
+  private void authorizeTableAccess(@Nullable RequesterIdentity requesterIdentity, @Nullable HttpHeaders httpHeaders,
+      Collection<String> tableNames, RequestContext requestContext) {
+    try {
+      checkTableAccess(_accessControlFactory.create(), requesterIdentity, httpHeaders, tableNames,
+          _enableRowColumnLevelAuth);
+    } catch (WebApplicationException e) {
+      _brokerMetrics.addMeteredGlobalValue(BrokerMeter.REQUEST_DROPPED_DUE_TO_ACCESS_ERROR, 1);
+      requestContext.setErrorCode(QueryErrorCode.ACCESS_DENIED);
+      throw e;
+    }
+  }
+
+  /// Checks that the requester may query every table in `tableNames`, the same way SQL queries are checked: the
+  /// requester's table scope ([AccessControl#authorize(RequesterIdentity, Set)], which BasicAuth implements) and the
+  /// fine-grained per-table hook. Names are reduced to raw table names first, since a time-series query may name a
+  /// table with its type suffix while table scopes list raw names. With row/column level auth enabled, a table that
+  /// carries a row filter for the requester is rejected: the time-series engine cannot apply row filters, so
+  /// answering would return rows the requester is not allowed to see.
+  ///
+  /// @throws WebApplicationException with status 403 when access is denied
+  @VisibleForTesting
+  static void checkTableAccess(AccessControl accessControl, @Nullable RequesterIdentity requesterIdentity,
+      @Nullable HttpHeaders httpHeaders, Collection<String> tableNames, boolean rowColumnLevelAuth) {
+    Set<String> rawTableNames = new TreeSet<>();
     for (String tableName : tableNames) {
-      AuthorizationResult authorizationResult = accessControl.authorize(httpHeaders, TargetType.TABLE, tableName,
-        Actions.Table.QUERY);
-      if (!authorizationResult.hasAccess()) {
-        _brokerMetrics.addMeteredGlobalValue(BrokerMeter.REQUEST_DROPPED_DUE_TO_ACCESS_ERROR, 1);
-        throw new WebApplicationException("Permission denied. " + authorizationResult.getFailureMessage(),
-          Response.Status.FORBIDDEN);
+      rawTableNames.add(TableNameBuilder.extractRawTableName(tableName));
+    }
+    if (rawTableNames.isEmpty()) {
+      return;
+    }
+    Set<String> deniedTables =
+        new TreeSet<>(accessControl.authorize(requesterIdentity, rawTableNames).getFailedTables());
+    for (String rawTableName : rawTableNames) {
+      if (!accessControl.hasAccess(httpHeaders, TargetType.TABLE, rawTableName, Actions.Table.QUERY)) {
+        deniedTables.add(rawTableName);
       }
     }
+    if (!deniedTables.isEmpty()) {
+      throw new WebApplicationException("Permission denied. Access denied to tables: " + deniedTables,
+          Response.Status.FORBIDDEN);
+    }
+    if (rowColumnLevelAuth) {
+      for (String rawTableName : rawTableNames) {
+        List<String> rowFilters =
+            accessControl.getRowColFilters(requesterIdentity, rawTableName).getRLSFilters().orElse(null);
+        if (rowFilters != null && !rowFilters.isEmpty()) {
+          throw new WebApplicationException("Permission denied. Table " + rawTableName
+              + " has row-level filters for this user, which time-series queries cannot apply",
+              Response.Status.FORBIDDEN);
+        }
+      }
+    }
+  }
+
+  /// Returns the tables read by the leaf nodes of a logical time-series plan.
+  @VisibleForTesting
+  static Set<String> collectTableNames(BaseTimeSeriesPlanNode planNode) {
+    Set<String> tableNames = new TreeSet<>();
+    Stack<BaseTimeSeriesPlanNode> stack = new Stack<>();
+    stack.push(planNode);
+    while (!stack.isEmpty()) {
+      BaseTimeSeriesPlanNode node = stack.pop();
+      if (node instanceof LeafTimeSeriesPlanNode) {
+        tableNames.add(((LeafTimeSeriesPlanNode) node).getTableName());
+      }
+      node.getInputs().forEach(stack::push);
+    }
+    return tableNames;
   }
 
   @Override
   public BrokerResponse handleExplainTimeSeriesRequest(String lang, String rawQueryParamString,
       Map<String, String> queryParams) {
+    // No requester: only an allow-all access control lets this through.
+    return handleExplainTimeSeriesRequest(lang, rawQueryParamString, queryParams, null, null);
+  }
+
+  /// Explains a time-series query after the same authentication and table checks as running it, since the plan
+  /// reveals which tables and columns the query touches.
+  @Override
+  public BrokerResponse handleExplainTimeSeriesRequest(String lang, String rawQueryParamString,
+      Map<String, String> queryParams, @Nullable RequesterIdentity requesterIdentity,
+      @Nullable HttpHeaders httpHeaders) {
+    firstStageAccessControlCheck(requesterIdentity);
     try {
       RangeTimeSeriesRequest request = buildRangeTimeSeriesRequest(lang, rawQueryParamString, queryParams);
       TimeSeriesLogicalPlanResult planResult = _queryEnvironment.buildLogicalPlan(request);
+      authorizeTableAccess(requesterIdentity, httpHeaders, collectTableNames(planResult.getPlanNode()),
+          new DefaultRequestContext());
       String plan = explainPlanTree(planResult.getPlanNode(), new StringBuilder(), 0).toString();
       DataSchema schema = new DataSchema(new String[]{"QUERY", "PLAN"},
           new DataSchema.ColumnDataType[]{DataSchema.ColumnDataType.STRING, DataSchema.ColumnDataType.STRING});

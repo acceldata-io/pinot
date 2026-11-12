@@ -18,10 +18,28 @@
  */
 package org.apache.pinot.broker.requesthandler;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.HttpHeaders;
+import org.apache.pinot.broker.api.AccessControl;
+import org.apache.pinot.broker.api.HttpRequesterIdentity;
+import org.apache.pinot.broker.broker.AccessControlFactory;
+import org.apache.pinot.broker.broker.BasicAuthAccessControlFactory;
+import org.apache.pinot.common.auth.BasicAuthTokenUtils;
+import org.apache.pinot.core.auth.Actions;
+import org.apache.pinot.core.auth.TargetType;
+import org.apache.pinot.spi.auth.TableAuthorizationResult;
+import org.apache.pinot.spi.auth.broker.RequesterIdentity;
 import org.apache.pinot.spi.data.Schema;
+import org.apache.pinot.spi.env.PinotConfiguration;
 import org.apache.pinot.spi.exception.QueryErrorCode;
 import org.apache.pinot.spi.exception.QueryException;
+import org.apache.pinot.tsdb.spi.plan.BaseTimeSeriesPlanNode;
 import org.apache.pinot.tsdb.spi.plan.LeafTimeSeriesPlanNode;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -29,6 +47,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.*;
 
@@ -189,5 +208,113 @@ public class TimeSeriesRequestHandlerTest {
     } catch (Exception e) {
       fail("Should pass with complex expressions if all columns are valid: " + e.getMessage());
     }
+  }
+
+  /// A broker BasicAuth access control: admin sees every table, "user" only `metrics`, "rlsUser" `metrics` with a
+  /// row filter.
+  private static AccessControl basicAuthAccessControl() {
+    Map<String, Object> config = new HashMap<>();
+    config.put("principals", "admin,user,rlsUser");
+    config.put("principals.admin.password", "adminPw");
+    config.put("principals.user.password", "userPw");
+    config.put("principals.user.tables", "metrics");
+    config.put("principals.rlsUser.password", "rlsPw");
+    config.put("principals.rlsUser.tables", "metrics");
+    config.put("principals.rlsUser.metrics.rls", "region = 'eu'");
+    AccessControlFactory factory = new BasicAuthAccessControlFactory();
+    factory.init(new PinotConfiguration(config));
+    return factory.create();
+  }
+
+  private static HttpRequesterIdentity identity(String user, String password) {
+    Multimap<String, String> headers = ArrayListMultimap.create();
+    headers.put("authorization", BasicAuthTokenUtils.toBasicAuthToken(user, password));
+    HttpRequesterIdentity identity = new HttpRequesterIdentity();
+    identity.setHttpHeaders(headers);
+    return identity;
+  }
+
+  private static void assertDenied(Runnable check, int expectedStatus, String expectedMessagePart) {
+    try {
+      check.run();
+      fail("Expected HTTP " + expectedStatus);
+    } catch (WebApplicationException e) {
+      assertEquals(e.getResponse().getStatus(), expectedStatus);
+      if (expectedMessagePart != null) {
+        assertTrue(e.getMessage().contains(expectedMessagePart), e.getMessage());
+      }
+    }
+  }
+
+  @Test
+  public void testTableAccessFollowsTableScope() {
+    AccessControl accessControl = basicAuthAccessControl();
+    HttpRequesterIdentity user = identity("user", "userPw");
+
+    // Table names carry a type suffix in time-series queries; the scope lists raw names.
+    TimeSeriesRequestHandler.checkTableAccess(accessControl, user, null, List.of("metrics_REALTIME"), true);
+    TimeSeriesRequestHandler.checkTableAccess(accessControl, user, null, List.of("metrics"), true);
+
+    // Any table outside the scope denies the whole query, and the denied table is named.
+    assertDenied(() -> TimeSeriesRequestHandler.checkTableAccess(accessControl, user, null,
+        List.of("other_OFFLINE"), true), 403, "[other]");
+    assertDenied(() -> TimeSeriesRequestHandler.checkTableAccess(accessControl, user, null,
+        List.of("metrics_REALTIME", "other_OFFLINE"), true), 403, "[other]");
+
+    // An unrestricted principal reads every table.
+    TimeSeriesRequestHandler.checkTableAccess(accessControl, identity("admin", "adminPw"), null,
+        List.of("metrics_REALTIME", "other_OFFLINE"), true);
+  }
+
+  @Test
+  public void testUnknownCredentialsAreRejected() {
+    assertDenied(() -> TimeSeriesRequestHandler.checkTableAccess(basicAuthAccessControl(), identity("user", "wrong"),
+        null, List.of("metrics_REALTIME"), false), 401, null);
+  }
+
+  @Test
+  public void testRowFilteredTableIsRejectedOnlyWithRowColumnAuth() {
+    AccessControl accessControl = basicAuthAccessControl();
+    HttpRequesterIdentity rlsUser = identity("rlsUser", "rlsPw");
+    // The engine cannot apply the row filter, so with row/column level auth on the query is refused.
+    assertDenied(() -> TimeSeriesRequestHandler.checkTableAccess(accessControl, rlsUser, null,
+        List.of("metrics_REALTIME"), true), 403, "row-level filters");
+    // With row/column level auth off, row filters are not in force on any query path.
+    TimeSeriesRequestHandler.checkTableAccess(accessControl, rlsUser, null, List.of("metrics_REALTIME"), false);
+  }
+
+  @Test
+  public void testFineGrainedTableDecisionIsHonored() {
+    // An access control whose table decision comes from the fine-grained hook (as an external authorizer's would);
+    // the requester-level check allows everything.
+    AccessControl denyOther = new AccessControl() {
+      @Override
+      public TableAuthorizationResult authorize(RequesterIdentity requesterIdentity, Set<String> tables) {
+        return TableAuthorizationResult.success();
+      }
+
+      @Override
+      public boolean hasAccess(HttpHeaders httpHeaders, TargetType targetType, String targetId, String action) {
+        return !"other".equals(targetId) || !Actions.Table.QUERY.equals(action);
+      }
+    };
+    TimeSeriesRequestHandler.checkTableAccess(denyOther, null, null, List.of("metrics_REALTIME"), false);
+    assertDenied(() -> TimeSeriesRequestHandler.checkTableAccess(denyOther, null, null, List.of("other_OFFLINE"),
+        false), 403, "[other]");
+  }
+
+  @Test
+  public void testCollectTableNamesWalksTheWholePlan() {
+    LeafTimeSeriesPlanNode leafA = mock(LeafTimeSeriesPlanNode.class);
+    when(leafA.getTableName()).thenReturn("metrics_REALTIME");
+    when(leafA.getInputs()).thenReturn(List.of());
+    LeafTimeSeriesPlanNode leafB = mock(LeafTimeSeriesPlanNode.class);
+    when(leafB.getTableName()).thenReturn("other_OFFLINE");
+    when(leafB.getInputs()).thenReturn(List.of());
+    BaseTimeSeriesPlanNode inner = mock(BaseTimeSeriesPlanNode.class);
+    when(inner.getInputs()).thenReturn(List.of(leafB));
+    BaseTimeSeriesPlanNode root = mock(BaseTimeSeriesPlanNode.class);
+    when(root.getInputs()).thenReturn(List.of(leafA, inner));
+    assertEquals(TimeSeriesRequestHandler.collectTableNames(root), Set.of("metrics_REALTIME", "other_OFFLINE"));
   }
 }

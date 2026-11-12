@@ -150,6 +150,17 @@ public class BrokerRequestHandlerDelegate implements BrokerRequestHandler {
   }
 
   @Override
+  public BrokerResponse handleExplainTimeSeriesRequest(String lang, String rawQueryParamString,
+      Map<String, String> queryParams, @Nullable RequesterIdentity requesterIdentity,
+      @Nullable HttpHeaders httpHeaders) {
+    if (_timeSeriesRequestHandler != null) {
+      return _timeSeriesRequestHandler.handleExplainTimeSeriesRequest(lang, rawQueryParamString, queryParams,
+          requesterIdentity, httpHeaders);
+    }
+    throw new QueryException(QueryErrorCode.INTERNAL, "Time series query engine not enabled.");
+  }
+
+  @Override
   public Map<Long, String> getRunningQueries() {
     // Both engines share the same request ID generator, so the query will have unique IDs across the two engines.
     Map<Long, String> queries = new HashMap<>(_singleStageBrokerRequestHandler.getRunningQueries());

@@ -344,7 +344,7 @@ public class PinotClientRequest {
 
       if (isExplainMode(requestJson)) {
         BrokerResponse explainResponse = _requestHandler.handleExplainTimeSeriesRequest(language, queryString,
-          queryParams);
+          queryParams, makeHttpIdentity(requestCtx), httpHeaders);
         asyncResponse.resume(explainResponse);
         return;
       }
