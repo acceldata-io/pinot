@@ -21,8 +21,10 @@ package org.apache.pinot.segment.local.rocksdb;
 import com.google.common.base.Preconditions;
 import java.io.File;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 import org.apache.pinot.spi.env.PinotConfiguration;
 
@@ -158,6 +160,60 @@ public final class RocksDBMetadataStoreConfig {
       }
     }
     return new RocksDBMetadataStoreConfig(values);
+  }
+
+  private static final Set<String> SERVER_ONLY_KEYS =
+      normalizeAll(BLOCK_CACHE_SIZE_BYTES, WRITE_BUFFER_MANAGER_BYTES, BACKGROUND_THREADS, MAINTENANCE_THREADS);
+  private static final Set<String> BOOLEAN_KEYS =
+      normalizeAll(ASYNC_TTL_SCAN, FALLBACK_TO_IN_MEMORY_ON_INIT_FAILURE, ENABLED);
+  private static final Set<String> TABLE_KEYS =
+      normalizeAll(DATA_DIR, WRITE_BUFFER_SIZE_BYTES, BLOOM_BITS_PER_KEY, BLOCK_SIZE_BYTES, MAX_RETRIES,
+          RETRY_BACKOFF_MS, TTL_SCAN_MAX_KEYS_PER_SECOND, ASYNC_TTL_SCAN, PRELOAD_SST_MIN_KEYS, PRELOAD_BATCH_KEYS,
+          FALLBACK_TO_IN_MEMORY_ON_INIT_FAILURE, ENABLED);
+
+  private static Set<String> normalizeAll(String... keys) {
+    Set<String> normalized = new HashSet<>();
+    for (String key : keys) {
+      normalized.add(normalize(key));
+    }
+    return Set.copyOf(normalized);
+  }
+
+  /**
+   * Validates the {@code rocksdb.*} entries of a table's {@code metadataManagerConfigs}, for the controller to reject
+   * a bad table config up front. Unknown keys, server-wide keys, non-boolean flags, a relative data dir and bad
+   * numbers are rejected.
+   *
+   * @throws IllegalArgumentException describing the first invalid entry
+   */
+  public static void validateTableConfigs(@Nullable Map<String, String> tableConfigs) {
+    if (tableConfigs == null) {
+      return;
+    }
+    for (Map.Entry<String, String> entry : tableConfigs.entrySet()) {
+      String fullKey = entry.getKey();
+      if (!fullKey.startsWith(PREFIX)) {
+        continue;
+      }
+      String key = normalize(fullKey.substring(PREFIX.length()));
+      String value = entry.getValue();
+      Preconditions.checkArgument(!SERVER_ONLY_KEYS.contains(key),
+          "RocksDB config: %s is server-wide and cannot be set per table; set it in the server config under "
+              + "pinot.server.instance.upsert.%s or pinot.server.instance.dedup.%s", fullKey, fullKey, fullKey);
+      Preconditions.checkArgument(TABLE_KEYS.contains(key), "Unknown RocksDB config: %s", fullKey);
+      Preconditions.checkArgument(value != null && !value.trim().isEmpty(), "RocksDB config: %s has no value",
+          fullKey);
+      if (BOOLEAN_KEYS.contains(key)) {
+        Preconditions.checkArgument("true".equalsIgnoreCase(value.trim()) || "false".equalsIgnoreCase(value.trim()),
+            "RocksDB config: %s must be true or false, got: %s", fullKey, value);
+      }
+      if (key.equals(normalize(DATA_DIR))) {
+        Preconditions.checkArgument(new File(value).isAbsolute(),
+            "RocksDB config: %s must be an absolute path, got: %s", fullKey, value);
+      }
+    }
+    // Parses and range-checks the numeric values
+    from(null, tableConfigs);
   }
 
   public static RocksDBMetadataStoreConfig defaults() {
