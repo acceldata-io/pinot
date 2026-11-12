@@ -63,8 +63,6 @@ public class RocksDBTableUpsertMetadataManager extends BaseTableUpsertMetadataMa
         tableConfig.getTableName());
     _storeConfig = RocksDBMetadataStoreConfig.from(instanceUpsertConfig, upsertConfig.getMetadataManagerConfigs());
     super.init(instanceUpsertConfig, tableConfig, schema, tableDataManager, segmentOperationsThrottlerSet);
-    Preconditions.checkState(_context.getPartialUpsertHandler() == null,
-        "RocksDB upsert metadata does not support partial upsert yet, table: %s", _tableNameWithType);
     Preconditions.checkState(_context.getMetadataTTL() <= 0 && _context.getDeletedKeysTTL() <= 0,
         "RocksDB upsert metadata does not support metadataTTL or deletedKeysTTL yet, table: %s", _tableNameWithType);
   }

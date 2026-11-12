@@ -20,6 +20,7 @@ package org.apache.pinot.segment.local.upsert;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.io.File;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
@@ -33,6 +34,7 @@ import org.apache.pinot.segment.local.rocksdb.MetadataCodec;
 import org.apache.pinot.segment.local.rocksdb.PrimaryKeyLocationStore;
 import org.apache.pinot.segment.local.rocksdb.PrimaryKeyLocationStore.Location;
 import org.apache.pinot.segment.local.rocksdb.RocksDBMetadataStoreConfig;
+import org.apache.pinot.segment.local.segment.readers.LazyRow;
 import org.apache.pinot.segment.local.segment.readers.PrimaryKeyReader;
 import org.apache.pinot.segment.local.utils.HashUtils;
 import org.apache.pinot.segment.spi.ImmutableSegment;
@@ -60,6 +62,10 @@ import org.roaringbitmap.buffer.MutableRoaringBitmap;
 @ThreadSafe
 public class RocksDBPartitionUpsertMetadataManager extends BasePartitionUpsertMetadataManager {
   public static final String STORE_DIR_PREFIX = "upsert_";
+
+  // Used to initialize a reference to previous row for merging in partial upsert
+  private final LazyRow _reusePreviousRow = new LazyRow();
+  private final Map<String, Object> _reuseMergeResultHolder = new HashMap<>();
 
   @VisibleForTesting
   final PrimaryKeyLocationStore _store;
@@ -340,9 +346,32 @@ public class RocksDBPartitionUpsertMetadataManager extends BasePartitionUpsertMe
     return !isOutOfOrderRecord.get();
   }
 
+  /**
+   * Merges the new record with the latest stored version of its key. Only the record location comes from RocksDB; the
+   * previous row itself is read from its segment, as in the in-memory manager.
+   */
   @Override
   protected GenericRow doUpdateRecord(GenericRow record, RecordInfo recordInfo) {
-    throw new UnsupportedOperationException("Partial upsert is not supported yet");
+    assert _partialUpsertHandler != null;
+    _store.computeIfPresent(toKey(recordInfo.getPrimaryKey()), (pk, recordLocation) -> {
+      // Read the previous record if the following conditions are met:
+      // - New record is not a DELETE record
+      // - New record is not out-of-order
+      // - Previous record is not deleted
+      if (!recordInfo.isDeleteRecord()
+          && recordInfo.getComparisonValue().compareTo(recordLocation.getComparisonValue()) >= 0) {
+        IndexSegment currentSegment = recordLocation.getSegment();
+        ThreadSafeMutableRoaringBitmap currentQueryableDocIds = currentSegment.getQueryableDocIds();
+        int currentDocId = recordLocation.getDocId();
+        if (currentQueryableDocIds == null || currentQueryableDocIds.contains(currentDocId)) {
+          _reusePreviousRow.init(currentSegment, currentDocId);
+          _partialUpsertHandler.merge(_reusePreviousRow, record, _reuseMergeResultHolder);
+          _reuseMergeResultHolder.clear();
+        }
+      }
+      return recordLocation;
+    });
+    return record;
   }
 
   @Override
