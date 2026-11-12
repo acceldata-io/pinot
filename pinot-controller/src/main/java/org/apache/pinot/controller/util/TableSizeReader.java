@@ -248,7 +248,8 @@ public class TableSizeReader {
       throws InvalidConfigException {
     Map<String, List<String>> serverToSegmentsMap = _helixResourceManager.getServerToSegmentsMap(tableNameWithType,
         null, includeReplacedSegments);
-    ServerTableSizeReader serverTableSizeReader = new ServerTableSizeReader(_executor, _connectionManager);
+    ServerTableSizeReader serverTableSizeReader = new ServerTableSizeReader(_executor, _connectionManager,
+        _helixResourceManager.getServerAdminAuthProvider());
     BiMap<String, String> endpoints = _helixResourceManager.getDataInstanceAdminEndpoints(serverToSegmentsMap.keySet());
     Map<String, List<SegmentSizeInfo>> serverToSegmentSizeInfoListMap =
         serverTableSizeReader.getSegmentSizeInfoFromServers(endpoints, tableNameWithType, timeoutMs);

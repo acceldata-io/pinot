@@ -141,7 +141,7 @@ public class UpsertCompactionTaskGenerator extends BaseTaskGenerator {
 
       ServerSegmentMetadataReader serverSegmentMetadataReader =
           new ServerSegmentMetadataReader(_clusterInfoAccessor.getExecutor(),
-              _clusterInfoAccessor.getConnectionManager());
+              _clusterInfoAccessor.getConnectionManager(), _clusterInfoAccessor.getServerAdminAuthProvider());
 
       ValidDocIdsType validDocIdsType = MinionTaskUtils.getValidDocIdsType(tableConfig.getUpsertConfig(), taskConfigs,
           UpsertCompactionTask.VALID_DOC_IDS_TYPE);

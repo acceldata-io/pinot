@@ -42,6 +42,8 @@ import org.apache.hc.client5.http.io.HttpClientConnectionManager;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.util.Timeout;
+import org.apache.pinot.common.auth.AuthProviderUtils;
+import org.apache.pinot.spi.auth.AuthProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,29 +108,46 @@ public class MultiHttpRequest {
   public <T extends HttpUriRequestBase> CompletionService<MultiHttpRequestResponse> execute(
       List<Pair<String, String>> urlsAndRequestBodies, @Nullable Map<String, String> requestHeaders, int timeoutMs,
       String httpMethodName, Function<String, T> httpRequestBaseSupplier) {
+    return execute(urlsAndRequestBodies, requestHeaders, null, timeoutMs, httpMethodName, httpRequestBaseSupplier);
+  }
+
+  /**
+   * Executes HTTP requests and resolves authentication headers from the provider separately for every request.
+   * Provider headers take precedence over the caller-supplied functional headers. All requests are prepared before
+   * any of them is submitted, so a failing credential resolution does not leave a partially submitted batch.
+   */
+  public <T extends HttpUriRequestBase> CompletionService<MultiHttpRequestResponse> execute(
+      List<Pair<String, String>> urlsAndRequestBodies, @Nullable Map<String, String> requestHeaders,
+      @Nullable AuthProvider authProvider, int timeoutMs, String httpMethodName,
+      Function<String, T> httpRequestBaseSupplier) {
     // Create global request configuration
     Timeout timeout = Timeout.of(timeoutMs, TimeUnit.MILLISECONDS);
     RequestConfig defaultRequestConfig =
         RequestConfig.custom().setConnectionRequestTimeout(timeout).setResponseTimeout(timeout)
             .build(); // setting the socket
 
+    List<HttpUriRequestBase> requests = new ArrayList<>(urlsAndRequestBodies.size());
+    for (Pair<String, String> pair : urlsAndRequestBodies) {
+      String url = pair.getLeft();
+      String body = pair.getRight();
+      HttpUriRequestBase httpMethod = httpRequestBaseSupplier.apply(url);
+      // If the http method is POST, set the request body
+      if (httpMethod instanceof HttpPost) {
+        ((HttpPost) httpMethod).setEntity(new StringEntity(body));
+      }
+      if (requestHeaders != null) {
+        requestHeaders.forEach(httpMethod::setHeader);
+      }
+      AuthProviderUtils.makeAuthHeadersMap(authProvider).forEach(httpMethod::setHeader);
+      requests.add(httpMethod);
+    }
+
     HttpClientBuilder httpClientBuilder =
         HttpClients.custom().setConnectionManager(_connectionManager).setDefaultRequestConfig(defaultRequestConfig);
-
     CompletionService<MultiHttpRequestResponse> completionService = new ExecutorCompletionService<>(_executor);
     CloseableHttpClient client = httpClientBuilder.build();
-    for (Pair<String, String> pair : urlsAndRequestBodies) {
+    for (HttpUriRequestBase httpMethod : requests) {
       completionService.submit(() -> {
-        String url = pair.getLeft();
-        String body = pair.getRight();
-        HttpUriRequestBase httpMethod = httpRequestBaseSupplier.apply(url);
-        // If the http method is POST, set the request body
-        if (httpMethod instanceof HttpPost) {
-          ((HttpPost) httpMethod).setEntity(new StringEntity(body));
-        }
-        if (requestHeaders != null) {
-          requestHeaders.forEach(((HttpUriRequestBase) httpMethod)::setHeader);
-        }
         CloseableHttpResponse response = null;
         try {
           response = client.execute(httpMethod);
@@ -137,10 +156,12 @@ public class MultiHttpRequest {
         } catch (IOException ex) {
           if (response != null) {
             String error = EntityUtils.toString(response.getEntity());
-            LOGGER.warn("Caught '{}' while executing: {} on URL: {}", error, httpMethodName, url);
+            LOGGER.warn("Caught '{}' while executing: {} on URL: {}", error, httpMethodName,
+                httpMethod.getRequestUri());
           } else {
             // Log only exception type and message instead of the whole stack trace
-            LOGGER.warn("Caught '{}' while executing: {} on URL: {}", ex, httpMethodName, url);
+            LOGGER.warn("Caught '{}' while executing: {} on URL: {}", ex, httpMethodName,
+                httpMethod.getRequestUri());
           }
           throw ex;
         }

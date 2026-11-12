@@ -19,6 +19,7 @@
 package org.apache.pinot.plugin.minion.tasks;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -37,6 +38,7 @@ import org.apache.pinot.controller.util.ServerSegmentMetadataReader;
 import org.apache.pinot.core.common.MinionConstants;
 import org.apache.pinot.core.common.MinionConstants.UpsertCompactionTask;
 import org.apache.pinot.minion.MinionContext;
+import org.apache.pinot.spi.auth.AuthProvider;
 import org.apache.pinot.spi.config.table.TableConfig;
 import org.apache.pinot.spi.config.table.TableTaskConfig;
 import org.apache.pinot.spi.config.table.TableType;
@@ -411,6 +413,33 @@ public class MinionTaskUtilsTest {
       return MinionTaskUtils.getValidDocIdFromServerMatchingCrc(tableName, segmentName,
           ValidDocIdsType.SNAPSHOT.name(), MinionContext.getInstance(), expectedCrc, consensusMode);
     }
+  }
+
+  @Test
+  public void testValidDocIdsFetchUsesMinionTaskAuthProvider() {
+    String tableName = "myTable_REALTIME";
+    String segmentName = "seg1";
+    String expectedCrc = "crc1";
+    setupMinionContextWithServers(tableName, segmentName, new String[]{"server1"});
+    AuthProvider taskAuthProvider = mock(AuthProvider.class);
+    AuthProvider previous = MinionContext.getInstance().getTaskAuthProvider();
+    MinionContext.getInstance().setTaskAuthProvider(taskAuthProvider);
+    List<Object> constructorAuthProviders = new ArrayList<>();
+    try (MockedConstruction<ServerSegmentMetadataReader> ignored = mockConstruction(ServerSegmentMetadataReader.class,
+        (mock, context) -> {
+          constructorAuthProviders.add(context.arguments().isEmpty() ? null : context.arguments().get(0));
+          when(mock.getValidDocIdsBitmapFromServer(anyString(), anyString(), anyString(), anyString(), anyInt()))
+              .thenReturn(makeResponse(segmentName, expectedCrc, "server1", makeBitmap(5)));
+        })) {
+      RoaringBitmap result = MinionTaskUtils.getValidDocIdFromServerMatchingCrc(tableName, segmentName,
+          ValidDocIdsType.SNAPSHOT.name(), MinionContext.getInstance(), expectedCrc,
+          MinionConstants.ValidDocIdsConsensusMode.EQUAL.name());
+      assertEquals(result.getCardinality(), 5);
+    } finally {
+      MinionContext.getInstance().setTaskAuthProvider(previous);
+    }
+    // The server admin API is access controlled; the reader must be built with the minion's task identity.
+    assertEquals(constructorAuthProviders, List.of(taskAuthProvider));
   }
 
   @Test

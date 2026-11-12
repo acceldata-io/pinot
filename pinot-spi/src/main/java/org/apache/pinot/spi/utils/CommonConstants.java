@@ -335,6 +335,10 @@ public class CommonConstants {
   public static class Broker {
     public static final String ROUTING_TABLE_CONFIG_PREFIX = "pinot.broker.routing.table";
     public static final String ACCESS_CONTROL_CONFIG_PREFIX = "pinot.broker.access.control";
+    /**
+     * Namespace for service credentials used by the broker when invoking Server admin APIs.
+     */
+    public static final String SERVER_ADMIN_AUTH_PREFIX = "pinot.broker.server.admin.auth";
     public static final String METRICS_CONFIG_PREFIX = "pinot.broker.metrics";
     public static final String EVENT_LISTENER_CONFIG_PREFIX = "pinot.broker.event.listener";
     // Prefix for table sampler configs:

@@ -992,7 +992,14 @@ public class FileUploadDownloadClient implements AutoCloseable {
    */
   public String uploadToSegmentStore(String uri)
       throws URISyntaxException, IOException, HttpErrorStatusException {
+    return uploadToSegmentStore(uri, null);
+  }
+
+  /// Authenticated variant of [#uploadToSegmentStore(String)].
+  public String uploadToSegmentStore(String uri, @Nullable AuthProvider authProvider)
+      throws URISyntaxException, IOException, HttpErrorStatusException {
     ClassicRequestBuilder requestBuilder = ClassicRequestBuilder.post(new URI(uri)).setVersion(HttpVersion.HTTP_1_1);
+    AuthProviderUtils.toRequestHeaders(authProvider).forEach(requestBuilder::setHeader);
     // sendRequest checks the response status code
     SimpleHttpResponse response = HttpClient.wrapAndThrowHttpException(
         _httpClient.sendRequest(requestBuilder.build(), HttpClient.DEFAULT_SOCKET_TIMEOUT_MS));
@@ -1016,7 +1023,14 @@ public class FileUploadDownloadClient implements AutoCloseable {
    */
   public TableLLCSegmentUploadResponse uploadLLCToSegmentStore(String uri)
       throws URISyntaxException, IOException, HttpErrorStatusException {
+    return uploadLLCToSegmentStore(uri, null);
+  }
+
+  /// Authenticated variant of [#uploadLLCToSegmentStore(String)].
+  public TableLLCSegmentUploadResponse uploadLLCToSegmentStore(String uri, @Nullable AuthProvider authProvider)
+      throws URISyntaxException, IOException, HttpErrorStatusException {
     ClassicRequestBuilder requestBuilder = ClassicRequestBuilder.post(new URI(uri)).setVersion(HttpVersion.HTTP_1_1);
+    AuthProviderUtils.toRequestHeaders(authProvider).forEach(requestBuilder::setHeader);
     // sendRequest checks the response status code
     SimpleHttpResponse response = HttpClient.wrapAndThrowHttpException(
         _httpClient.sendRequest(requestBuilder.build(), HttpClient.DEFAULT_SOCKET_TIMEOUT_MS));
@@ -1042,7 +1056,14 @@ public class FileUploadDownloadClient implements AutoCloseable {
    */
   public SegmentZKMetadata uploadLLCToSegmentStoreWithZKMetadata(String uri)
       throws URISyntaxException, IOException, HttpErrorStatusException {
+    return uploadLLCToSegmentStoreWithZKMetadata(uri, null);
+  }
+
+  /// Authenticated variant of [#uploadLLCToSegmentStoreWithZKMetadata(String)].
+  public SegmentZKMetadata uploadLLCToSegmentStoreWithZKMetadata(String uri, @Nullable AuthProvider authProvider)
+      throws URISyntaxException, IOException, HttpErrorStatusException {
     ClassicRequestBuilder requestBuilder = ClassicRequestBuilder.post(new URI(uri)).setVersion(HttpVersion.HTTP_1_1);
+    AuthProviderUtils.toRequestHeaders(authProvider).forEach(requestBuilder::setHeader);
     // sendRequest checks the response status code
     SimpleHttpResponse response = HttpClient.wrapAndThrowHttpException(
         _httpClient.sendRequest(requestBuilder.build(), HttpClient.DEFAULT_SOCKET_TIMEOUT_MS));

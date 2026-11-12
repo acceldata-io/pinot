@@ -56,6 +56,7 @@ import org.apache.pinot.broker.api.AccessControl;
 import org.apache.pinot.broker.broker.AccessControlFactory;
 import org.apache.pinot.broker.querylog.QueryLogger;
 import org.apache.pinot.broker.queryquota.QueryQuotaManager;
+import org.apache.pinot.common.auth.AuthProviderUtils;
 import org.apache.pinot.common.config.provider.TableCache;
 import org.apache.pinot.common.http.MultiHttpRequest;
 import org.apache.pinot.common.http.MultiHttpRequestResponse;
@@ -101,6 +102,7 @@ import org.apache.pinot.core.util.GapfillUtils;
 import org.apache.pinot.query.parser.utils.ParserUtils;
 import org.apache.pinot.segment.local.function.GroovyFunctionEvaluator;
 import org.apache.pinot.spi.accounting.ThreadAccountant;
+import org.apache.pinot.spi.auth.AuthProvider;
 import org.apache.pinot.spi.auth.AuthorizationResult;
 import org.apache.pinot.spi.auth.TableRowColAccessResult;
 import org.apache.pinot.spi.auth.broker.RequesterIdentity;
@@ -177,6 +179,7 @@ public abstract class BaseSingleStageBrokerRequestHandler extends BaseBrokerRequ
   protected final boolean _enableMultistageMigrationMetric;
   protected final boolean _useMSEToFillEmptyResponseSchema;
   protected final boolean _enableQueryFingerprinting;
+  protected final AuthProvider _serverAdminAuthProvider;
   protected ExecutorService _multistageCompileExecutor;
   protected BlockingQueue<Pair<String, String>> _multistageCompileQueryQueue;
   protected ImplicitHybridTableRouteProvider _implicitHybridTableRouteProvider;
@@ -188,6 +191,7 @@ public abstract class BaseSingleStageBrokerRequestHandler extends BaseBrokerRequ
       ThreadAccountant threadAccountant, MultiClusterRoutingContext multiClusterRoutingContext) {
     super(config, brokerId, requestIdGenerator, routingManager, accessControlFactory, queryQuotaManager, tableCache,
         threadAccountant, multiClusterRoutingContext);
+    _serverAdminAuthProvider = AuthProviderUtils.extractAuthProvider(config, Broker.SERVER_ADMIN_AUTH_PREFIX);
     _disableGroovy = _config.getProperty(Broker.DISABLE_GROOVY, Broker.DEFAULT_DISABLE_GROOVY);
     _useApproximateFunction = _config.getProperty(Broker.USE_APPROXIMATE_FUNCTION, false);
     _defaultHllLog2m = _config.getProperty(CommonConstants.Helix.DEFAULT_HYPERLOGLOG_LOG2M_KEY,
@@ -295,7 +299,8 @@ public abstract class BaseSingleStageBrokerRequestHandler extends BaseBrokerRequ
     }
     LOGGER.debug("Cancelling the query: {} via server urls: {}", queryServers._query, serverUrls);
     CompletionService<MultiHttpRequestResponse> completionService =
-        new MultiHttpRequest(executor, connMgr).execute(serverUrls, null, timeoutMs, "DELETE", HttpDelete::new);
+        new MultiHttpRequest(executor, connMgr).execute(serverUrls, null, _serverAdminAuthProvider, timeoutMs,
+            "DELETE", HttpDelete::new);
     List<String> errMsgs = new ArrayList<>(serverUrls.size());
     for (int i = 0; i < serverUrls.size(); i++) {
       MultiHttpRequestResponse httpRequestResponse = null;

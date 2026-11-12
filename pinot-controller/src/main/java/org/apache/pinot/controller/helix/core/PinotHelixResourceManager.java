@@ -90,6 +90,7 @@ import org.apache.helix.zookeeper.datamodel.ZNRecord;
 import org.apache.pinot.common.assignment.InstanceAssignmentConfigUtils;
 import org.apache.pinot.common.assignment.InstancePartitions;
 import org.apache.pinot.common.assignment.InstancePartitionsUtils;
+import org.apache.pinot.common.auth.AuthProviderUtils;
 import org.apache.pinot.common.config.provider.TableCache;
 import org.apache.pinot.common.config.provider.ZkTableCache;
 import org.apache.pinot.common.exception.InvalidConfigException;
@@ -159,6 +160,7 @@ import org.apache.pinot.core.util.NumberUtils;
 import org.apache.pinot.core.util.NumericException;
 import org.apache.pinot.segment.local.utils.TableConfigUtils;
 import org.apache.pinot.segment.spi.SegmentMetadata;
+import org.apache.pinot.spi.auth.AuthProvider;
 import org.apache.pinot.spi.config.DatabaseConfig;
 import org.apache.pinot.spi.config.instance.Instance;
 import org.apache.pinot.spi.config.table.TableConfig;
@@ -230,6 +232,8 @@ public class PinotHelixResourceManager {
   private final boolean _enableBatchMessageMode;
   private final int _deletedSegmentsRetentionInDays;
   private final boolean _enableTieredSegmentAssignment;
+  @Nullable
+  private final AuthProvider _serverAdminAuthProvider;
 
   private HelixManager _helixZkManager;
   private HelixAdmin _helixAdmin;
@@ -246,12 +250,25 @@ public class PinotHelixResourceManager {
   public PinotHelixResourceManager(String helixClusterName, @Nullable String dataDir,
       boolean isSingleTenantCluster, boolean enableBatchMessageMode, int deletedSegmentsRetentionInDays,
       boolean enableTieredSegmentAssignment, LineageManager lineageManager) {
+    this(helixClusterName, dataDir, isSingleTenantCluster, enableBatchMessageMode, deletedSegmentsRetentionInDays,
+        enableTieredSegmentAssignment, lineageManager, null);
+  }
+
+  /**
+   * @param serverAdminAuthProvider service identity used for outbound Server admin API requests, or {@code null}
+   *                                when the servers do not require one
+   */
+  public PinotHelixResourceManager(String helixClusterName, @Nullable String dataDir,
+      boolean isSingleTenantCluster, boolean enableBatchMessageMode, int deletedSegmentsRetentionInDays,
+      boolean enableTieredSegmentAssignment, LineageManager lineageManager,
+      @Nullable AuthProvider serverAdminAuthProvider) {
     _helixClusterName = helixClusterName;
     _dataDir = dataDir;
     _isSingleTenantCluster = isSingleTenantCluster;
     _enableBatchMessageMode = enableBatchMessageMode;
     _deletedSegmentsRetentionInDays = deletedSegmentsRetentionInDays;
     _enableTieredSegmentAssignment = enableTieredSegmentAssignment;
+    _serverAdminAuthProvider = serverAdminAuthProvider;
     _instanceAdminEndpointCache =
         CacheBuilder.newBuilder().expireAfterWrite(CACHE_ENTRY_EXPIRE_TIME_HOURS, TimeUnit.HOURS)
             .build(new CacheLoader<>() {
@@ -274,7 +291,8 @@ public class PinotHelixResourceManager {
     this(controllerConf.getHelixClusterName(), controllerConf.getDataDir(),
         controllerConf.tenantIsolationEnabled(), controllerConf.getEnableBatchMessageMode(),
         controllerConf.getDeletedSegmentsRetentionInDays(), controllerConf.tieredSegmentAssignmentEnabled(),
-        LineageManagerFactory.create(controllerConf));
+        LineageManagerFactory.create(controllerConf),
+        AuthProviderUtils.extractAuthProvider(controllerConf, ControllerConf.CONTROLLER_SERVER_ADMIN_AUTH_PREFIX));
   }
 
   /**
@@ -4110,6 +4128,15 @@ public class PinotHelixResourceManager {
       endpointToInstance.put(instance, instanceAdminEndpoint);
     }
     return endpointToInstance;
+  }
+
+  /**
+   * Returns the service identity provider used for outbound Server admin API requests.
+   * Callers must resolve the headers for each request so providers that rotate credentials are honored.
+   */
+  @Nullable
+  public AuthProvider getServerAdminAuthProvider() {
+    return _serverAdminAuthProvider;
   }
 
   /**

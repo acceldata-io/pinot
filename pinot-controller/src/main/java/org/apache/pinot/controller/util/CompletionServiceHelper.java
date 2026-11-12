@@ -30,8 +30,10 @@ import javax.annotation.Nullable;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.hc.client5.http.io.HttpClientConnectionManager;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.pinot.common.auth.AuthProviderUtils;
 import org.apache.pinot.common.http.MultiHttpRequest;
 import org.apache.pinot.common.http.MultiHttpRequestResponse;
+import org.apache.pinot.spi.auth.AuthProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,12 +51,23 @@ public class CompletionServiceHelper {
   private final Executor _executor;
   private final HttpClientConnectionManager _httpConnectionManager;
   private final BiMap<String, String> _endpointsToServers;
+  @Nullable
+  private final AuthProvider _authProvider;
 
   public CompletionServiceHelper(Executor executor, HttpClientConnectionManager httpConnectionManager,
       BiMap<String, String> endpointsToServers) {
+    this(executor, httpConnectionManager, endpointsToServers, null);
+  }
+
+  /**
+   * Creates a helper whose requests resolve service authentication headers from the provider at request time.
+   */
+  public CompletionServiceHelper(Executor executor, HttpClientConnectionManager httpConnectionManager,
+      BiMap<String, String> endpointsToServers, @Nullable AuthProvider authProvider) {
     _executor = executor;
     _httpConnectionManager = httpConnectionManager;
     _endpointsToServers = endpointsToServers;
+    _authProvider = authProvider;
   }
 
   public CompletionServiceResponse doMultiGetRequest(List<String> serverURLs, String tableNameWithType,
@@ -82,7 +95,8 @@ public class CompletionServiceHelper {
       @Nullable String useCase) {
     // TODO: use some service other than completion service so that we know which server encounters the error
     CompletionService<MultiHttpRequestResponse> completionService =
-        new MultiHttpRequest(_executor, _httpConnectionManager).executeGet(serverURLs, requestHeaders, timeoutMs);
+        new MultiHttpRequest(_executor, _httpConnectionManager).executeGet(serverURLs,
+            getRequestHeaders(requestHeaders), timeoutMs);
 
     return collectResponse(tableNameWithType, serverURLs.size(), completionService, multiRequestPerServer, useCase);
   }
@@ -107,11 +121,26 @@ public class CompletionServiceHelper {
       int timeoutMs, @Nullable String useCase) {
 
     CompletionService<MultiHttpRequestResponse> completionService =
-        new MultiHttpRequest(_executor, _httpConnectionManager).executePost(serverURLsAndRequestBodies, requestHeaders,
-            timeoutMs);
+        new MultiHttpRequest(_executor, _httpConnectionManager).executePost(serverURLsAndRequestBodies,
+            getRequestHeaders(requestHeaders), timeoutMs);
 
     return collectResponse(tableNameWithType, serverURLsAndRequestBodies.size(), completionService,
         multiRequestPerServer, useCase);
+  }
+
+  @Nullable
+  private Map<String, String> getRequestHeaders(@Nullable Map<String, String> requestHeaders) {
+    Map<String, String> authHeaders = AuthProviderUtils.makeAuthHeadersMap(_authProvider);
+    if (authHeaders.isEmpty()) {
+      return requestHeaders;
+    }
+    Map<String, String> mergedRequestHeaders =
+        requestHeaders != null ? new HashMap<>(requestHeaders) : new HashMap<>();
+    // A configured service identity takes precedence over a caller-supplied end-user credential.
+    mergedRequestHeaders.keySet()
+        .removeIf(header -> authHeaders.keySet().stream().anyMatch(header::equalsIgnoreCase));
+    mergedRequestHeaders.putAll(authHeaders);
+    return mergedRequestHeaders;
   }
 
   private CompletionServiceResponse collectResponse(String tableNameWithType, int size,

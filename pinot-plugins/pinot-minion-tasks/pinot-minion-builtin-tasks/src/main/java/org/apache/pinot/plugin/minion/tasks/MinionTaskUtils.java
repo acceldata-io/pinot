@@ -304,7 +304,9 @@ public class MinionTaskUtils {
       InstanceConfig instanceConfig = helixAdmin.getInstanceConfig(clusterName, server);
       String endpoint = InstanceUtils.getServerAdminEndpoint(instanceConfig);
 
-      ServerSegmentMetadataReader serverSegmentMetadataReader = new ServerSegmentMetadataReader();
+      // Server admin APIs are access controlled; fetch with the minion's task identity (task.auth).
+      ServerSegmentMetadataReader serverSegmentMetadataReader =
+          new ServerSegmentMetadataReader(minionContext.getTaskAuthProvider());
       ValidDocIdsBitmapResponse validDocIdsBitmapResponse;
       try {
         validDocIdsBitmapResponse =

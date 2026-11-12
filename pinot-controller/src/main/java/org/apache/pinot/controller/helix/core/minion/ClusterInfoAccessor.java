@@ -47,6 +47,7 @@ import org.apache.pinot.controller.ControllerConf;
 import org.apache.pinot.controller.LeadControllerManager;
 import org.apache.pinot.controller.helix.core.PinotHelixResourceManager;
 import org.apache.pinot.core.minion.PinotTaskConfig;
+import org.apache.pinot.spi.auth.AuthProvider;
 import org.apache.pinot.spi.config.table.TableConfig;
 import org.apache.pinot.spi.data.Schema;
 import org.apache.pinot.spi.utils.CommonConstants;
@@ -333,6 +334,16 @@ public class ClusterInfoAccessor {
    */
   public PinotHelixResourceManager getPinotHelixResourceManager() {
     return _pinotHelixResourceManager;
+  }
+
+  /**
+   * Returns the controller's service identity for Server admin API calls (configured under
+   * {@code controller.server.admin.auth}), or {@code null} when none is configured. Task generators that read
+   * segment state from servers, such as validDocIds metadata, must send it once Server admin APIs are protected.
+   */
+  @Nullable
+  public AuthProvider getServerAdminAuthProvider() {
+    return _pinotHelixResourceManager != null ? _pinotHelixResourceManager.getServerAdminAuthProvider() : null;
   }
 
   /**

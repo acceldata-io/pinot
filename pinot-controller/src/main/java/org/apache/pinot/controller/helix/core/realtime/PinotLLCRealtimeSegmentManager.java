@@ -2281,7 +2281,8 @@ public class PinotLLCRealtimeSegmentManager {
     LOGGER.info("Asking server to upload segment: {} by path: {}", segmentName, serverUploadRequestUrl);
     try {
       SegmentZKMetadata uploadedMetadata =
-          _fileUploadDownloadClient.uploadLLCToSegmentStoreWithZKMetadata(serverUploadRequestUrl);
+          _fileUploadDownloadClient.uploadLLCToSegmentStoreWithZKMetadata(serverUploadRequestUrl,
+              _helixResourceManager.getServerAdminAuthProvider());
       handleMetadataUpload(rawTableName, segmentName, segmentZKMetadata, uploadedMetadata, pinotFS);
       return;
     } catch (Exception e) {
@@ -2296,7 +2297,8 @@ public class PinotLLCRealtimeSegmentManager {
     LOGGER.info("Asking server to upload segment: {} by path: {}", segmentName, serverUploadRequestUrl);
     try {
       TableLLCSegmentUploadResponse response =
-          _fileUploadDownloadClient.uploadLLCToSegmentStore(serverUploadRequestUrl);
+          _fileUploadDownloadClient.uploadLLCToSegmentStore(serverUploadRequestUrl,
+              _helixResourceManager.getServerAdminAuthProvider());
       handleLLCUpload(segmentName, rawTableName, segmentZKMetadata, response, pinotFS);
       return;
     } catch (Exception e) {
@@ -2307,7 +2309,8 @@ public class PinotLLCRealtimeSegmentManager {
     serverUploadRequestUrl = getUploadUrl(uri, "upload");
     LOGGER.info("Asking server to upload segment: {} by path: {}", segmentName, serverUploadRequestUrl);
     try {
-      String segmentLocation = _fileUploadDownloadClient.uploadToSegmentStore(serverUploadRequestUrl);
+      String segmentLocation = _fileUploadDownloadClient.uploadToSegmentStore(serverUploadRequestUrl,
+          _helixResourceManager.getServerAdminAuthProvider());
       handleBasicUpload(rawTableName, segmentName, segmentZKMetadata, segmentLocation, pinotFS);
     } catch (Exception e) {
       throw new RuntimeException("Failed to ask server to upload segment: " + segmentName, e);
@@ -3126,7 +3129,8 @@ public class PinotLLCRealtimeSegmentManager {
 
     URI reingestUri = FileUploadDownloadClient.getURI(scheme, serverHost, Integer.parseInt(serverPort),
         REINGEST_SEGMENT_PATH + "/" + segmentName);
-    HttpClient.wrapAndThrowHttpException(HttpClient.getInstance().sendJsonPostRequest(reingestUri, ""));
+    HttpClient.wrapAndThrowHttpException(HttpClient.getInstance().sendJsonPostRequest(reingestUri, "", Map.of(),
+        _helixResourceManager.getServerAdminAuthProvider()));
   }
 
   /**

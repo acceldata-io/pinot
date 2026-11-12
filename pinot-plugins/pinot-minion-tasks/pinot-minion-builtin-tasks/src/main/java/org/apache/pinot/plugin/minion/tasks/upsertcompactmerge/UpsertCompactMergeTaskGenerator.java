@@ -168,7 +168,7 @@ public class UpsertCompactMergeTaskGenerator extends BaseTaskGenerator {
 
       ServerSegmentMetadataReader serverSegmentMetadataReader =
           new ServerSegmentMetadataReader(_clusterInfoAccessor.getExecutor(),
-              _clusterInfoAccessor.getConnectionManager());
+              _clusterInfoAccessor.getConnectionManager(), _clusterInfoAccessor.getServerAdminAuthProvider());
 
       // Number of segments to query per server request. If a table has a lot of segments, then we might send a
       // huge payload to pinot-server in request. Batching the requests will help in reducing the payload size.

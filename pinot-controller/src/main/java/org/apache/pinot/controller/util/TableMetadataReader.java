@@ -115,7 +115,8 @@ public class TableMetadataReader {
       int timeoutMs, Set<String> serverInstanceSet) throws InvalidConfigException {
     BiMap<String, String> endpoints = _pinotHelixResourceManager.getDataInstanceAdminEndpoints(serverInstanceSet);
     ServerSegmentMetadataReader serverSegmentMetadataReader =
-        new ServerSegmentMetadataReader(_executor, _connectionManager);
+        new ServerSegmentMetadataReader(_executor, _connectionManager,
+            _pinotHelixResourceManager.getServerAdminAuthProvider());
     return serverSegmentMetadataReader.getCheckReloadSegmentsFromServer(tableNameWithType, serverInstanceSet, endpoints,
         timeoutMs);
   }
@@ -148,7 +149,8 @@ public class TableMetadataReader {
   private JsonNode fetchAndAggregateMetadata(List<String> urls, BiMap<String, String> endpoints, boolean perSegmentJson,
       String tableNameWithType, int timeoutMs)
       throws InvalidConfigException, IOException {
-    CompletionServiceHelper cs = new CompletionServiceHelper(_executor, _connectionManager, endpoints);
+    CompletionServiceHelper cs = new CompletionServiceHelper(_executor, _connectionManager, endpoints,
+        _pinotHelixResourceManager.getServerAdminAuthProvider());
     CompletionServiceHelper.CompletionServiceResponse resp =
         cs.doMultiGetRequest(urls, tableNameWithType, perSegmentJson, timeoutMs);
     // all requests will fail if new server endpoint is not available
@@ -205,7 +207,8 @@ public class TableMetadataReader {
     BiMap<String, String> endpoints =
         _pinotHelixResourceManager.getDataInstanceAdminEndpoints(serverToSegs.keySet());
     ServerSegmentMetadataReader reader =
-        new ServerSegmentMetadataReader(_executor, _connectionManager);
+        new ServerSegmentMetadataReader(_executor, _connectionManager,
+            _pinotHelixResourceManager.getServerAdminAuthProvider());
 
     // try table level endpoint first
     try {
@@ -238,7 +241,8 @@ public class TableMetadataReader {
 
     BiMap<String, String> endpoints = _pinotHelixResourceManager.getDataInstanceAdminEndpoints(servers);
     ServerSegmentMetadataReader serverSegmentMetadataReader =
-        new ServerSegmentMetadataReader(_executor, _connectionManager);
+        new ServerSegmentMetadataReader(_executor, _connectionManager,
+            _pinotHelixResourceManager.getServerAdminAuthProvider());
 
     List<String> segmentsMetadata =
         serverSegmentMetadataReader.getSegmentMetadataFromServer(tableNameWithType, serverToSegments, endpoints,
@@ -268,7 +272,8 @@ public class TableMetadataReader {
     BiMap<String, String> endpoints =
         _pinotHelixResourceManager.getDataInstanceAdminEndpoints(serverToSegments.keySet());
     ServerSegmentMetadataReader serverSegmentMetadataReader =
-        new ServerSegmentMetadataReader(_executor, _connectionManager);
+        new ServerSegmentMetadataReader(_executor, _connectionManager,
+            _pinotHelixResourceManager.getServerAdminAuthProvider());
 
     TableMetadataInfo aggregateTableMetadataInfo =
         serverSegmentMetadataReader.getAggregatedTableMetadataFromServer(tableNameWithType, endpoints, columns,
@@ -288,7 +293,8 @@ public class TableMetadataReader {
     BiMap<String, String> endpoints =
         _pinotHelixResourceManager.getDataInstanceAdminEndpoints(serverToSegments.keySet());
     ServerSegmentMetadataReader serverSegmentMetadataReader =
-        new ServerSegmentMetadataReader(_executor, _connectionManager);
+        new ServerSegmentMetadataReader(_executor, _connectionManager,
+            _pinotHelixResourceManager.getServerAdminAuthProvider());
 
     List<ValidDocIdsMetadataInfo> aggregateTableMetadataInfo =
         serverSegmentMetadataReader.getValidDocIdsMetadataFromServer(tableNameWithType, serverToSegments, endpoints,
@@ -304,7 +310,8 @@ public class TableMetadataReader {
     Set<String> serverInstanceSet = new HashSet<>(serverInstances);
     BiMap<String, String> endpoints = _pinotHelixResourceManager.getDataInstanceAdminEndpoints(serverInstanceSet);
     ServerSegmentMetadataReader serverSegmentMetadataReader =
-        new ServerSegmentMetadataReader(_executor, _connectionManager);
+        new ServerSegmentMetadataReader(_executor, _connectionManager,
+            _pinotHelixResourceManager.getServerAdminAuthProvider());
     return serverSegmentMetadataReader.getStaleSegmentsFromServer(tableNameWithType, serverInstanceSet, endpoints,
         timeoutMs);
   }
