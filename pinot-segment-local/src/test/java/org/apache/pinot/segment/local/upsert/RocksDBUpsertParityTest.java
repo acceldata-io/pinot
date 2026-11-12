@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
 import java.util.function.IntFunction;
+import java.util.function.IntUnaryOperator;
 import javax.annotation.Nullable;
 import org.apache.commons.io.FileUtils;
 import org.apache.pinot.common.metrics.ServerMetrics;
@@ -50,6 +51,7 @@ import org.apache.pinot.spi.data.FieldSpec.DataType;
 import org.apache.pinot.spi.data.Schema;
 import org.apache.pinot.spi.data.readers.GenericRow;
 import org.apache.pinot.spi.data.readers.PrimaryKey;
+import org.apache.pinot.spi.utils.ConsumingSegmentConsistencyModeListener;
 import org.apache.pinot.spi.utils.builder.TableNameBuilder;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -202,13 +204,13 @@ public class RocksDBUpsertParityTest {
     return dataSource;
   }
 
-  private static DataSource intDataSource(List<Row> rows) {
+  private static DataSource intDataSource(IntUnaryOperator valueOfDoc) {
     DataSource dataSource = mock(DataSource.class);
     ForwardIndexReader forwardIndex = mock(ForwardIndexReader.class);
     when(forwardIndex.isSingleValue()).thenReturn(true);
     when(forwardIndex.getStoredType()).thenReturn(DataType.INT);
     when(forwardIndex.getInt(anyInt(), any())).thenAnswer(
-        invocation -> rows.get(invocation.getArgument(0))._comparisonValue);
+        invocation -> valueOfDoc.applyAsInt(invocation.getArgument(0)));
     when(dataSource.getForwardIndex()).thenReturn(forwardIndex);
     return dataSource;
   }
@@ -220,12 +222,14 @@ public class RocksDBUpsertParityTest {
     when(segment.getValidDocIds()).thenReturn(validDocIds);
     when(segment.getQueryableDocIds()).thenReturn(queryableDocIds);
     DataSource pkDataSource = stringDataSource(docId -> spec._rows.get(docId)._pk);
-    DataSource comparisonDataSource = intDataSource(spec._rows);
+    DataSource comparisonDataSource = intDataSource(docId -> spec._rows.get(docId)._comparisonValue);
+    DataSource deleteDataSource = intDataSource(docId -> spec._rows.get(docId)._deleted ? 1 : 0);
     DataSource tagDataSource = stringDataSource(docId -> spec._name + "#" + docId);
     when(segment.getDataSource(anyString())).thenReturn(pkDataSource);
     when(segment.getDataSource(PK_COLUMN)).thenReturn(pkDataSource);
     when(segment.getDataSource(COMPARISON_COLUMN)).thenReturn(comparisonDataSource);
     when(segment.getDataSource(TAG_COLUMN)).thenReturn(tagDataSource);
+    when(segment.getDataSource(DELETE_COLUMN)).thenReturn(deleteDataSource);
     SegmentMetadataImpl segmentMetadata = mock(SegmentMetadataImpl.class);
     when(segmentMetadata.getIndexCreationTime()).thenReturn(spec._creationTimeMs);
     when(segmentMetadata.getZkCreationTime()).thenReturn(spec._creationTimeMs);
@@ -251,12 +255,14 @@ public class RocksDBUpsertParityTest {
     when(segment.getValidDocIds()).thenReturn(validDocIds);
     when(segment.getQueryableDocIds()).thenReturn(queryableDocIds);
     DataSource pkDataSource = stringDataSource(docId -> spec._rows.get(docId)._pk);
-    DataSource comparisonDataSource = intDataSource(spec._rows);
+    DataSource comparisonDataSource = intDataSource(docId -> spec._rows.get(docId)._comparisonValue);
+    DataSource deleteDataSource = intDataSource(docId -> spec._rows.get(docId)._deleted ? 1 : 0);
     DataSource tagDataSource = stringDataSource(docId -> spec._name + "#" + docId);
     when(segment.getDataSource(anyString())).thenReturn(pkDataSource);
     when(segment.getDataSource(PK_COLUMN)).thenReturn(pkDataSource);
     when(segment.getDataSource(COMPARISON_COLUMN)).thenReturn(comparisonDataSource);
     when(segment.getDataSource(TAG_COLUMN)).thenReturn(tagDataSource);
+    when(segment.getDataSource(DELETE_COLUMN)).thenReturn(deleteDataSource);
     SegmentMetadataImpl segmentMetadata = mock(SegmentMetadataImpl.class);
     when(segmentMetadata.getIndexCreationTime()).thenReturn(spec._creationTimeMs);
     when(segmentMetadata.getZkCreationTime()).thenReturn(spec._creationTimeMs);
@@ -297,6 +303,9 @@ public class RocksDBUpsertParityTest {
     SegmentSpec _consuming;
     int _consumedRows;
     int _numMerges;
+    /// Simulates replicas that diverged: commits may keep fewer rows than consumed, and consuming segments may be
+    /// dropped. In PROTECTED mode both trigger reverting keys to their previous locations.
+    boolean _divergent;
 
     Driver(long seed, boolean withDeletes, int numKeys, int maxComparisonValue, World expected, World actual) {
       _random = new Random(seed);
@@ -354,8 +363,9 @@ public class RocksDBUpsertParityTest {
     }
 
     void commit() {
+      int numCommittedRows = _divergent && _consumedRows > 0 ? _random.nextInt(_consumedRows + 1) : _consumedRows;
       SegmentSpec committed = new SegmentSpec(_consuming._name, _consuming._creationTimeMs,
-          new ArrayList<>(_consuming._rows.subList(0, _consumedRows)));
+          new ArrayList<>(_consuming._rows.subList(0, numCommittedRows)));
       for (World world : List.of(_expected, _actual)) {
         IndexSegment oldSegment = world._segments.get(committed._name);
         ThreadSafeMutableRoaringBitmap validDocIds = new ThreadSafeMutableRoaringBitmap();
@@ -423,6 +433,12 @@ public class RocksDBUpsertParityTest {
           int numRows = 1 + _random.nextInt(20);
           consume(numRows);
           description = "consume " + numRows + " rows";
+        } else if (_divergent && choice < 56) {
+          description = "drop consuming " + _consuming._name;
+          for (World world : List.of(_expected, _actual)) {
+            world._manager.doRemoveSegment(world._segments.remove(_consuming._name));
+          }
+          _consuming = null;
         } else if (choice < 70) {
           description = "commit " + _consuming._name;
           commit();
@@ -498,6 +514,29 @@ public class RocksDBUpsertParityTest {
       driver.run(400);
       assertTrue(driver._numMerges > 100, "Too few partial-upsert merges: " + driver._numMerges);
     } finally {
+      closeQuietly(expected._manager);
+      closeQuietly(actual._manager);
+    }
+  }
+
+  @Test(dataProvider = "fullUpsertCases")
+  public void testPartialUpsertRevertParity(HashFunction hashFunction, boolean withDeletes, long seed) {
+    ConsumingSegmentConsistencyModeListener.getInstance()
+        .setMode(ConsumingSegmentConsistencyModeListener.Mode.PROTECTED);
+    UpsertContext context =
+        contextBuilder(hashFunction, withDeletes).setPartialUpsertHandler(recordingPartialUpsertHandler()).build();
+    World expected = new World(new ConcurrentMapPartitionUpsertMetadataManager(REALTIME_TABLE_NAME, 0, context));
+    RocksDBPartitionUpsertMetadataManager rocksDBManager =
+        new RocksDBPartitionUpsertMetadataManager(REALTIME_TABLE_NAME, 0, context, storeConfig());
+    World actual = new World(rocksDBManager);
+    try {
+      Driver driver = new Driver(seed, withDeletes, 300, 40, expected, actual);
+      driver._divergent = true;
+      driver.run(400);
+      assertEquals(rocksDBManager.getPrevKeyToRecordLocationSize(),
+          ((ConcurrentMapPartitionUpsertMetadataManager) expected._manager).getPrevKeyToRecordLocationSize());
+    } finally {
+      ConsumingSegmentConsistencyModeListener.getInstance().reset();
       closeQuietly(expected._manager);
       closeQuietly(actual._manager);
     }
