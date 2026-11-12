@@ -89,7 +89,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 
     // exclude public/unprotected paths
     if (isBaseFile(AuthProviderUtils.stripMatrixParams(uriInfo.getPath()))
-        || UNPROTECTED_PATHS.contains(AuthProviderUtils.stripMatrixParams(uriInfo.getPath()))) {
+        || isUnprotectedPath(AuthProviderUtils.stripMatrixParams(uriInfo.getPath()))) {
       return;
     }
 
@@ -127,6 +127,13 @@ public class AuthenticationFilter implements ContainerRequestFilter {
     AccessControlUtils.validatePermission(tableName, accessType, _httpHeaders, endpointUrl, accessControl);
 
     FineGrainedAuthUtils.validateFineGrainedAuth(endpointMethod, uriInfo, _httpHeaders, accessControl);
+  }
+
+  /// Returns whether the filter lets requests for the given path (relative, without a leading `/`) through without
+  /// authentication: the UI landing page, health and the login endpoints.
+  @VisibleForTesting
+  static boolean isUnprotectedPath(String path) {
+    return UNPROTECTED_PATHS.contains(path);
   }
 
   @VisibleForTesting

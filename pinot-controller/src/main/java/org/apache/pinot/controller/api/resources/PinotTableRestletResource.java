@@ -1128,6 +1128,7 @@ public class PinotTableRestletResource {
   @PUT
   @Path("/tables/{tableName}/state")
   @Authenticate(AccessType.UPDATE)
+  @ManualAuthorization // the action, EnableTable or DisableTable, depends on the requested state
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.TEXT_PLAIN)
   @ApiOperation(value = "Enable/disable a table", notes = "Enable/disable a table")
@@ -1141,7 +1142,7 @@ public class PinotTableRestletResource {
       @ApiParam(value = "Table name", required = true) @PathParam("tableName") String tableName,
       @ApiParam(value = "realtime|offline", required = true) @QueryParam("type") String tableTypeStr,
       @ApiParam(value = "enable|disable", required = true) @QueryParam("state") String state,
-      @Context HttpHeaders headers) {
+      @Context HttpHeaders headers, @Context Request request) {
     tableName = DatabaseUtils.translateTableName(tableName, headers);
     String tableNameWithType = constructTableNameWithType(tableName, tableTypeStr);
     StateType stateType;
@@ -1152,6 +1153,9 @@ public class PinotTableRestletResource {
     } else {
       throw new ControllerApplicationException(LOGGER, "Unknown state '" + state + "'", Response.Status.BAD_REQUEST);
     }
+    ResourceUtils.checkPermissionAndAccess(tableName, request, headers, AccessType.UPDATE,
+        stateType == StateType.ENABLE ? Actions.Table.ENABLE_TABLE : Actions.Table.DISABLE_TABLE, _accessControlFactory,
+        LOGGER);
     if (!_pinotHelixResourceManager.hasTable(tableNameWithType)) {
       throw new ControllerApplicationException(LOGGER, "Table '" + tableName + "' does not exist",
           Response.Status.NOT_FOUND);

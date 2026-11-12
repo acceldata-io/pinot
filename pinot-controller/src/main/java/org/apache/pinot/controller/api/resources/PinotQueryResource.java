@@ -77,7 +77,9 @@ import org.apache.pinot.controller.api.access.AccessType;
 import org.apache.pinot.controller.api.access.Authenticate;
 import org.apache.pinot.controller.helix.core.PinotHelixResourceManager;
 import org.apache.pinot.core.auth.Actions;
+import org.apache.pinot.core.auth.Authorize;
 import org.apache.pinot.core.auth.ManualAuthorization;
+import org.apache.pinot.core.auth.TargetType;
 import org.apache.pinot.core.query.executor.sql.SqlQueryExecutor;
 import org.apache.pinot.query.QueryEnvironment;
 import org.apache.pinot.query.parser.utils.ParserUtils;
@@ -200,6 +202,7 @@ public class PinotQueryResource {
 
   @POST
   @Path("validateMultiStageQuery")
+  @Authorize(targetType = TargetType.CLUSTER, action = Actions.Cluster.GET_TABLE)
   @Authenticate(AccessType.READ)
   public List<MultiStageQueryValidationResponse> validateMultiStageQuery(MultiStageQueryValidationRequest request,
       @Context HttpHeaders httpHeaders) {
@@ -257,6 +260,7 @@ public class PinotQueryResource {
   @Path("query/tableNames")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
+  @Authorize(targetType = TargetType.CLUSTER, action = Actions.Cluster.GET_TABLE)
   @Authenticate(AccessType.READ)
   @ApiOperation(value = "Extract table names from SQL queries")
   public Set<String> extractTableNames(List<String> sqlQueries, @Context HttpHeaders httpHeaders) {

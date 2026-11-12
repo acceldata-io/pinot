@@ -19,13 +19,18 @@
 package org.apache.pinot.controller.api.access;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 import javax.ws.rs.core.HttpHeaders;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.helix.zookeeper.datamodel.ZNRecord;
 import org.apache.pinot.common.auth.BasicAuthTokenUtils;
 import org.apache.pinot.common.exception.HttpErrorStatusException;
+import org.apache.pinot.common.utils.http.HttpClient;
 import org.apache.pinot.controller.ControllerConf;
 import org.apache.pinot.controller.helix.ControllerTest;
 import org.apache.pinot.spi.config.user.ComponentType;
@@ -112,6 +117,7 @@ public class ControllerClusterBasicAuthAuthorizationTest extends ControllerTest 
 
       assertClusterScope(tableReadHeaders, tableAdminHeaders);
       assertZkAndInstanceScope(adminHeaders, updateHeaders, tableReadHeaders, tableAdminHeaders);
+      assertFormerlyUnannotatedEndpoints(adminHeaders, tableAdminHeaders);
       assertTableScope(tableReadHeaders, tableUpdateHeaders, authHeaders("unknown", "incorrect"));
 
       String configKey = "pinot.controller.auth.test." + configKeySuffix;
@@ -297,6 +303,43 @@ public class ControllerClusterBasicAuthAuthorizationTest extends ControllerTest 
     assertHttpError(404, () -> sendDeleteRequest(instanceUrl, adminHeaders));
   }
 
+  /// Endpoints that used to carry no authorization annotation: cluster-wide ones are denied to a table-scoped
+  /// principal, table ones follow the principal's table scope, and the UI landing page stays public.
+  private void assertFormerlyUnannotatedEndpoints(Map<String, String> adminHeaders,
+      Map<String, String> tableAdminHeaders)
+      throws IOException {
+    assertGetStatus(_controllerBaseApiUrl + "/timeseries/languages", tableAdminHeaders, 403);
+    assertGetStatus(_controllerBaseApiUrl + "/timeseries/languages", adminHeaders, 200);
+    String validateUrl = _controllerBaseApiUrl + "/validateMultiStageQuery";
+    String validateBody = "{\"sql\":\"SELECT 1 FROM " + ALLOWED_TABLE + "\"}";
+    assertHttpError(403, () -> sendPostRequest(validateUrl, validateBody, tableAdminHeaders));
+    sendPostRequest(validateUrl, validateBody, adminHeaders);
+
+    // Table state and time-window segment deletion follow the table scope: the principal's own table passes
+    // authorization and reaches the resource (the table does not exist), any other table is denied.
+    String stateUrl = _controllerBaseApiUrl + "/tables/%s/state?type=offline&state=disable";
+    assertHttpError(404, () -> sendTextPutRequest(String.format(stateUrl, ALLOWED_TABLE), tableAdminHeaders));
+    assertHttpError(403, () -> sendTextPutRequest(String.format(stateUrl, DISALLOWED_TABLE), tableAdminHeaders));
+    String chooseUrl = _controllerBaseApiUrl + "/segments/%s/choose?startTimestamp=0&endTimestamp=1";
+    assertHttpError(403, () -> sendDeleteRequest(String.format(chooseUrl, DISALLOWED_TABLE), tableAdminHeaders));
+    assertNotForbidden(() -> sendDeleteRequest(String.format(chooseUrl, ALLOWED_TABLE), tableAdminHeaders));
+
+    // The landing page loads before the user signs in (no credentials; the UI bundle may be absent in tests).
+    int landingPageStatus = getStatus(_controllerBaseApiUrl + "/", Map.of());
+    assertTrue(landingPageStatus != 401 && landingPageStatus != 403, "Landing page needs credentials: "
+        + landingPageStatus);
+  }
+
+  private static void assertNotForbidden(IoRequest request) {
+    try {
+      request.send();
+    } catch (IOException e) {
+      assertTrue(e.getCause() instanceof HttpErrorStatusException, "Unexpected failure: " + e);
+      int status = ((HttpErrorStatusException) e.getCause()).getStatusCode();
+      assertTrue(status != 401 && status != 403, "Request was not authorized: HTTP " + status);
+    }
+  }
+
   private void assertTableScope(Map<String, String> readHeaders, Map<String, String> updateHeaders,
       Map<String, String> invalidHeaders)
       throws IOException {
@@ -342,6 +385,17 @@ public class ControllerClusterBasicAuthAuthorizationTest extends ControllerTest 
     } catch (IOException e) {
       assertTrue(e.getCause() instanceof HttpErrorStatusException);
       assertEquals(((HttpErrorStatusException) e.getCause()).getStatusCode(), expectedStatus);
+    }
+  }
+
+  /// `PUT /tables/{tableName}/state` consumes `text/plain`; the JSON helpers would get HTTP 415.
+  private static String sendTextPutRequest(String url, Map<String, String> headers)
+      throws IOException {
+    try {
+      return HttpClient.wrapAndThrowHttpException(getHttpClient().sendPutRequest(new URI(url),
+          new StringEntity("", ContentType.TEXT_PLAIN), headers)).getResponse();
+    } catch (URISyntaxException | HttpErrorStatusException e) {
+      throw new IOException(e);
     }
   }
 

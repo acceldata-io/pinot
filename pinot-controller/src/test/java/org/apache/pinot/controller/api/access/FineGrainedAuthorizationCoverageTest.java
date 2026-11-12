@@ -75,13 +75,13 @@ public class FineGrainedAuthorizationCoverageTest {
   private static final boolean STRICT = Boolean.getBoolean(STRICT_PROPERTY);
 
   /** Endpoints with neither {@link Authorize} nor {@link ManualAuthorization}. Must become empty. */
-  private static final List<String> KNOWN_UNANNOTATED_ENDPOINTS = Arrays.asList(
-      "GET /",
-      "GET /timeseries/languages",
-      "POST /validateMultiStageQuery",
-      "POST /query/tableNames",
-      "DELETE /segments/{tableName}/choose",
-      "PUT /tables/{tableName}/state");
+  private static final List<String> KNOWN_UNANNOTATED_ENDPOINTS = Collections.emptyList();
+
+  /**
+   * Endpoints with neither annotation that the {@link AuthenticationFilter} serves without authentication on purpose.
+   * The UI landing page has to load before the user can sign in.
+   */
+  private static final List<String> KNOWN_PUBLIC_ENDPOINTS = Collections.singletonList("GET /");
 
   /** Endpoints that authorize inside the resource method. Each one must keep an explicit reason to stay manual. */
   private static final List<String> KNOWN_MANUAL_ENDPOINTS = Arrays.asList(
@@ -97,6 +97,7 @@ public class FineGrainedAuthorizationCoverageTest {
       "GET /schemas/fieldSpec",
       "POST /tables",
       "POST /tables/validate",
+      "PUT /tables/{tableName}/state",
       "POST /tableConfigs",
       "POST /tableConfigs/validate");
 
@@ -104,8 +105,7 @@ public class FineGrainedAuthorizationCoverageTest {
   private static final List<String> KNOWN_TABLE_TARGET_WITHOUT_PARAM = Collections.emptyList();
 
   /** CLUSTER-scoped {@link Authorize} that carries a {@code paramName} the filter ignores. Must become empty. */
-  private static final List<String> KNOWN_CLUSTER_TARGET_WITH_PARAM = Collections.singletonList(
-      "GET /logicalTables");
+  private static final List<String> KNOWN_CLUSTER_TARGET_WITH_PARAM = Collections.emptyList();
 
   private final List<Endpoint> _endpoints = new ArrayList<>();
 
@@ -137,6 +137,7 @@ public class FineGrainedAuthorizationCoverageTest {
   @Test
   public void testEveryEndpointIsAnnotatedOrExplicitlyManual() {
     List<String> unannotated = new ArrayList<>();
+    List<String> publicEndpoints = new ArrayList<>();
     List<String> manual = new ArrayList<>();
     List<String> both = new ArrayList<>();
     for (Endpoint endpoint : _endpoints) {
@@ -147,13 +148,21 @@ public class FineGrainedAuthorizationCoverageTest {
       } else if (manualAuth) {
         manual.add(endpoint._id);
       } else if (!authorize) {
-        unannotated.add(endpoint._id);
+        String path = endpoint._id.substring(endpoint._id.indexOf(' ') + 1);
+        if (AuthenticationFilter.isUnprotectedPath(path.startsWith("/") ? path.substring(1) : path)) {
+          publicEndpoints.add(endpoint._id);
+        } else {
+          unannotated.add(endpoint._id);
+        }
       }
     }
     assertTrue(both.isEmpty(), "Endpoints carry both @Authorize and @ManualAuthorization: " + both);
     assertSameEndpoints(unannotated, KNOWN_UNANNOTATED_ENDPOINTS,
         "Endpoints without @Authorize or @ManualAuthorization");
     assertSameEndpoints(manual, KNOWN_MANUAL_ENDPOINTS, "Endpoints with @ManualAuthorization");
+    // Not subject to the strict mode: these stay public by design, the list only makes any new one visible.
+    assertEquals(sorted(publicEndpoints), sorted(KNOWN_PUBLIC_ENDPOINTS),
+        "Endpoints served without authentication by AuthenticationFilter");
   }
 
   @Test
@@ -309,6 +318,12 @@ public class FineGrainedAuthorizationCoverageTest {
   private static String joinPaths(String classPath, String methodPath) {
     String joined = "/" + classPath + "/" + methodPath;
     return joined.replaceAll("/+", "/").replaceAll("(?<=.)/$", "");
+  }
+
+  private static List<String> sorted(List<String> endpoints) {
+    List<String> copy = new ArrayList<>(endpoints);
+    Collections.sort(copy);
+    return copy;
   }
 
   private static void assertSameEndpoints(List<String> actual, List<String> expected, String what) {

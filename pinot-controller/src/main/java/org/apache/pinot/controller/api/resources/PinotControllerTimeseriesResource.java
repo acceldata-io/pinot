@@ -30,6 +30,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.apache.pinot.controller.ControllerConf;
 import org.apache.pinot.controller.api.exception.ControllerApplicationException;
+import org.apache.pinot.core.auth.Actions;
+import org.apache.pinot.core.auth.Authorize;
+import org.apache.pinot.core.auth.TargetType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,6 +46,7 @@ public class PinotControllerTimeseriesResource {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/timeseries/languages")
+  @Authorize(targetType = TargetType.CLUSTER, action = Actions.Cluster.GET_APP_CONFIG)
   @ApiOperation(value = "Get timeseries languages from controller configuration",
       notes = "Get timeseries languages from controller configuration")
   public List<String> getBrokerTimeSeriesLanguages(@Context HttpHeaders headers) {

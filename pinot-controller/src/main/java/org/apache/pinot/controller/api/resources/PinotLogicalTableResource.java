@@ -91,7 +91,7 @@ public class PinotLogicalTableResource {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/logicalTables")
-  @Authorize(targetType = TargetType.CLUSTER, paramName = "tableName", action = Actions.Cluster.GET_TABLE)
+  @Authorize(targetType = TargetType.CLUSTER, action = Actions.Cluster.GET_TABLE)
   @ApiOperation(value = "List all logical table names", notes = "Lists all logical table names")
   public List<String> listLogicalTableNames(@Context HttpHeaders headers) {
     String databaseName = DatabaseUtils.extractDatabaseFromHttpHeaders(headers);
