@@ -1,0 +1,211 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package org.apache.pinot.segment.local.rocksdb;
+
+import com.google.common.base.Preconditions;
+import java.io.File;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import javax.annotation.Nullable;
+import org.apache.pinot.spi.env.PinotConfiguration;
+
+
+/**
+ * Settings for the RocksDB-backed upsert and dedup metadata stores.
+ *
+ * <p>Values are read from the server instance config under {@code pinot.server.instance.upsert.rocksdb.*} (or
+ * {@code pinot.server.instance.dedup.rocksdb.*}) and can be overridden per table through
+ * {@code upsertConfig.metadataManagerConfigs} (or {@code dedupConfig.metadataManagerConfigs}) using the same keys with
+ * the {@code rocksdb.} prefix, e.g. {@code "rocksdb.ttlScanMaxKeysPerSecond": "2000000"}.
+ *
+ * <p>Settings marked as server-wide are only honored by the first table that creates the shared
+ * {@link RocksDBEnvironment}; later tables log a warning when they ask for different values.
+ *
+ * <p>Instances are immutable and thread-safe.
+ */
+public final class RocksDBMetadataStoreConfig {
+  public static final String PREFIX = "rocksdb.";
+
+  /// Root directory of all stores on this server. Defaults to {@code <server data dir>/rocksdb_metadata}.
+  public static final String DATA_DIR = "dataDir";
+  /// Server-wide: shared LRU block cache size. Memtables are charged to the same cache.
+  public static final String BLOCK_CACHE_SIZE_BYTES = "blockCacheSizeBytes";
+  /// Server-wide: total memtable budget across all stores, charged to the block cache.
+  public static final String WRITE_BUFFER_MANAGER_BYTES = "writeBufferManagerBytes";
+  /// Server-wide: number of RocksDB flush and compaction threads.
+  public static final String BACKGROUND_THREADS = "backgroundThreads";
+  /// Per store: size of one memtable.
+  public static final String WRITE_BUFFER_SIZE_BYTES = "writeBufferSizeBytes";
+  /// Per store: bloom filter bits per key. 10 gives about a 1% false-positive rate.
+  public static final String BLOOM_BITS_PER_KEY = "bloomBitsPerKey";
+  /// Per store: data block size. Small blocks favour point lookups.
+  public static final String BLOCK_SIZE_BYTES = "blockSizeBytes";
+  /// Retries of a failed store operation before the operation fails.
+  public static final String MAX_RETRIES = "maxRetries";
+  /// Initial backoff between retries; doubles on every retry.
+  public static final String RETRY_BACKOFF_MS = "retryBackoffMs";
+  /// Rate limit of the metadata TTL scan, in keys per second. 0 means unlimited.
+  public static final String TTL_SCAN_MAX_KEYS_PER_SECOND = "ttlScanMaxKeysPerSecond";
+  /// Segments with at least this many valid keys are preloaded by ingesting a sorted SST file. 0 disables it.
+  public static final String PRELOAD_SST_MIN_KEYS = "preloadSstMinKeys";
+  /// Full upsert only: use the in-memory manager if RocksDB cannot be initialized. Partial upsert never falls back.
+  public static final String FALLBACK_TO_IN_MEMORY_ON_INIT_FAILURE = "fallbackToInMemoryOnInitFailure";
+
+  public static final String DEFAULT_DATA_DIR_NAME = "rocksdb_metadata";
+  public static final long DEFAULT_BLOCK_CACHE_SIZE_BYTES = 1L << 30;
+  public static final long DEFAULT_WRITE_BUFFER_MANAGER_BYTES = 256L << 20;
+  public static final int DEFAULT_BACKGROUND_THREADS = 4;
+  public static final long DEFAULT_WRITE_BUFFER_SIZE_BYTES = 64L << 20;
+  public static final double DEFAULT_BLOOM_BITS_PER_KEY = 10;
+  public static final long DEFAULT_BLOCK_SIZE_BYTES = 4L << 10;
+  public static final int DEFAULT_MAX_RETRIES = 3;
+  public static final long DEFAULT_RETRY_BACKOFF_MS = 100;
+  public static final long DEFAULT_TTL_SCAN_MAX_KEYS_PER_SECOND = 0;
+  public static final int DEFAULT_PRELOAD_SST_MIN_KEYS = 100_000;
+
+  @Nullable
+  private final String _dataDir;
+  private final long _blockCacheSizeBytes;
+  private final long _writeBufferManagerBytes;
+  private final int _backgroundThreads;
+  private final long _writeBufferSizeBytes;
+  private final double _bloomBitsPerKey;
+  private final long _blockSizeBytes;
+  private final int _maxRetries;
+  private final long _retryBackoffMs;
+  private final long _ttlScanMaxKeysPerSecond;
+  private final int _preloadSstMinKeys;
+  private final boolean _fallbackToInMemoryOnInitFailure;
+
+  private RocksDBMetadataStoreConfig(Map<String, String> values) {
+    _dataDir = values.get(normalize(DATA_DIR));
+    _blockCacheSizeBytes = getLong(values, BLOCK_CACHE_SIZE_BYTES, DEFAULT_BLOCK_CACHE_SIZE_BYTES, 1);
+    _writeBufferManagerBytes = getLong(values, WRITE_BUFFER_MANAGER_BYTES, DEFAULT_WRITE_BUFFER_MANAGER_BYTES, 1);
+    _backgroundThreads = (int) getLong(values, BACKGROUND_THREADS, DEFAULT_BACKGROUND_THREADS, 1);
+    _writeBufferSizeBytes = getLong(values, WRITE_BUFFER_SIZE_BYTES, DEFAULT_WRITE_BUFFER_SIZE_BYTES, 1 << 20);
+    _bloomBitsPerKey = Double.parseDouble(
+        values.getOrDefault(normalize(BLOOM_BITS_PER_KEY), Double.toString(DEFAULT_BLOOM_BITS_PER_KEY)));
+    Preconditions.checkArgument(_bloomBitsPerKey >= 0, "%s must be non-negative", BLOOM_BITS_PER_KEY);
+    _blockSizeBytes = getLong(values, BLOCK_SIZE_BYTES, DEFAULT_BLOCK_SIZE_BYTES, 1 << 10);
+    _maxRetries = (int) getLong(values, MAX_RETRIES, DEFAULT_MAX_RETRIES, 0);
+    _retryBackoffMs = getLong(values, RETRY_BACKOFF_MS, DEFAULT_RETRY_BACKOFF_MS, 0);
+    _ttlScanMaxKeysPerSecond = getLong(values, TTL_SCAN_MAX_KEYS_PER_SECOND, DEFAULT_TTL_SCAN_MAX_KEYS_PER_SECOND, 0);
+    _preloadSstMinKeys = (int) getLong(values, PRELOAD_SST_MIN_KEYS, DEFAULT_PRELOAD_SST_MIN_KEYS, 0);
+    _fallbackToInMemoryOnInitFailure =
+        Boolean.parseBoolean(values.get(normalize(FALLBACK_TO_IN_MEMORY_ON_INIT_FAILURE)));
+  }
+
+  /// Matches the key normalization of {@link PinotConfiguration}, so instance and table keys compare equal.
+  private static String normalize(String key) {
+    return key.replace("-", "").replace("_", "").toLowerCase(Locale.ROOT);
+  }
+
+  /**
+   * Builds the effective config from the instance-level config (already scoped to {@code upsert} or {@code dedup})
+   * and the table-level {@code metadataManagerConfigs}. Table-level values win.
+   */
+  public static RocksDBMetadataStoreConfig from(@Nullable PinotConfiguration instanceConfig,
+      @Nullable Map<String, String> tableConfigs) {
+    Map<String, String> values = new HashMap<>();
+    if (instanceConfig != null) {
+      PinotConfiguration subset = instanceConfig.subset(PREFIX.substring(0, PREFIX.length() - 1));
+      for (String key : subset.getKeys()) {
+        values.put(normalize(key), subset.getProperty(key));
+      }
+    }
+    if (tableConfigs != null) {
+      for (Map.Entry<String, String> entry : tableConfigs.entrySet()) {
+        if (entry.getKey().startsWith(PREFIX)) {
+          values.put(normalize(entry.getKey().substring(PREFIX.length())), entry.getValue());
+        }
+      }
+    }
+    return new RocksDBMetadataStoreConfig(values);
+  }
+
+  public static RocksDBMetadataStoreConfig defaults() {
+    return new RocksDBMetadataStoreConfig(Map.of());
+  }
+
+  private static long getLong(Map<String, String> values, String key, long defaultValue, long minValue) {
+    String value = values.get(normalize(key));
+    if (value == null) {
+      return defaultValue;
+    }
+    long parsed;
+    try {
+      parsed = Long.parseLong(value.trim());
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException(String.format("Invalid value: %s for RocksDB config: %s", value, key), e);
+    }
+    Preconditions.checkArgument(parsed >= minValue, "RocksDB config: %s must be >= %s, got: %s", key, minValue,
+        parsed);
+    return parsed;
+  }
+
+  /// Resolves the root directory of all stores, using {@code defaultParentDir} when {@link #DATA_DIR} is not set.
+  public File resolveDataDir(File defaultParentDir) {
+    return _dataDir != null ? new File(_dataDir) : new File(defaultParentDir, DEFAULT_DATA_DIR_NAME);
+  }
+
+  public long getBlockCacheSizeBytes() {
+    return _blockCacheSizeBytes;
+  }
+
+  public long getWriteBufferManagerBytes() {
+    return _writeBufferManagerBytes;
+  }
+
+  public int getBackgroundThreads() {
+    return _backgroundThreads;
+  }
+
+  public long getWriteBufferSizeBytes() {
+    return _writeBufferSizeBytes;
+  }
+
+  public double getBloomBitsPerKey() {
+    return _bloomBitsPerKey;
+  }
+
+  public long getBlockSizeBytes() {
+    return _blockSizeBytes;
+  }
+
+  public int getMaxRetries() {
+    return _maxRetries;
+  }
+
+  public long getRetryBackoffMs() {
+    return _retryBackoffMs;
+  }
+
+  public long getTtlScanMaxKeysPerSecond() {
+    return _ttlScanMaxKeysPerSecond;
+  }
+
+  public int getPreloadSstMinKeys() {
+    return _preloadSstMinKeys;
+  }
+
+  public boolean isFallbackToInMemoryOnInitFailure() {
+    return _fallbackToInMemoryOnInitFailure;
+  }
+}
