@@ -26,6 +26,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 import org.apache.pinot.spi.config.BaseJsonConfig;
 import org.apache.pinot.spi.config.table.DisasterRecoveryMode;
+import org.apache.pinot.spi.utils.Enablement;
 
 
 /**
@@ -61,6 +62,11 @@ public class StreamIngestionConfig extends BaseJsonConfig {
 
   @JsonPropertyDescription("Class to handle realtime offset auto reset")
   private String _realtimeOffsetAutoResetHandlerClass;
+
+  @JsonPropertyDescription("Optional table-level enablement override for server-side ingestion OOM protection. "
+      + "Supported values are ENABLE, DISABLE and DEFAULT. If unset or DEFAULT, the table follows the server-level "
+      + "mode.")
+  private Enablement _oomProtection = Enablement.DEFAULT;
 
   @JsonCreator
   public StreamIngestionConfig(@JsonProperty("streamConfigMaps") List<Map<String, String>> streamConfigMaps) {
@@ -135,5 +141,13 @@ public class StreamIngestionConfig extends BaseJsonConfig {
 
   public void setRealtimeOffsetAutoResetHandlerClass(String realtimeOffsetAutoResetHandlerClass) {
     _realtimeOffsetAutoResetHandlerClass = realtimeOffsetAutoResetHandlerClass;
+  }
+
+  public Enablement getOomProtection() {
+    return _oomProtection == null ? Enablement.DEFAULT : _oomProtection;
+  }
+
+  public void setOomProtection(@Nullable Enablement oomProtection) {
+    _oomProtection = oomProtection == null ? Enablement.DEFAULT : oomProtection;
   }
 }

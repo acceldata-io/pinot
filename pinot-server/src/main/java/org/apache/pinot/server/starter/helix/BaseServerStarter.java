@@ -770,6 +770,10 @@ public abstract class BaseServerStarter implements ServiceStartable {
     PinotClusterConfigChangeListener serverRateLimitConfigChangeListener =
         new ServerRateLimitConfigChangeListener(_serverMetrics);
     _clusterConfigChangeHandler.registerClusterConfigChangeListener(serverRateLimitConfigChangeListener);
+    if (instanceDataManager instanceof HelixInstanceDataManager) {
+      _clusterConfigChangeHandler.registerClusterConfigChangeListener(
+          ((HelixInstanceDataManager) instanceDataManager).getServerIngestionOomProtectionThrottleState());
+    }
 
     initSegmentFetcher(_serverConf);
     StateModelFactory<?> stateModelFactory =
