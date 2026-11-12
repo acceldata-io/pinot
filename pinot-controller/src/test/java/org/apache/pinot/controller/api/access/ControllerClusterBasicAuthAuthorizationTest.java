@@ -60,6 +60,7 @@ public class ControllerClusterBasicAuthAuthorizationTest extends ControllerTest 
   private static final String TABLE_ADMIN_PASSWORD = "tableAdminPassword";
   private static final String ALLOWED_TABLE = "allowedTable";
   private static final String DISALLOWED_TABLE = "disallowedTable";
+  private static final String MISSING_INSTANCE = "Server_missing.example.com_8098";
 
   @DataProvider(name = "accessControlFactories")
   public Object[][] accessControlFactories() {
@@ -110,6 +111,7 @@ public class ControllerClusterBasicAuthAuthorizationTest extends ControllerTest 
           .isEmpty());
 
       assertClusterScope(tableReadHeaders, tableAdminHeaders);
+      assertZkAndInstanceScope(adminHeaders, updateHeaders, tableReadHeaders, tableAdminHeaders);
       assertTableScope(tableReadHeaders, tableUpdateHeaders, authHeaders("unknown", "incorrect"));
 
       String configKey = "pinot.controller.auth.test." + configKeySuffix;
@@ -264,6 +266,35 @@ public class ControllerClusterBasicAuthAuthorizationTest extends ControllerTest 
     assertHttpError(403, () -> sendPostRequest(_controllerBaseApiUrl + "/sql",
         "{\"sql\":\"SELECT 1 FROM " + ALLOWED_TABLE + "\",\"queryOptions\":\"useMultistageEngine=true\"}",
         tableAdminHeaders));
+  }
+
+  /// Asserts [issue 11399](https://github.com/apache/pinot/issues/11399): ZooKeeper browsing and instance management
+  /// expose and change the whole cluster, so a principal confined to a subset of tables is denied all of them, reads
+  /// included, while a cluster-wide principal keeps them.
+  private void assertZkAndInstanceScope(Map<String, String> adminHeaders, Map<String, String> clusterUpdateHeaders,
+      Map<String, String> tableReadHeaders, Map<String, String> tableAdminHeaders)
+      throws IOException {
+    String zkLsUrl = _controllerBaseApiUrl + "/zk/ls?path=/";
+    String instanceUrl = _controllerBaseApiUrl + "/instances/" + MISSING_INSTANCE;
+    for (Map<String, String> tableScopedHeaders : List.of(tableReadHeaders, tableAdminHeaders)) {
+      assertGetStatus(zkLsUrl, tableScopedHeaders, 403);
+      assertGetStatus(_controllerBaseApiUrl + "/zk/get?path=/", tableScopedHeaders, 403);
+      assertGetStatus(_controllerBaseApiUrl + "/zk/stat?path=/", tableScopedHeaders, 403);
+      assertGetStatus(_controllerBaseApiUrl + "/liveinstances", tableScopedHeaders, 403);
+      assertGetStatus(instanceUrl, tableScopedHeaders, 403);
+      assertHttpError(403, () -> sendPutRequest(instanceUrl + "/state", "DISABLE", tableScopedHeaders));
+      assertHttpError(403, () -> sendPostRequest(instanceUrl + "/state", "DISABLE", tableScopedHeaders));
+      assertHttpError(403, () -> sendPutRequest(instanceUrl + "/updateTags?tags=t_OFFLINE", "", tableScopedHeaders));
+      assertHttpError(403, () -> sendDeleteRequest(instanceUrl, tableScopedHeaders));
+      assertHttpError(403,
+          () -> sendPostRequest(_controllerBaseApiUrl + "/instances/updateTags/validate", "[]", tableScopedHeaders));
+    }
+
+    // Cluster-wide principals pass authorization and reach the resource, which reports the missing instance.
+    assertGetStatus(zkLsUrl, adminHeaders, 200);
+    assertGetStatus(instanceUrl, adminHeaders, 404);
+    assertHttpError(404, () -> sendPutRequest(instanceUrl + "/state", "DISABLE", clusterUpdateHeaders));
+    assertHttpError(404, () -> sendDeleteRequest(instanceUrl, adminHeaders));
   }
 
   private void assertTableScope(Map<String, String> readHeaders, Map<String, String> updateHeaders,

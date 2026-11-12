@@ -78,8 +78,6 @@ public class FineGrainedAuthorizationCoverageTest {
   private static final List<String> KNOWN_UNANNOTATED_ENDPOINTS = Arrays.asList(
       "GET /",
       "GET /timeseries/languages",
-      "PUT /instances/{instanceName}/state",
-      "POST /instances/updateTags/validate",
       "POST /validateMultiStageQuery",
       "POST /query/tableNames",
       "DELETE /segments/{tableName}/choose",

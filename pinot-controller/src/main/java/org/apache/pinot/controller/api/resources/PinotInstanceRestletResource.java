@@ -254,6 +254,7 @@ public class PinotInstanceRestletResource {
 
   @PUT
   @Path("/instances/{instanceName}/state")
+  @Authorize(targetType = TargetType.CLUSTER, action = Actions.Cluster.UPDATE_INSTANCE)
   @Authenticate(AccessType.UPDATE)
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.TEXT_PLAIN)
@@ -529,6 +530,7 @@ public class PinotInstanceRestletResource {
   @POST
   @Path("/instances/updateTags/validate")
   @Produces(MediaType.APPLICATION_JSON)
+  @Authorize(targetType = TargetType.CLUSTER, action = Actions.Cluster.GET_INSTANCE)
   @Authenticate(AccessType.READ)
   @ApiOperation(value = "Check if it's safe to update the tags of the given instances. If not list all the reasons.")
   @ApiResponses(value = {
