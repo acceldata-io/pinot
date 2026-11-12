@@ -1,0 +1,127 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package org.apache.pinot.segment.local.rocksdb;
+
+import com.google.common.annotations.VisibleForTesting;
+import javax.annotation.concurrent.GuardedBy;
+import javax.annotation.concurrent.ThreadSafe;
+import org.rocksdb.Cache;
+import org.rocksdb.Env;
+import org.rocksdb.LRUCache;
+import org.rocksdb.Priority;
+import org.rocksdb.RocksDB;
+import org.rocksdb.WriteBufferManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
+/**
+ * Server-wide RocksDB resources shared by all metadata stores: the native library, one LRU block cache, one
+ * {@link WriteBufferManager} that charges memtables to that cache, and the background thread pool. Sharing them bounds
+ * the native memory of all stores together by {@link RocksDBMetadataStoreConfig#getBlockCacheSizeBytes()}, no matter
+ * how many table partitions a server hosts.
+ *
+ * <p>The environment is reference counted. {@link #acquire} creates it on first use and {@link #release()} frees the
+ * native resources when the last store is closed. Thread-safe.
+ */
+@ThreadSafe
+public final class RocksDBEnvironment {
+  private static final Logger LOGGER = LoggerFactory.getLogger(RocksDBEnvironment.class);
+
+  private static final Object LOCK = new Object();
+  @GuardedBy("LOCK")
+  private static RocksDBEnvironment _instance;
+
+  private final RocksDBMetadataStoreConfig _config;
+  private final Cache _blockCache;
+  private final WriteBufferManager _writeBufferManager;
+  @GuardedBy("LOCK")
+  private int _refCount;
+
+  private RocksDBEnvironment(RocksDBMetadataStoreConfig config) {
+    _config = config;
+    _blockCache = new LRUCache(config.getBlockCacheSizeBytes());
+    _writeBufferManager = new WriteBufferManager(config.getWriteBufferManagerBytes(), _blockCache);
+    Env env = Env.getDefault();
+    env.setBackgroundThreads(config.getBackgroundThreads(), Priority.LOW);
+    env.setBackgroundThreads(Math.max(1, config.getBackgroundThreads() / 4), Priority.HIGH);
+  }
+
+  /**
+   * Returns the shared environment and increments its reference count. The server-wide settings of {@code config}
+   * only apply when this call creates the environment.
+   */
+  public static RocksDBEnvironment acquire(RocksDBMetadataStoreConfig config) {
+    synchronized (LOCK) {
+      if (_instance == null) {
+        RocksDB.loadLibrary();
+        _instance = new RocksDBEnvironment(config);
+        LOGGER.info("Created RocksDB environment with block cache: {} bytes, write buffer manager: {} bytes, "
+                + "background threads: {}", config.getBlockCacheSizeBytes(), config.getWriteBufferManagerBytes(),
+            config.getBackgroundThreads());
+      } else if (_instance._config.getBlockCacheSizeBytes() != config.getBlockCacheSizeBytes()
+          || _instance._config.getWriteBufferManagerBytes() != config.getWriteBufferManagerBytes()) {
+        LOGGER.warn("RocksDB environment already exists with block cache: {} bytes and write buffer manager: {} bytes; "
+                + "ignoring the requested {} and {} bytes", _instance._config.getBlockCacheSizeBytes(),
+            _instance._config.getWriteBufferManagerBytes(), config.getBlockCacheSizeBytes(),
+            config.getWriteBufferManagerBytes());
+      }
+      _instance._refCount++;
+      return _instance;
+    }
+  }
+
+  /// Decrements the reference count and frees the native resources when it reaches zero.
+  public void release() {
+    synchronized (LOCK) {
+      if (--_refCount == 0) {
+        _writeBufferManager.close();
+        _blockCache.close();
+        if (_instance == this) {
+          _instance = null;
+        }
+        LOGGER.info("Closed RocksDB environment");
+      }
+    }
+  }
+
+  public Cache getBlockCache() {
+    return _blockCache;
+  }
+
+  public WriteBufferManager getWriteBufferManager() {
+    return _writeBufferManager;
+  }
+
+  /// Bytes held by the shared block cache, including memtables charged to it.
+  public long getBlockCacheUsageBytes() {
+    return _blockCache.getUsage();
+  }
+
+  public long getBlockCachePinnedUsageBytes() {
+    return _blockCache.getPinnedUsage();
+  }
+
+  @VisibleForTesting
+  static int getRefCount() {
+    synchronized (LOCK) {
+      return _instance != null ? _instance._refCount : 0;
+    }
+  }
+}
