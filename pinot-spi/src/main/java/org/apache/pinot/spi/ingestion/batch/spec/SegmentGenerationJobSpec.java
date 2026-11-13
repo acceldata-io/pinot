@@ -21,6 +21,7 @@ package org.apache.pinot.spi.ingestion.batch.spec;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 import org.apache.pinot.spi.utils.JsonUtils;
 
 
@@ -138,6 +139,13 @@ public class SegmentGenerationJobSpec implements Serializable {
    * Instead, resolve tokens right when the job command is run. This allows injection of client-local credentials.
    */
   private String _authToken;
+
+  /**
+   * Auth provider configuration, used instead of {@link #_authToken} when set: the same keys as Pinot's outbound auth
+   * settings, e.g. {@code provider.class} with an auth provider whose credentials are renewed (such as OAuth 2.0
+   * client credentials), so that calls made late in a long job carry a valid credential.
+   */
+  private Map<String, String> _authConfig;
 
   /**
    * Create a separated metadata only tar gz file to reduce the data transfer of segment metadata push job.
@@ -314,6 +322,14 @@ public class SegmentGenerationJobSpec implements Serializable {
 
   public void setAuthToken(String authToken) {
     _authToken = authToken;
+  }
+
+  public Map<String, String> getAuthConfig() {
+    return _authConfig;
+  }
+
+  public void setAuthConfig(Map<String, String> authConfig) {
+    _authConfig = authConfig;
   }
 
   public boolean isCreateMetadataTarGz() {

@@ -31,6 +31,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.apache.pinot.common.auth.AuthProviderUtils;
 import org.apache.pinot.common.segment.generation.SegmentGenerationUtils;
 import org.apache.pinot.segment.local.utils.ConsistentDataPushUtils;
 import org.apache.pinot.segment.local.utils.SegmentPushUtils;
@@ -113,7 +114,8 @@ public class SparkSegmentMetadataPushJobRunner implements IngestionJobRunner, Se
 
     // Retrieve table config and check for consistent push
     TableConfig tableConfig =
-        SegmentGenerationUtils.getTableConfig(_spec.getTableSpec().getTableConfigURI(), _spec.getAuthToken());
+        SegmentGenerationUtils.getTableConfig(_spec.getTableSpec().getTableConfigURI(),
+            AuthProviderUtils.currentAuthToken(_spec));
     boolean consistentPushEnabled = ConsistentDataPushUtils.consistentDataPushEnabled(tableConfig);
 
     // Determine push parallelism

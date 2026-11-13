@@ -20,6 +20,7 @@ package org.apache.pinot.plugin.ingestion.batch.standalone;
 
 import java.util.ArrayList;
 import java.util.Map;
+import org.apache.pinot.common.auth.AuthProviderUtils;
 import org.apache.pinot.common.segment.generation.SegmentGenerationUtils;
 import org.apache.pinot.plugin.ingestion.batch.common.BaseSegmentPushJobRunner;
 import org.apache.pinot.segment.local.utils.ConsistentDataPushUtils;
@@ -54,7 +55,8 @@ public class SegmentTarPushJobRunner extends BaseSegmentPushJobRunner {
     // Read Table config
     if (_spec.getTableSpec().getTableConfigURI() != null) {
       _tableConfig =
-          SegmentGenerationUtils.getTableConfig(_spec.getTableSpec().getTableConfigURI(), spec.getAuthToken());
+          SegmentGenerationUtils.getTableConfig(_spec.getTableSpec().getTableConfigURI(),
+              AuthProviderUtils.currentAuthToken(spec));
       _consistentPushEnabled = ConsistentDataPushUtils.consistentDataPushEnabled(_tableConfig);
     }
   }

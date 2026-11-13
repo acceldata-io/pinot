@@ -111,7 +111,7 @@ public class ConsistentDataPushUtils {
     Map<URI, String> uriToLineageEntryIdMap = new HashMap<>();
     String rawTableName = spec.getTableSpec().getTableName();
     Map<URI, URI> segmentsUris = getStartReplaceSegmentUris(spec, rawTableName);
-    AuthProvider authProvider = AuthProviderUtils.makeAuthProvider(spec.getAuthToken());
+    AuthProvider authProvider = AuthProviderUtils.makeAuthProvider(spec);
     LOGGER.info("Start replace segment URIs: {}", segmentsUris);
 
     for (Map.Entry<URI, URI> entry : segmentsUris.entrySet()) {
@@ -158,7 +158,7 @@ public class ConsistentDataPushUtils {
    */
   public static void endReplaceSegments(SegmentGenerationJobSpec spec, Map<URI, String> uriToLineageEntryIdMap)
       throws Exception {
-    AuthProvider authProvider = AuthProviderUtils.makeAuthProvider(spec.getAuthToken());
+    AuthProvider authProvider = AuthProviderUtils.makeAuthProvider(spec);
     String rawTableName = spec.getTableSpec().getTableName();
     for (URI controllerUri : uriToLineageEntryIdMap.keySet()) {
       String segmentLineageEntryId = uriToLineageEntryIdMap.get(controllerUri);
@@ -197,7 +197,7 @@ public class ConsistentDataPushUtils {
     if (uriToLineageEntryIdMap != null) {
       LOGGER.error("Exception when pushing segments. Marking segment lineage entry to 'REVERTED'.", exception);
       String rawTableName = spec.getTableSpec().getTableName();
-      AuthProvider authProvider = AuthProviderUtils.makeAuthProvider(spec.getAuthToken());
+      AuthProvider authProvider = AuthProviderUtils.makeAuthProvider(spec);
       for (Map.Entry<URI, String> entry : uriToLineageEntryIdMap.entrySet()) {
         String segmentLineageEntryId = entry.getValue();
         try {
@@ -236,7 +236,7 @@ public class ConsistentDataPushUtils {
       List<String> offlineSegments;
       try {
         controllerURI = new URI(pinotClusterSpec.getControllerURI());
-        AuthProvider authProvider = AuthProviderUtils.makeAuthProvider(spec.getAuthToken());
+        AuthProvider authProvider = AuthProviderUtils.makeAuthProvider(spec);
         Map<String, List<String>> segments =
             FILE_UPLOAD_DOWNLOAD_CLIENT.getSegments(controllerURI, rawTableName, TableType.OFFLINE, true, authProvider);
         offlineSegments = segments.get(TableType.OFFLINE.toString());

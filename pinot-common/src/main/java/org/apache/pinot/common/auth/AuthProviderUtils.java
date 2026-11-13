@@ -20,6 +20,7 @@ package org.apache.pinot.common.auth;
 
 import java.lang.reflect.Constructor;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -31,6 +32,7 @@ import org.apache.hc.core5.http.message.BasicHeader;
 import org.apache.pinot.common.exception.HttpErrorStatusException;
 import org.apache.pinot.spi.auth.AuthProvider;
 import org.apache.pinot.spi.env.PinotConfiguration;
+import org.apache.pinot.spi.ingestion.batch.spec.SegmentGenerationJobSpec;
 
 
 /**
@@ -76,6 +78,28 @@ public final class AuthProviderUtils {
    * @param authToken static auth token
    * @return auth provider
    */
+  /**
+   * The auth provider of an ingestion job: its {@code authConfig} when set (e.g. a provider that renews OAuth 2.0
+   * tokens), otherwise its fixed {@code authToken}.
+   */
+  public static AuthProvider makeAuthProvider(SegmentGenerationJobSpec spec) {
+    Map<String, String> authConfig = spec.getAuthConfig();
+    if (authConfig != null && !authConfig.isEmpty()) {
+      return makeAuthProvider(new AuthConfig(new HashMap<>(authConfig)));
+    }
+    return makeAuthProvider(spec.getAuthToken());
+  }
+
+  /**
+   * The credential an ingestion job sends with a call made now (the {@code Authorization} header value), or
+   * {@code null} without one. Obtain it right before each call: with an {@code authConfig} it may change during the
+   * job.
+   */
+  @Nullable
+  public static String currentAuthToken(SegmentGenerationJobSpec spec) {
+    return toStaticToken(makeAuthProvider(spec));
+  }
+
   public static AuthProvider makeAuthProvider(String authToken) {
     if (StringUtils.isBlank(authToken)) {
       return new NullAuthProvider();

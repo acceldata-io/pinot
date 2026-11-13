@@ -114,7 +114,7 @@ public class LaunchBackfillIngestionJobCommand extends LaunchDataIngestionJobCom
       String tableNameWithType = TableNameBuilder.forType(TableType.OFFLINE)
           .tableNameWithType(spec.getTableSpec().getTableName());
       String uploadURL = spec.getPinotClusterSpecs()[0].getControllerURI();
-      AuthProvider authProvider = AuthProviderUtils.makeAuthProvider(spec.getAuthToken());
+      AuthProvider authProvider = AuthProviderUtils.makeAuthProvider(spec);
 
       // 3. Create a lineage entry to track replacement (old vs new segments)
       String segmentLineageEntryId = createSegmentLineageEntry(
@@ -169,8 +169,10 @@ public class LaunchBackfillIngestionJobCommand extends LaunchDataIngestionJobCom
   }
 
   public Map<String, String> getAuthHeaders(SegmentGenerationJobSpec spec) {
+    // The job's credential: its authConfig when set (e.g. renewed OAuth 2.0 tokens), otherwise its fixed authToken
     Map<String, String> authHeaders = new HashMap<>();
-    authHeaders.put("Authorization", spec.getAuthToken());
+    AuthProviderUtils.makeAuthProvider(spec).getRequestHeaders()
+        .forEach((name, value) -> authHeaders.put(name, String.valueOf(value)));
     return authHeaders;
   }
 

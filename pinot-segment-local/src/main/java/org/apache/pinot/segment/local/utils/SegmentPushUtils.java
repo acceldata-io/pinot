@@ -33,8 +33,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -109,7 +112,7 @@ public class SegmentPushUtils implements Serializable {
   public static void pushSegments(SegmentGenerationJobSpec spec, PinotFS fileSystem, List<String> tarFilePaths)
       throws RetriableOperationException, AttemptsExceededException {
     String tableName = spec.getTableSpec().getTableName();
-    AuthProvider authProvider = AuthProviderUtils.makeAuthProvider(spec.getAuthToken());
+    AuthProvider authProvider = AuthProviderUtils.makeAuthProvider(spec);
     List<Header> headers = AuthProviderUtils.toRequestHeaders(authProvider);
     List<NameValuePair> parameters = FileUploadDownloadClient.makeTableParam(tableName);
     pushSegments(spec, fileSystem, tarFilePaths, headers, parameters);
@@ -118,7 +121,7 @@ public class SegmentPushUtils implements Serializable {
   public static void sendSegmentUris(SegmentGenerationJobSpec spec, List<String> segmentUris)
       throws RetriableOperationException, AttemptsExceededException {
     String tableName = spec.getTableSpec().getTableName();
-    AuthProvider authProvider = AuthProviderUtils.makeAuthProvider(spec.getAuthToken());
+    AuthProvider authProvider = AuthProviderUtils.makeAuthProvider(spec);
     List<Header> headers = AuthProviderUtils.toRequestHeaders(authProvider);
     List<NameValuePair> parameters = FileUploadDownloadClient.makeTableParam(tableName);
     sendSegmentUris(spec, segmentUris, headers, parameters);
@@ -142,7 +145,7 @@ public class SegmentPushUtils implements Serializable {
       Map<String, String> segmentUriToTarPathMap)
       throws Exception {
     String tableName = spec.getTableSpec().getTableName();
-    AuthProvider authProvider = AuthProviderUtils.makeAuthProvider(spec.getAuthToken());
+    AuthProvider authProvider = AuthProviderUtils.makeAuthProvider(spec);
     List<Header> headers = AuthProviderUtils.toRequestHeaders(authProvider);
     List<NameValuePair> parameters = FileUploadDownloadClient.makeTableParam(tableName);
     PushJobSpec pushJobSpec = spec.getPushJobSpec();
@@ -190,7 +193,7 @@ public class SegmentPushUtils implements Serializable {
           try (InputStream inputStream = fileSystem.open(tarFileURI)) {
             SimpleHttpResponse response =
                 FILE_UPLOAD_DOWNLOAD_CLIENT.uploadSegment(FileUploadDownloadClient.getUploadSegmentURI(controllerURI),
-                    segmentName, inputStream, headers,
+                    segmentName, inputStream, currentHeaders(spec, headers),
                     parameters, tableName, tableType);
             LOGGER.info("Response for pushing table {} segment {} to location {} - {}: {}", tableName, segmentName,
                 controllerURI, response.getStatusCode(), response.getResponse());
@@ -248,7 +251,7 @@ public class SegmentPushUtils implements Serializable {
           try {
             SimpleHttpResponse response = FILE_UPLOAD_DOWNLOAD_CLIENT
                 .sendSegmentUri(FileUploadDownloadClient.getUploadSegmentURI(controllerURI), segmentUri,
-                    headers, parameters, HttpClient.DEFAULT_SOCKET_TIMEOUT_MS);
+                    currentHeaders(spec, headers), parameters, HttpClient.DEFAULT_SOCKET_TIMEOUT_MS);
             LOGGER.info("Response for pushing table {} segment uri {} to location {} - {}: {}", tableName, segmentUri,
                 controllerURI, response.getStatusCode(), response.getResponse());
             return true;
@@ -337,7 +340,7 @@ public class SegmentPushUtils implements Serializable {
             retryWaitMs = spec.getPushJobSpec().getPushRetryIntervalMillis();
           }
           RetryPolicies.exponentialBackoffRetryPolicy(attempts, retryWaitMs, 5).attempt(() -> {
-            List<Header> reqHttpHeaders = new ArrayList<>(headers);
+            List<Header> reqHttpHeaders = new ArrayList<>(currentHeaders(spec, headers));
             try {
               reqHttpHeaders.add(new BasicHeader(FileUploadDownloadClient.CustomHeaders.DOWNLOAD_URI, segmentUriPath));
               reqHttpHeaders.add(new BasicHeader(FileUploadDownloadClient.CustomHeaders.UPLOAD_TYPE,
@@ -415,7 +418,7 @@ public class SegmentPushUtils implements Serializable {
           retryWaitMs = spec.getPushJobSpec().getPushRetryIntervalMillis();
         }
         RetryPolicies.exponentialBackoffRetryPolicy(attempts, retryWaitMs, 5).attempt(() -> {
-          List<Header> reqHttpHeaders = new ArrayList<>(headers);
+          List<Header> reqHttpHeaders = new ArrayList<>(currentHeaders(spec, headers));
           try {
             addHeaders(spec, reqHttpHeaders);
             URI segmentUploadURI = getBatchSegmentUploadURI(controllerURI);
@@ -511,6 +514,26 @@ public class SegmentPushUtils implements Serializable {
   private static URI getBatchSegmentUploadURI(URI controllerURI)
       throws URISyntaxException {
     return FileUploadDownloadClient.getBatchSegmentUploadURI(controllerURI);
+  }
+
+  /// The headers of one request: the given ones, with the job's current credential when its `authConfig` renews
+  /// credentials (e.g. OAuth 2.0 tokens), so that a long push keeps working after the first credential expired.
+  private static List<Header> currentHeaders(SegmentGenerationJobSpec spec, List<Header> headers) {
+    Map<String, String> authConfig = spec.getAuthConfig();
+    if (authConfig == null || authConfig.isEmpty()) {
+      return headers;
+    }
+    List<Header> credential = AuthProviderUtils.toRequestHeaders(AuthProviderUtils.makeAuthProvider(spec));
+    Set<String> names = new HashSet<>();
+    credential.forEach(header -> names.add(header.getName().toLowerCase(Locale.ROOT)));
+    List<Header> result = new ArrayList<>();
+    for (Header header : headers) {
+      if (!names.contains(header.getName().toLowerCase(Locale.ROOT))) {
+        result.add(header);
+      }
+    }
+    result.addAll(credential);
+    return result;
   }
 
   private static void addHeaders(SegmentGenerationJobSpec jobSpec, List<Header> headers) {

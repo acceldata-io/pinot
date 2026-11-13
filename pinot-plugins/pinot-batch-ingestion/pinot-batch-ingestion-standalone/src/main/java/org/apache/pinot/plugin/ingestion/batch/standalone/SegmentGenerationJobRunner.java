@@ -34,6 +34,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.commons.io.FileUtils;
+import org.apache.pinot.common.auth.AuthProviderUtils;
 import org.apache.pinot.common.segment.generation.SegmentGenerationUtils;
 import org.apache.pinot.common.utils.TarCompressionUtils;
 import org.apache.pinot.common.utils.URIUtils;
@@ -143,7 +144,8 @@ public class SegmentGenerationJobRunner implements IngestionJobRunner {
           .generateSchemaURI(pinotClusterSpec.getControllerURI(), _spec.getTableSpec().getTableName());
       _spec.getTableSpec().setSchemaURI(schemaURI);
     }
-    _schema = SegmentGenerationUtils.getSchema(_spec.getTableSpec().getSchemaURI(), _spec.getAuthToken());
+    _schema = SegmentGenerationUtils.getSchema(_spec.getTableSpec().getSchemaURI(),
+        AuthProviderUtils.currentAuthToken(_spec));
 
     // Read Table config
     if (_spec.getTableSpec().getTableConfigURI() == null) {
@@ -155,7 +157,8 @@ public class SegmentGenerationJobRunner implements IngestionJobRunner {
           .generateTableConfigURI(pinotClusterSpec.getControllerURI(), _spec.getTableSpec().getTableName());
       _spec.getTableSpec().setTableConfigURI(tableConfigURI);
     }
-    _tableConfig = SegmentGenerationUtils.getTableConfig(_spec.getTableSpec().getTableConfigURI(), spec.getAuthToken());
+    _tableConfig = SegmentGenerationUtils.getTableConfig(_spec.getTableSpec().getTableConfigURI(),
+        AuthProviderUtils.currentAuthToken(spec));
 
     _consistentPushEnabled = ConsistentDataPushUtils.consistentDataPushEnabled(_tableConfig);
 

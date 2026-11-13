@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.commons.io.FileUtils;
+import org.apache.pinot.common.auth.AuthProviderUtils;
 import org.apache.pinot.common.segment.generation.SegmentGenerationUtils;
 import org.apache.pinot.common.utils.TarCompressionUtils;
 import org.apache.pinot.common.utils.URIUtils;
@@ -139,7 +140,8 @@ public class SparkSegmentGenerationJobRunner implements IngestionJobRunner, Seri
     LOGGER.info("Found {} files to create Pinot segments!", filteredFiles.size());
 
     TableConfig tableConfig =
-        SegmentGenerationUtils.getTableConfig(_spec.getTableSpec().getTableConfigURI(), _spec.getAuthToken());
+        SegmentGenerationUtils.getTableConfig(_spec.getTableSpec().getTableConfigURI(),
+            AuthProviderUtils.currentAuthToken(_spec));
     boolean consistentPushEnabled = ConsistentDataPushUtils.consistentDataPushEnabled(tableConfig);
 
     if (consistentPushEnabled) {
@@ -278,10 +280,12 @@ public class SparkSegmentGenerationJobRunner implements IngestionJobRunner, Seri
           taskSpec.setOutputDirectoryPath(localOutputTempDir.getAbsolutePath());
           taskSpec.setRecordReaderSpec(_spec.getRecordReaderSpec());
           taskSpec.setSchema(
-              SegmentGenerationUtils.getSchema(_spec.getTableSpec().getSchemaURI(), _spec.getAuthToken(),
+              SegmentGenerationUtils.getSchema(_spec.getTableSpec().getSchemaURI(),
+                  AuthProviderUtils.currentAuthToken(_spec),
                   _spec.getTlsSpec()));
           taskSpec.setTableConfig(
-              SegmentGenerationUtils.getTableConfig(_spec.getTableSpec().getTableConfigURI(), _spec.getAuthToken(),
+              SegmentGenerationUtils.getTableConfig(_spec.getTableSpec().getTableConfigURI(),
+                  AuthProviderUtils.currentAuthToken(_spec),
                   _spec.getTlsSpec()));
           taskSpec.setSequenceId(idx);
           taskSpec.setSegmentNameGeneratorSpec(_spec.getSegmentNameGeneratorSpec());

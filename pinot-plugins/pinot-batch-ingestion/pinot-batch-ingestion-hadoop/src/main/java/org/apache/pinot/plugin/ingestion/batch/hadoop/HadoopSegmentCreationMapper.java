@@ -31,6 +31,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.pinot.common.auth.AuthProviderUtils;
 import org.apache.pinot.common.segment.generation.SegmentGenerationUtils;
 import org.apache.pinot.common.utils.TarCompressionUtils;
 import org.apache.pinot.common.utils.URIUtils;
@@ -146,9 +147,11 @@ public class HadoopSegmentCreationMapper extends Mapper<LongWritable, Text, Long
       taskSpec.setInputFilePath(localInputDataFile.getAbsolutePath());
       taskSpec.setOutputDirectoryPath(localOutputTempDir.getAbsolutePath());
       taskSpec.setRecordReaderSpec(_spec.getRecordReaderSpec());
-      taskSpec.setSchema(SegmentGenerationUtils.getSchema(_spec.getTableSpec().getSchemaURI(), _spec.getAuthToken()));
+      taskSpec.setSchema(SegmentGenerationUtils.getSchema(_spec.getTableSpec().getSchemaURI(),
+          AuthProviderUtils.currentAuthToken(_spec)));
       taskSpec.setTableConfig(
-          SegmentGenerationUtils.getTableConfig(_spec.getTableSpec().getTableConfigURI(), _spec.getAuthToken()));
+          SegmentGenerationUtils.getTableConfig(_spec.getTableSpec().getTableConfigURI(),
+              AuthProviderUtils.currentAuthToken(_spec)));
       taskSpec.setSequenceId(idx);
       taskSpec.setSegmentNameGeneratorSpec(_spec.getSegmentNameGeneratorSpec());
       taskSpec.setFailOnEmptySegment(_spec.isFailOnEmptySegment());
