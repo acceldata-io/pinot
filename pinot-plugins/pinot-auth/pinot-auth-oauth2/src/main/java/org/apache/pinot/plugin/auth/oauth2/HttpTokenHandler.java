@@ -146,8 +146,8 @@ final class HttpTokenHandler implements OAuthTokenHandler {
   private final AtomicLong _breakerOpenUntilMs = new AtomicLong();
   private TokenResultCache _cache;
 
-  /// One configured provider call.
-  private static final class Call {
+  /// One configured provider call; also used by [HttpTokenSource].
+  static final class Call {
     final RequestTemplate _url;
     final String _method;
     final Map<String, RequestTemplate> _headers = new LinkedHashMap<>();

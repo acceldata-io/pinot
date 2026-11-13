@@ -54,5 +54,11 @@
       <groupId>com.jayway.jsonpath</groupId>
       <artifactId>json-path</artifactId>
     </dependency>
+    <!-- AuthConfig / AuthProvider plumbing of Pinot's outbound calls; provided by every Pinot component -->
+    <dependency>
+      <groupId>org.apache.pinot</groupId>
+      <artifactId>pinot-common</artifactId>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
 </project>
