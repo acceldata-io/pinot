@@ -27,6 +27,7 @@ import TreeDirectory from '../components/Zookeeper/TreeDirectory';
 import TabPanel from '../components/TabPanel';
 import Utils from '../utils/Utils';
 import CustomCodemirror from '../components/CustomCodemirror';
+import { NotificationContext } from '../components/Notification/NotificationContext';
 
 const useStyles = makeStyles((theme) => ({
   root:{
@@ -65,6 +66,11 @@ const ZookeeperPage = () => {
   const [expanded, setExpanded] = React.useState<string[]>(['1']);
   const [selected, setSelected] = React.useState<string[]>(['1']);
   const [lastRefresh, setLastRefresh] = React.useState(null);
+  const { dispatch } = React.useContext(NotificationContext);
+
+  const showError = (error) => {
+    dispatch({ type: 'error', message: error && error.message ? error.message : `${error}`, show: true });
+  };
 
   const handleToggle = (event: React.ChangeEvent<{}>, nodeIds: string[]) => {
     setExpanded(nodeIds);
@@ -84,10 +90,14 @@ const ZookeeperPage = () => {
 
   // on select, show node data and node metadata
   const showInfoEvent = async (fullPath) => {
-    const nodeDataObj = await PinotMethodUtils.getNodeData(fullPath);
-    setCurrentNodeData(nodeDataObj.currentNodeData);
-    setCurrentNodeMetadata(nodeDataObj.currentNodeMetadata);
-    setLastRefresh(new Date());
+    try {
+      const nodeDataObj = await PinotMethodUtils.getNodeData(fullPath);
+      setCurrentNodeData(nodeDataObj.currentNodeData);
+      setCurrentNodeMetadata(nodeDataObj.currentNodeMetadata);
+      setLastRefresh(new Date());
+    } catch (e) {
+      showError(e);
+    }
   };
 
   // handlers for Tabs
@@ -104,7 +114,13 @@ const ZookeeperPage = () => {
   };
 
   const fetchInnerPath = async (pathObj) => {
-    const ZKDataObj = await PinotMethodUtils.getZookeeperData(pathObj.fullPath, count);
+    let ZKDataObj;
+    try {
+      ZKDataObj = await PinotMethodUtils.getZookeeperData(pathObj.fullPath, count);
+    } catch (e) {
+      showError(e);
+      return;
+    }
     pathObj.child = ZKDataObj.newTreeData[0].child;
     pathObj.isLeafNode = ZKDataObj.newTreeData[0].child.length === 0;
     pathObj.hasChildRendered = true;
@@ -120,7 +136,14 @@ const ZookeeperPage = () => {
   const fetchData = async () => {
     setFetching(true);
     const path = '/';
-    const ZKDataObj = await PinotMethodUtils.getZookeeperData(path, 1);
+    let ZKDataObj;
+    try {
+      ZKDataObj = await PinotMethodUtils.getZookeeperData(path, 1);
+    } catch (e) {
+      showError(e);
+      setFetching(false);
+      return;
+    }
     setTreeData(ZKDataObj.newTreeData);
     setSelectedNode(path);
     setCurrentNodeData(ZKDataObj.currentNodeData || {});

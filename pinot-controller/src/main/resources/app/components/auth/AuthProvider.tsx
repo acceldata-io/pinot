@@ -20,7 +20,8 @@
 import { AuthLocalStorageKeys, AuthWorkflow } from 'Models';
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { useHistory, useLocation } from 'react-router';
-import { baseApi, getAxiosErrorInterceptor, getAxiosRequestInterceptor, getAxiosResponseInterceptor, transformApi } from '../../utils/axios-config';
+import { Paper, Typography } from '@material-ui/core';
+import { baseApi, getAxiosErrorInterceptor, getAxiosRequestInterceptor, getAxiosResponseInterceptor, getAxiosUnauthenticatedInterceptors, transformApi } from '../../utils/axios-config';
 import PinotMethodUtils from '../../utils/PinotMethodUtils';
 import { AppLoadingIndicator } from '../AppLoadingIndicator';
 
@@ -43,6 +44,8 @@ export const AuthProvider = ({ children }) => {
     const [authenticated, setAuthenticated] = useState<boolean>(false);
     const [authorizationEndpoint, setAuthorizationEndpoint] = useState<string | null>(null);
     const [autoLogout, setAutoLogout] = useState<boolean>(false);
+    // Set when the cluster needs no UI sign-in (workflow NONE) but refuses the UI's requests with 401
+    const [authenticationRequired, setAuthenticationRequired] = useState<boolean>(false);
     const history = useHistory();
     const location = useLocation();
     const [axiosRequestInterceptorIds, setAxiosRequestInterceptorIds] =
@@ -84,7 +87,11 @@ export const AuthProvider = ({ children }) => {
         setAuthWorkflow(authWorkFlowInternal);
 
         if (authWorkFlowInternal === AuthWorkflow.NONE) {
-            // No authentication required
+            // No UI sign-in. The cluster may still authenticate requests through a proxy in front of the UI: a 401
+            // then means the UI was opened without it, which is shown instead of rendering error answers as data.
+            const [onResponse, onError] = getAxiosUnauthenticatedInterceptors(() => setAuthenticationRequired(true));
+            baseApi.interceptors.response.use(onResponse, onError);
+            transformApi.interceptors.response.use(onResponse, onError);
             setAuthenticated(true);
         }
 
@@ -228,6 +235,22 @@ export const AuthProvider = ({ children }) => {
 
     if (loading) {
         return <AppLoadingIndicator />
+    }
+
+    if (authenticationRequired) {
+        return (
+            <Paper style={{ margin: '48px auto', maxWidth: 640, padding: 32 }}>
+                <Typography variant="h5" gutterBottom>Authentication required</Typography>
+                <Typography variant="body1" gutterBottom>
+                    This Pinot cluster accepts only authenticated requests, and this page was opened without
+                    credentials.
+                </Typography>
+                <Typography variant="body1">
+                    Open the Pinot console through your organisation's sign-in gateway, or call the REST API with a
+                    bearer token.
+                </Typography>
+            </Paper>
+        );
     }
 
 

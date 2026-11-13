@@ -867,6 +867,13 @@ const getNodeData = (path) => {
     zookeeperGetStat(params)
   ];
   return Promise.all(promiseArr).then((results)=>{
+    // Error answers (e.g. 401 / 403) come back as responses: never read their bodies as node data or children
+    const failed = results.find((result) => !result || result.status >= 400);
+    if (failed) {
+      const body: { error?: string } = failed && failed.data ? (failed.data as { error?: string }) : {};
+      const message = body.error || 'ZooKeeper request failed';
+      throw new Error(`${message} (${failed ? failed.status : 'no response'})`);
+    }
     const currentNodeData = results[0].data || {};
     const currentNodeListStat = results[1].data;
     const currentNodeMetadata = results[2].data;

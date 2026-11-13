@@ -68,6 +68,29 @@ export const getAxiosErrorInterceptor = (
     return rejectedResponseInterceptor;
 };
 
+// Returns axios response interceptors (fulfilled, rejected) that report HTTP 401 (no or rejected credentials). Used when
+// the cluster does not ask the UI to sign in (workflow NONE), e.g. behind an authenticating proxy: a 401 then means the
+// UI was opened without passing through that proxy. A 403 (signed in, not allowed) is left to the calling page.
+// Both paths are watched because the default error interceptor, registered first, already turns a rejected 401 into a
+// resolved response. Responses and errors are passed on unchanged.
+export const getAxiosUnauthenticatedInterceptors = (
+    unauthenticatedFn: () => void
+): [(response: any) => any, (error: AxiosError) => any] => {
+    const fulfilled = (response: any): any => {
+        if (response && response.status === 401) {
+            unauthenticatedFn();
+        }
+        return response;
+    };
+    const rejected = (error: AxiosError): any => {
+        if (error && error.response && error.response.status === 401) {
+            unauthenticatedFn();
+        }
+        return error.response || error;
+    };
+    return [fulfilled, rejected];
+};
+
 // Returns axios fulfilled response interceptor
 export const getAxiosResponseInterceptor = (): (<T>(
     response: T
