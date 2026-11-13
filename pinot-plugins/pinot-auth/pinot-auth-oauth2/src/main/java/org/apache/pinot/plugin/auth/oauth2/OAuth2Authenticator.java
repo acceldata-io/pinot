@@ -45,7 +45,7 @@ import org.apache.pinot.spi.plugin.PluginManager;
 
 /// The `oauth2` authentication method: routes each bearer token to one of the configured token handlers and turns the
 /// result into a [PinotPrincipal]. Several identity providers are several handlers under this one method, built-in
-/// (`jwt`, `google`) or custom (`java`, loaded from their own jar). Thread-safe after [#init].
+/// (`jwt`, `google`, `introspection`) or custom (`java`, loaded from their own jar). Thread-safe after [#init].
 ///
 /// Routing:
 /// - tokens larger than `max.token.bytes` (default 16384) are rejected;
@@ -62,7 +62,8 @@ import org.apache.pinot.spi.plugin.PluginManager;
 /// Settings (`pinot.auth.oauth2.*`):
 /// - `handlers`: comma-separated handler names, in order; `max.token.bytes`; `handlers.dir`: directory of custom
 ///   handler jars (default `<plugins.dir>/pinot-auth-handlers`)
-/// - `handler.<name>.type`: `jwt` (default, see [JwtTokenHandler]), `google` (see [GoogleHandlerPreset]) or `java`
+/// - `handler.<name>.type`: `jwt` (default, see [JwtTokenHandler]), `google` (see [GoogleHandlerPreset]),
+///   `introspection` (see [IntrospectionTokenHandler]) or `java`
 /// - for `java`: `handler.<name>.class` (required), `handler.<name>.jar.dir` (default `<handlers.dir>/<name>`),
 ///   `handler.<name>.issuer` and / or `handler.<name>.token.pattern`; every other `handler.<name>.*` setting is passed
 ///   to the handler. `handler.<name>.allow.classpath=true` loads the class from Pinot's own classpath instead (only for
@@ -124,6 +125,7 @@ public class OAuth2Authenticator implements PinotAuthenticator {
     ClassLoader classLoader = getClass().getClassLoader();
     String issuer;
     long defaultCacheSeconds = 0;
+    boolean cacheDisabled = false;
     switch (type) {
       case JwtTokenHandler.TYPE:
       case GoogleHandlerPreset.TYPE: {
@@ -133,6 +135,15 @@ public class OAuth2Authenticator implements PinotAuthenticator {
         jwt.init(new SimpleHandlerContext(name, jwtConfig, secretResolver));
         handler = jwt;
         issuer = jwt.getIssuer();
+        break;
+      }
+      case IntrospectionTokenHandler.TYPE: {
+        IntrospectionTokenHandler introspection = new IntrospectionTokenHandler();
+        introspection.init(new SimpleHandlerContext(name, handlerConfig, secretResolver));
+        handler = introspection;
+        issuer = introspection.getIssuer();
+        // The handler caches itself (positive and negative answers); a second cache here would only hide its counters
+        cacheDisabled = true;
         break;
       }
       case TYPE_JAVA: {
@@ -164,13 +175,17 @@ public class OAuth2Authenticator implements PinotAuthenticator {
     }
     GuardedHandler guarded = new GuardedHandler(name, handler, classLoader, _executor,
         handlerConfig.getProperty("timeout.ms", 5000L),
-        handlerConfig.getProperty("cache.ttl.seconds", defaultCacheSeconds) * 1000);
+        cacheDisabled ? 0 : handlerConfig.getProperty("cache.ttl.seconds", defaultCacheSeconds) * 1000);
     _allHandlers.add(guarded);
-    if (issuer != null && !issuer.trim().isEmpty()) {
+    boolean hasIssuer = issuer != null && !issuer.trim().isEmpty();
+    if (hasIssuer) {
       if (_handlersByIssuer.putIfAbsent(issuer.trim(), guarded) != null) {
         throw new IllegalArgumentException("Two handlers claim issuer '" + issuer.trim() + "'");
       }
-    } else {
+    }
+    // Opaque tokens carry no issuer, so a handler that checks them with the provider (introspection) also takes the
+    // tokens no issuer routes, unless opaque.tokens=false
+    if (!hasIssuer || handlerConfig.getProperty("opaque.tokens", IntrospectionTokenHandler.TYPE.equals(type))) {
       String pattern = handlerConfig.getProperty("token.pattern");
       _issuerlessHandlers.add(new RoutedHandler(guarded,
           pattern == null || pattern.trim().isEmpty() ? null : Pattern.compile(pattern.trim())));
