@@ -65,6 +65,7 @@ import org.apache.pinot.minion.executor.MinionTaskZkMetadataManager;
 import org.apache.pinot.minion.executor.PinotTaskExecutorFactory;
 import org.apache.pinot.minion.executor.TaskExecutorFactoryRegistry;
 import org.apache.pinot.minion.taskfactory.TaskFactoryRegistry;
+import org.apache.pinot.plugin.auth.spi.AuthorizerSelector;
 import org.apache.pinot.segment.local.utils.ClusterConfigForTable;
 import org.apache.pinot.server.access.AccessControlFactory;
 import org.apache.pinot.spi.crypt.PinotCrypterFactory;
@@ -424,7 +425,10 @@ public abstract class BaseMinionStarter implements ServiceStartable {
       throw new RuntimeException("Caught exception while creating the Minion admin API AccessControlFactory "
           + "using class '" + factoryClass + "'", e);
     }
-    factory.init(_config.subset(CommonConstants.Minion.PREFIX_OF_CONFIG_OF_ACCESS_CONTROL), _helixManager);
+    // The factory also receives the cluster-wide authentication and authorization settings (pinot.auth.*,
+    // pinot.authz.*), which live outside its subset
+    factory.init(AuthorizerSelector.withClusterAuthSettings(
+        _config.subset(CommonConstants.Minion.PREFIX_OF_CONFIG_OF_ACCESS_CONTROL), _config), _helixManager);
     return factory;
   }
 }

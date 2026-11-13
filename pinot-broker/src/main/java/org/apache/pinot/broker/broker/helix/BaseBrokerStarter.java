@@ -93,6 +93,7 @@ import org.apache.pinot.core.transport.NettyInspector;
 import org.apache.pinot.core.transport.server.routing.stats.ServerRoutingStatsManager;
 import org.apache.pinot.core.util.ListenerConfigUtil;
 import org.apache.pinot.core.util.trace.ContinuousJfrStarter;
+import org.apache.pinot.plugin.auth.spi.AuthorizerSelector;
 import org.apache.pinot.query.routing.WorkerManager;
 import org.apache.pinot.query.runtime.operator.factory.DefaultQueryOperatorFactoryProvider;
 import org.apache.pinot.query.runtime.operator.factory.QueryOperatorFactoryProvider;
@@ -355,7 +356,10 @@ public abstract class BaseBrokerStarter implements ServiceStartable {
     _serverRoutingStatsManager.init();
     initRoutingManager();
 
-    final PinotConfiguration factoryConf = _brokerConf.subset(Broker.ACCESS_CONTROL_CONFIG_PREFIX);
+    // The factory also receives the cluster-wide authentication and authorization settings (pinot.auth.*,
+    // pinot.authz.*), which live outside its subset
+    final PinotConfiguration factoryConf = AuthorizerSelector.withClusterAuthSettings(
+        _brokerConf.subset(Broker.ACCESS_CONTROL_CONFIG_PREFIX), _brokerConf);
     // Adding cluster name to the config so that it can be used by the AccessControlFactory
     factoryConf.setProperty(Helix.CONFIG_OF_CLUSTER_NAME, _brokerConf.getProperty(Helix.CONFIG_OF_CLUSTER_NAME));
     _accessControlFactory = AccessControlFactory.loadFactory(factoryConf, _propertyStore);

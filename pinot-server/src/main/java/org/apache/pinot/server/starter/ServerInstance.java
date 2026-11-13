@@ -42,6 +42,7 @@ import org.apache.pinot.core.transport.ChannelHandlerFactory;
 import org.apache.pinot.core.transport.InstanceRequestHandler;
 import org.apache.pinot.core.transport.QueryServer;
 import org.apache.pinot.core.transport.grpc.GrpcQueryServer;
+import org.apache.pinot.plugin.auth.spi.AuthorizerSelector;
 import org.apache.pinot.query.runtime.KeepPipelineBreakerStatsPredicate;
 import org.apache.pinot.query.runtime.SendStatsPredicate;
 import org.apache.pinot.segment.local.utils.SegmentOperationsThrottlerSet;
@@ -127,8 +128,11 @@ public class ServerInstance {
         TlsUtils.extractTlsConfig(serverConf.getPinotConfig(), CommonConstants.Server.SERVER_TLS_PREFIX);
     NettyConfig nettyConfig =
         NettyConfig.extractNettyConfig(serverConf.getPinotConfig(), CommonConstants.Server.SERVER_NETTY_PREFIX);
-    accessControlFactory.init(
-        serverConf.getPinotConfig().subset(CommonConstants.Server.PREFIX_OF_CONFIG_OF_ACCESS_CONTROL), helixManager);
+    // The factory also receives the cluster-wide authentication and authorization settings (pinot.auth.*,
+    // pinot.authz.*), which live outside its subset
+    accessControlFactory.init(AuthorizerSelector.withClusterAuthSettings(
+        serverConf.getPinotConfig().subset(CommonConstants.Server.PREFIX_OF_CONFIG_OF_ACCESS_CONTROL),
+        serverConf.getPinotConfig()), helixManager);
     AccessControl accessControl = accessControlFactory.create();
 
     if (serverConf.isMultiStageServerEnabled()) {
