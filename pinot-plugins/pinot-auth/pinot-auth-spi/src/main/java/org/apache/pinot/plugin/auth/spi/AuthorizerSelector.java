@@ -47,7 +47,7 @@ public final class AuthorizerSelector {
 
   public static final String DEFAULT_NATIVE_AUTHORIZER = "org.apache.pinot.core.auth.authz.NativeAuthorizer";
   public static final String DEFAULT_RANGER_AUTHORIZER =
-      "org.apache.ranger.authorization.pinot.authorizer.RangerPinotAuthorizer";
+      "org.apache.pinot.core.auth.authz.RangerAuthorizer";
 
   private AuthorizerSelector() {
   }
