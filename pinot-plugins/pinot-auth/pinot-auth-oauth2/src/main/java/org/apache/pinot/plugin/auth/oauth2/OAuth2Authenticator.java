@@ -23,6 +23,7 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,6 +70,10 @@ import org.apache.pinot.spi.plugin.PluginManager;
 ///   `handler.<name>.issuer` and / or `handler.<name>.token.pattern`; every other `handler.<name>.*` setting is passed
 ///   to the handler. `handler.<name>.allow.classpath=true` loads the class from Pinot's own classpath instead (only for
 ///   handlers shipped with Pinot)
+///
+/// Each handler's result is mapped to the Pinot principal by its [IdentityMapper] (`handler.<name>.user.rules`,
+/// `groups.*`, `required.scopes`, `scopes.as.groups`, `service.*`), so user and group names match the authorization
+/// rules.
 public class OAuth2Authenticator implements PinotAuthenticator {
   public static final int DEFAULT_MAX_TOKEN_BYTES = 16 * 1024;
   public static final String HANDLERS_DIR_NAME = "auth-handlers";
@@ -78,6 +83,8 @@ public class OAuth2Authenticator implements PinotAuthenticator {
   private final List<RoutedHandler> _issuerlessHandlers = new ArrayList<>();
   private final List<GuardedHandler> _allHandlers = new ArrayList<>();
   private final List<HandlerClassLoader> _classLoaders = new ArrayList<>();
+  /// Identity mapping of each handler.
+  private final Map<GuardedHandler, IdentityMapper> _mappers = new IdentityHashMap<>();
   private ExecutorService _executor;
   private int _maxTokenBytes;
   private String _challenge;
@@ -187,6 +194,7 @@ public class OAuth2Authenticator implements PinotAuthenticator {
         handlerConfig.getProperty("timeout.ms", 5000L),
         cacheDisabled ? 0 : handlerConfig.getProperty("cache.ttl.seconds", defaultCacheSeconds) * 1000);
     _allHandlers.add(guarded);
+    _mappers.put(guarded, new IdentityMapper(name, handlerConfig));
     boolean hasIssuer = issuer != null && !issuer.trim().isEmpty();
     if (hasIssuer) {
       if (_handlersByIssuer.putIfAbsent(issuer.trim(), guarded) != null) {
@@ -238,10 +246,10 @@ public class OAuth2Authenticator implements PinotAuthenticator {
     if (token.getBytes(StandardCharsets.UTF_8).length > _maxTokenBytes) {
       throw new AuthenticationException("Token larger than " + _maxTokenBytes + " bytes", _challenge);
     }
-    return toPrincipal(route(token));
+    return route(token);
   }
 
-  private TokenIdentity route(String token) {
+  private PinotPrincipal route(String token) {
     String issuer = unverifiedIssuer(token);
     if (issuer != null) {
       GuardedHandler handler = _handlersByIssuer.get(issuer);
@@ -252,7 +260,7 @@ public class OAuth2Authenticator implements PinotAuthenticator {
       if (identity == null) {
         throw new AuthenticationException("Token not accepted", _challenge);
       }
-      return identity;
+      return _mappers.get(handler).map(identity);
     }
     for (RoutedHandler routed : _issuerlessHandlers) {
       if (routed._pattern != null && !routed._pattern.matcher(token).matches()) {
@@ -260,7 +268,7 @@ public class OAuth2Authenticator implements PinotAuthenticator {
       }
       TokenIdentity identity = routed._handler.validate(token);
       if (identity != null) {
-        return identity;
+        return _mappers.get(routed._handler).map(identity);
       }
     }
     throw new AuthenticationException("Token not recognised by any configured identity provider", _challenge);
@@ -277,13 +285,6 @@ public class OAuth2Authenticator implements PinotAuthenticator {
     } catch (ParseException e) {
       return null;
     }
-  }
-
-  /// Minimal mapping: user and groups as delivered by the handler. Name rules and service-account detection are added
-  /// by the identity mapping.
-  private PinotPrincipal toPrincipal(TokenIdentity identity) {
-    Map<String, Object> claims = new LinkedHashMap<>(identity.getAttributes());
-    return new PinotPrincipal(identity.getUser(), identity.getGroups(), AuthMethod.OAUTH2, false, claims);
   }
 
   @Override

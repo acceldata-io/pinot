@@ -256,6 +256,20 @@ public class CustomHandlerTest {
   }
 
   @Test
+  public void testIdentityMappingAppliesToEveryHandler() {
+    Map<String, Object> props = java("custom", "accept");
+    props.put("handler.custom.user.rules", "^(.*)$/$1@corp/U");
+    props.put("handler.custom.service.users", "ALICE@CORP");
+    OAuth2Authenticator authenticator = authenticator("custom", props);
+    PinotPrincipal principal = auth(authenticator, "ok-alice");
+    assertEquals(principal.getUser(), "ALICE@CORP");
+    assertTrue(principal.isServiceAccount());
+    assertEquals(principal.getClaims().get("token_user"), "alice");
+    assertEquals(principal.getClaims().get("handler"), "custom");
+    authenticator.close();
+  }
+
+  @Test
   public void testDefaultHandlersDirIsOutsideThePluginsDirectory() {
     String previous = System.getProperty(PluginManager.PLUGINS_DIR_PROPERTY_NAME);
     try {
