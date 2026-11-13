@@ -29,6 +29,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLContext;
 import org.apache.commons.lang3.StringUtils;
@@ -52,7 +53,8 @@ public class JsonAsyncHttpPinotClientTransport implements PinotClientTransport<C
   private static final ObjectReader OBJECT_READER = JsonUtils.DEFAULT_READER;
   private static final String DEFAULT_EXTRA_QUERY_OPTION_STRING = "groupByMode=sql;responseFormat=sql";
 
-  private final Map<String, String> _headers;
+  /// Headers of each request, obtained again for every request (e.g. a fresh OAuth 2.0 token).
+  private final Supplier<Map<String, String>> _headers;
   private final String _scheme;
 
   private final int _brokerReadTimeout;
@@ -63,7 +65,7 @@ public class JsonAsyncHttpPinotClientTransport implements PinotClientTransport<C
 
   public JsonAsyncHttpPinotClientTransport() {
     _brokerReadTimeout = 60000;
-    _headers = new HashMap<>();
+    _headers = HashMap::new;
     _scheme = CommonConstants.HTTP_PROTOCOL;
     _extraOptionStr = DEFAULT_EXTRA_QUERY_OPTION_STRING;
     Builder builder = Dsl.config();
@@ -76,6 +78,14 @@ public class JsonAsyncHttpPinotClientTransport implements PinotClientTransport<C
   public JsonAsyncHttpPinotClientTransport(Map<String, String> headers, String scheme, String extraOptionString,
       boolean useMultistageEngine, @Nullable SSLContext sslContext, ConnectionTimeouts connectionTimeouts,
       TlsProtocols tlsProtocols, @Nullable String appId) {
+    this(ConnectionUtils.combine(headers, null), scheme, extraOptionString, useMultistageEngine, sslContext,
+        connectionTimeouts, tlsProtocols, appId);
+  }
+
+  /// @param headers supplies the headers of each request when it is sent, e.g. a fresh OAuth 2.0 token
+  public JsonAsyncHttpPinotClientTransport(Supplier<Map<String, String>> headers, String scheme,
+      String extraOptionString, boolean useMultistageEngine, @Nullable SSLContext sslContext,
+      ConnectionTimeouts connectionTimeouts, TlsProtocols tlsProtocols, @Nullable String appId) {
     _brokerReadTimeout = connectionTimeouts.getReadTimeoutMs();
     _headers = headers;
     _scheme = scheme;
@@ -114,9 +124,7 @@ public class JsonAsyncHttpPinotClientTransport implements PinotClientTransport<C
       String url = String.format("%s://%s%s", _scheme, brokerAddress, _useMultistageEngine ? "/query" : "/query/sql");
       BoundRequestBuilder requestBuilder = _httpClient.preparePost(url);
 
-      if (_headers != null) {
-        _headers.forEach((k, v) -> requestBuilder.addHeader(k, v));
-      }
+      addHeaders(requestBuilder);
       String correlationId = UUID.randomUUID().toString();
       LOGGER.debug("Sending query {} to {} with correlationId {}", query, url, correlationId);
       return requestBuilder.addHeader("Content-Type", "application/json; charset=utf-8")
@@ -196,9 +204,7 @@ public class JsonAsyncHttpPinotClientTransport implements PinotClientTransport<C
           _useMultistageEngine ? "/query" : "/query/sql", numRows);
       BoundRequestBuilder requestBuilder = _httpClient.preparePost(url);
 
-      if (_headers != null) {
-        _headers.forEach((k, v) -> requestBuilder.addHeader(k, v));
-      }
+      addHeaders(requestBuilder);
       LOGGER.debug("Sending cursor query {} to {}", query, url);
       return requestBuilder.addHeader("Content-Type", "application/json; charset=utf-8").setBody(json.toString())
           .execute().toCompletableFuture().thenApply(httpResponse -> {
@@ -251,9 +257,7 @@ public class JsonAsyncHttpPinotClientTransport implements PinotClientTransport<C
       String url = String.format("%s://%s/responseStore/%s/", _scheme, brokerAddress, requestId);
       BoundRequestBuilder requestBuilder = _httpClient.prepareGet(url);
 
-      if (_headers != null) {
-        _headers.forEach((k, v) -> requestBuilder.addHeader(k, v));
-      }
+      addHeaders(requestBuilder);
       LOGGER.debug("Getting cursor metadata from {}", url);
       return requestBuilder.execute().toCompletableFuture().thenApply(httpResponse -> {
         LOGGER.debug("Completed cursor metadata fetch, HTTP status is {}", httpResponse.getStatusCode());
@@ -303,9 +307,7 @@ public class JsonAsyncHttpPinotClientTransport implements PinotClientTransport<C
       String url = String.format("%s://%s/responseStore/%s/", _scheme, brokerAddress, requestId);
       BoundRequestBuilder requestBuilder = _httpClient.prepareDelete(url);
 
-      if (_headers != null) {
-        _headers.forEach((k, v) -> requestBuilder.addHeader(k, v));
-      }
+      addHeaders(requestBuilder);
       LOGGER.debug("Deleting cursor at {}", url);
       return requestBuilder.execute().toCompletableFuture().thenApply(httpResponse -> {
         LOGGER.debug("Completed cursor deletion, HTTP status is {}", httpResponse.getStatusCode());
@@ -340,9 +342,7 @@ public class JsonAsyncHttpPinotClientTransport implements PinotClientTransport<C
           cursorId, offset, numRows);
       BoundRequestBuilder requestBuilder = _httpClient.prepareGet(url);
 
-      if (_headers != null) {
-        _headers.forEach((k, v) -> requestBuilder.addHeader(k, v));
-      }
+      addHeaders(requestBuilder);
 
       return requestBuilder.execute().toCompletableFuture().thenApply(httpResponse -> {
         if (httpResponse.getStatusCode() != 200) {
@@ -380,9 +380,7 @@ public class JsonAsyncHttpPinotClientTransport implements PinotClientTransport<C
           cursorId, offset, numRows);
       BoundRequestBuilder requestBuilder = _httpClient.prepareGet(url);
 
-      if (_headers != null) {
-        _headers.forEach((k, v) -> requestBuilder.addHeader(k, v));
-      }
+      addHeaders(requestBuilder);
 
       return requestBuilder.execute().toCompletableFuture().thenApply(httpResponse -> {
         if (httpResponse.getStatusCode() != 200) {
@@ -421,9 +419,7 @@ public class JsonAsyncHttpPinotClientTransport implements PinotClientTransport<C
           cursorId, offset, numRows);
       BoundRequestBuilder requestBuilder = _httpClient.prepareGet(url);
 
-      if (_headers != null) {
-        _headers.forEach((k, v) -> requestBuilder.addHeader(k, v));
-      }
+      addHeaders(requestBuilder);
 
       return requestBuilder.execute().toCompletableFuture().thenApply(httpResponse -> {
         if (httpResponse.getStatusCode() != 200) {
@@ -445,5 +441,12 @@ public class JsonAsyncHttpPinotClientTransport implements PinotClientTransport<C
   @Override
   public ClientStats getClientMetrics() {
     return _httpClient.getClientStats();
+  }
+
+  private void addHeaders(BoundRequestBuilder requestBuilder) {
+    Map<String, String> headers = _headers.get();
+    if (headers != null) {
+      headers.forEach(requestBuilder::addHeader);
+    }
   }
 }

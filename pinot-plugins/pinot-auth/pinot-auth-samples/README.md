@@ -129,7 +129,30 @@ curl -i -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
 A rejected token answers `401` with `WWW-Authenticate: Bearer realm="pinot", error="invalid_token"`; the reason is in
 the role's log, not in the response.
 
-## 5. Cut-over
+## 5. Clients
+
+Every client sends `Authorization: Bearer <token>` and must replace the token before it expires.
+
+- **Java client and JDBC driver**: connection headers were fixed when the connection was made, so a long-lived
+  connection (or a connection pool) failed once its token expired. Give the connection a headers supplier, called for
+  every request:
+  - Java: `JsonAsyncHttpPinotClientTransportFactory.setHeadersSupplier(() -> Map.of("Authorization", "Bearer " +
+    tokens.current()))`;
+  - JDBC / connection properties: `headersSupplier=<class>`, a class implementing `Supplier<Map<String, String>>` with
+    a public no-argument constructor, on the driver's classpath.
+
+  Without a supplier, reconnect (or recycle pooled connections) before the token expires.
+- **JDBC and broker discovery**: the driver finds brokers through a cluster-wide controller call. A user whose rules
+  cover only some tables is refused that call (cluster-wide endpoints need `tables=*`, see apache/pinot#14595), so JDBC
+  users need `READ` on all tables, or a dedicated reporting identity that has it.
+- **Trino Pinot connector**: supports only no authentication or a user name and password towards Pinot, not a bearer
+  token. Querying an OAuth 2.0 cluster from Trino needs a change in the connector.
+- **Superset (pinotdb) and the Spark connector**: whether they can send a bearer token, and refresh it, has not been
+  checked yet.
+- **Controller UI**: opened directly it shows "Authentication required"; open it through the sign-in gateway (an
+  authenticating proxy in front of the controller that adds the bearer token).
+
+## 6. Cut-over
 
 A cluster uses one authentication method (`pinot.auth.method`) on all roles; mixing methods between roles is refused
 at start. Moving from Basic authentication to `oauth2`:
@@ -147,7 +170,7 @@ at start. Moving from Basic authentication to `oauth2`:
 5. **Rollback.** Restore the previous configuration on all roles and restart them. Nothing is migrated, so rollback
    is a configuration change only.
 
-## 6. Runbook
+## 7. Runbook
 
 | Symptom | Log line (role log) | Likely cause | Action |
 |---|---|---|---|

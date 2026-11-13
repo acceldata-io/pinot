@@ -35,6 +35,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLContext;
@@ -99,7 +100,7 @@ public class BrokerCache {
 
   private final AsyncHttpClient _client;
   private final String _address;
-  private final Map<String, String> _headers;
+  private final Supplier<Map<String, String>> _headers;
   private final Properties _properties;
   private volatile BrokerData _brokerData;
   private final boolean _useGrpcPort;
@@ -135,7 +136,7 @@ public class BrokerCache {
     ControllerRequestURLBuilder controllerRequestURLBuilder =
         ControllerRequestURLBuilder.baseUrl(scheme + "://" + controllerUrl);
     _address = controllerRequestURLBuilder.forLiveBrokerTablesGet();
-    _headers = ConnectionUtils.getHeadersFromProperties(properties);
+    _headers = ConnectionUtils.getHeadersSupplierFromProperties(properties);
     _useGrpcPort = Boolean.parseBoolean(properties.getProperty("useGrpcPort", "false"));
     _properties = properties;
   }
@@ -143,8 +144,9 @@ public class BrokerCache {
   private Map<String, List<BrokerInstance>> getTableToBrokersData() throws Exception {
     BoundRequestBuilder getRequest = _client.prepareGet(_address);
 
-    if (_headers != null) {
-      _headers.forEach((k, v) -> getRequest.addHeader(k, v));
+    Map<String, String> headers = _headers.get();
+    if (headers != null) {
+      headers.forEach(getRequest::addHeader);
     }
 
     Future<Response> responseFuture = getRequest.addHeader("accept", "application/json").execute();

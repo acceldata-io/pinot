@@ -21,6 +21,8 @@ package org.apache.pinot.client;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.function.Supplier;
+import javax.annotation.Nullable;
 import javax.net.ssl.SSLContext;
 import org.apache.pinot.client.utils.ConnectionUtils;
 import org.apache.pinot.spi.utils.CommonConstants;
@@ -37,6 +39,8 @@ public class JsonAsyncHttpPinotClientTransportFactory implements PinotClientTran
   private static final String DEFAULT_BROKER_TLS_V10_ENABLED = "false";
 
   private Map<String, String> _headers = new HashMap<>();
+  @Nullable
+  private Supplier<Map<String, String>> _headersSupplier;
   private String _scheme = CommonConstants.HTTP_PROTOCOL;
   private SSLContext _sslContext = null;
   private boolean _tlsV10Enabled = false;
@@ -52,8 +56,8 @@ public class JsonAsyncHttpPinotClientTransportFactory implements PinotClientTran
     ConnectionTimeouts connectionTimeouts =
         ConnectionTimeouts.create(_readTimeoutMs, _connectTimeoutMs, _handshakeTimeoutMs);
     TlsProtocols tlsProtocols = TlsProtocols.defaultProtocols(_tlsV10Enabled);
-    return new JsonAsyncHttpPinotClientTransport(_headers, _scheme, _extraOptionString, _useMultistageEngine,
-        _sslContext, connectionTimeouts, tlsProtocols, _appId);
+    return new JsonAsyncHttpPinotClientTransport(ConnectionUtils.combine(_headers, _headersSupplier), _scheme,
+        _extraOptionString, _useMultistageEngine, _sslContext, connectionTimeouts, tlsProtocols, _appId);
   }
 
   public Map<String, String> getHeaders() {
@@ -62,6 +66,12 @@ public class JsonAsyncHttpPinotClientTransportFactory implements PinotClientTran
 
   public void setHeaders(Map<String, String> headers) {
     _headers = headers;
+  }
+
+  /// Headers obtained again for every request, added to the fixed headers, e.g. a supplier of fresh OAuth 2.0 tokens
+  /// (`Authorization: Bearer <token>`): a long-lived connection then keeps working when tokens expire.
+  public void setHeadersSupplier(@Nullable Supplier<Map<String, String>> headersSupplier) {
+    _headersSupplier = headersSupplier;
   }
 
   public String getScheme() {
@@ -83,6 +93,9 @@ public class JsonAsyncHttpPinotClientTransportFactory implements PinotClientTran
   public JsonAsyncHttpPinotClientTransportFactory withConnectionProperties(Properties properties) {
     if (_headers == null || _headers.isEmpty()) {
       _headers = ConnectionUtils.getHeadersFromProperties(properties);
+    }
+    if (_headersSupplier == null && properties.getProperty(ConnectionUtils.HEADERS_SUPPLIER) != null) {
+      _headersSupplier = ConnectionUtils.getHeadersSupplierFromProperties(properties);
     }
 
     String scheme = properties.getProperty("scheme", CommonConstants.HTTP_PROTOCOL);

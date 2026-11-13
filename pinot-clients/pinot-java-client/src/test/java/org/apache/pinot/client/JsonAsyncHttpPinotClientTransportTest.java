@@ -27,9 +27,15 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.InetSocketAddress;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.pinot.client.utils.ConnectionUtils;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
@@ -37,8 +43,10 @@ import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.expectThrows;
 import static org.testng.Assert.fail;
 
 
@@ -67,6 +75,7 @@ public class JsonAsyncHttpPinotClientTransportTest implements HttpHandler {
   private String _requestPath = "";
   private String _requestMethod = "";
   private String _requestBody = "";
+  private final List<String> _authorizations = new CopyOnWriteArrayList<>();
 
   @BeforeClass
   public void setUp()
@@ -84,6 +93,7 @@ public class JsonAsyncHttpPinotClientTransportTest implements HttpHandler {
     _requestPath = "";
     _requestMethod = "";
     _requestBody = "";
+    _authorizations.clear();
   }
 
   @AfterClass
@@ -91,6 +101,51 @@ public class JsonAsyncHttpPinotClientTransportTest implements HttpHandler {
     if (_dummyServer != null) {
       _dummyServer.stop(0);
     }
+  }
+
+  /// Supplies a new token on every call, like a client holding short-lived OAuth 2.0 tokens.
+  public static class CountingTokenSupplier implements Supplier<Map<String, String>> {
+    private static final AtomicInteger COUNT = new AtomicInteger();
+
+    @Override
+    public Map<String, String> get() {
+      return Map.of("Authorization", "Bearer tok-" + COUNT.incrementAndGet());
+    }
+  }
+
+  @Test
+  public void headersSupplierIsCalledForEveryRequest() {
+    AtomicInteger tokens = new AtomicInteger();
+    JsonAsyncHttpPinotClientTransportFactory factory = new JsonAsyncHttpPinotClientTransportFactory();
+    factory.setHeaders(Map.of("Authorization", "Bearer fixed", "X-Tenant", "t1"));
+    factory.setHeadersSupplier(() -> Map.of("Authorization", "Bearer tok-" + tokens.incrementAndGet()));
+    JsonAsyncHttpPinotClientTransport transport = (JsonAsyncHttpPinotClientTransport) factory.buildTransport();
+    String broker = "localhost:" + _dummyServer.getAddress().getPort();
+    transport.executeQuery(broker, "select * from planets");
+    transport.executeQuery(broker, "select * from planets");
+    // The supplied header wins over the fixed one and is obtained again for every request
+    assertEquals(_authorizations, List.of("Bearer tok-1", "Bearer tok-2"));
+  }
+
+  @Test
+  public void headersSupplierFromConnectionProperties() {
+    Properties properties = new Properties();
+    properties.setProperty(ConnectionUtils.HEADERS_SUPPLIER, CountingTokenSupplier.class.getName());
+    JsonAsyncHttpPinotClientTransport transport = (JsonAsyncHttpPinotClientTransport)
+        new JsonAsyncHttpPinotClientTransportFactory().withConnectionProperties(properties).buildTransport();
+    String broker = "localhost:" + _dummyServer.getAddress().getPort();
+    transport.executeQuery(broker, "select * from planets");
+    transport.executeQuery(broker, "select * from planets");
+    assertEquals(_authorizations.size(), 2);
+    assertTrue(_authorizations.get(0).startsWith("Bearer tok-"));
+    assertNotEquals(_authorizations.get(0), _authorizations.get(1));
+
+    Properties invalid = new Properties();
+    invalid.setProperty(ConnectionUtils.HEADERS_SUPPLIER, "org.example.NoSuchSupplier");
+    expectThrows(IllegalArgumentException.class, () -> ConnectionUtils.getHeadersSupplierFromProperties(invalid));
+    Properties notASupplier = new Properties();
+    notASupplier.setProperty(ConnectionUtils.HEADERS_SUPPLIER, String.class.getName());
+    expectThrows(IllegalArgumentException.class, () -> ConnectionUtils.getHeadersSupplierFromProperties(notASupplier));
   }
 
   @Test
@@ -283,6 +338,8 @@ public class JsonAsyncHttpPinotClientTransportTest implements HttpHandler {
     // Capture request details for verification
     _requestPath = exchange.getRequestURI().toString();
     _requestMethod = exchange.getRequestMethod();
+    String authorization = exchange.getRequestHeaders().getFirst("Authorization");
+    _authorizations.add(authorization == null ? "" : authorization);
 
     // Capture request body for POST requests
     if ("POST".equals(_requestMethod)) {

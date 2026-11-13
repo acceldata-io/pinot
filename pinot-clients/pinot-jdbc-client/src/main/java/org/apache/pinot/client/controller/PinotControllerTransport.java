@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLContext;
 import org.apache.commons.lang3.StringUtils;
@@ -35,6 +36,7 @@ import org.apache.pinot.client.TlsProtocols;
 import org.apache.pinot.client.controller.response.ControllerTenantBrokerResponse;
 import org.apache.pinot.client.controller.response.SchemaResponse;
 import org.apache.pinot.client.controller.response.TableResponse;
+import org.apache.pinot.client.utils.ConnectionUtils;
 import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.BoundRequestBuilder;
 import org.asynchttpclient.DefaultAsyncHttpClientConfig;
@@ -48,12 +50,20 @@ public class PinotControllerTransport {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(PinotControllerTransport.class);
 
-  Map<String, String> _headers;
+  /// Headers of each request, obtained again for every request (e.g. a fresh OAuth 2.0 token).
+  Supplier<Map<String, String>> _headers;
   private final String _scheme;
   private final AsyncHttpClient _httpClient;
 
   public PinotControllerTransport(Map<String, String> headers, String scheme, @Nullable SSLContext sslContext,
       ConnectionTimeouts connectionTimeouts, TlsProtocols tlsProtocols, @Nullable String appId) {
+    this(ConnectionUtils.combine(headers, null), scheme, sslContext, connectionTimeouts, tlsProtocols, appId);
+  }
+
+  /// @param headers supplies the headers of each request when it is sent, e.g. a fresh OAuth 2.0 token
+  public PinotControllerTransport(Supplier<Map<String, String>> headers, String scheme,
+      @Nullable SSLContext sslContext, ConnectionTimeouts connectionTimeouts, TlsProtocols tlsProtocols,
+      @Nullable String appId) {
     _headers = headers;
     _scheme = scheme;
 
@@ -92,9 +102,7 @@ public class PinotControllerTransport {
     try {
       String url = _scheme + "://" + controllerAddress + "/tables";
       BoundRequestBuilder requestBuilder = _httpClient.prepareGet(url);
-      if (_headers != null) {
-        _headers.forEach((k, v) -> requestBuilder.addHeader(k, v));
-      }
+      addHeaders(requestBuilder);
 
       final Future<Response> response =
           requestBuilder.addHeader("Content-Type", "application/json; charset=utf-8").execute();
@@ -110,9 +118,7 @@ public class PinotControllerTransport {
     try {
       String url = _scheme + "://" + controllerAddress + "/tables/" + table + "/schema";
       BoundRequestBuilder requestBuilder = _httpClient.prepareGet(url);
-      if (_headers != null) {
-        _headers.forEach((k, v) -> requestBuilder.addHeader(k, v));
-      }
+      addHeaders(requestBuilder);
 
       final Future<Response> response =
           requestBuilder.addHeader("Content-Type", "application/json; charset=utf-8").execute();
@@ -128,9 +134,7 @@ public class PinotControllerTransport {
     try {
       String url = _scheme + "://" + controllerAddress + "/v2/brokers/tenants/" + tenant + "?state=ONLINE";
       BoundRequestBuilder requestBuilder = _httpClient.prepareGet(url);
-      if (_headers != null) {
-        _headers.forEach((k, v) -> requestBuilder.addHeader(k, v));
-      }
+      addHeaders(requestBuilder);
 
 
       final Future<Response> response =
@@ -153,6 +157,13 @@ public class PinotControllerTransport {
       _httpClient.close();
     } catch (IOException exception) {
       throw new PinotClientException("Error while closing connection!");
+    }
+  }
+
+  private void addHeaders(BoundRequestBuilder requestBuilder) {
+    Map<String, String> headers = _headers.get();
+    if (headers != null) {
+      headers.forEach(requestBuilder::addHeader);
     }
   }
 }

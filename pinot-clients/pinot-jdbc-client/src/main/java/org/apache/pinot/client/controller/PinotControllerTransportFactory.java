@@ -21,9 +21,12 @@ package org.apache.pinot.client.controller;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.function.Supplier;
+import javax.annotation.Nullable;
 import javax.net.ssl.SSLContext;
 import org.apache.pinot.client.ConnectionTimeouts;
 import org.apache.pinot.client.TlsProtocols;
+import org.apache.pinot.client.utils.ConnectionUtils;
 import org.apache.pinot.spi.utils.CommonConstants;
 
 
@@ -34,6 +37,8 @@ public class PinotControllerTransportFactory {
   private static final String DEFAULT_CONTROLLER_TLS_V10_ENABLED = "false";
 
   private Map<String, String> _headers = new HashMap<>();
+  @Nullable
+  private Supplier<Map<String, String>> _headersSupplier;
   private String _scheme = CommonConstants.HTTP_PROTOCOL;
   private SSLContext _sslContext = null;
 
@@ -47,7 +52,8 @@ public class PinotControllerTransportFactory {
     ConnectionTimeouts connectionTimeouts =
         ConnectionTimeouts.create(_readTimeoutMs, _connectTimeoutMs, _handshakeTimeoutMs);
     TlsProtocols tlsProtocols = TlsProtocols.defaultProtocols(_tlsV10Enabled);
-    return new PinotControllerTransport(_headers, _scheme, _sslContext, connectionTimeouts, tlsProtocols, _appId);
+    return new PinotControllerTransport(ConnectionUtils.combine(_headers, _headersSupplier), _scheme, _sslContext,
+        connectionTimeouts, tlsProtocols, _appId);
   }
 
   public Map<String, String> getHeaders() {
@@ -56,6 +62,11 @@ public class PinotControllerTransportFactory {
 
   public void setHeaders(Map<String, String> headers) {
     _headers = headers;
+  }
+
+  /// Headers obtained again for every request, added to the fixed headers (e.g. fresh OAuth 2.0 tokens).
+  public void setHeadersSupplier(@Nullable Supplier<Map<String, String>> headersSupplier) {
+    _headersSupplier = headersSupplier;
   }
 
   public String getScheme() {

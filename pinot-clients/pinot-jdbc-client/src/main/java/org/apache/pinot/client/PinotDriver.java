@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.function.Supplier;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javax.net.ssl.SSLContext;
@@ -38,6 +39,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.pinot.client.controller.PinotControllerTransport;
 import org.apache.pinot.client.controller.PinotControllerTransportFactory;
 import org.apache.pinot.client.grpc.PinotGrpcConnection;
+import org.apache.pinot.client.utils.ConnectionUtils;
 import org.apache.pinot.client.utils.DriverUtils;
 import org.apache.pinot.common.utils.tls.TlsUtils;
 import org.apache.pinot.spi.utils.CommonConstants;
@@ -53,6 +55,8 @@ public class PinotDriver implements Driver {
   public static final String DEFAULT_TENANT = "DefaultTenant";
   public static final String INFO_SCHEME = "scheme";
   public static final String INFO_HEADERS = "headers";
+  /// Class supplying headers for every request (see ConnectionUtils#HEADERS_SUPPLIER), e.g. fresh OAuth 2.0 tokens.
+  public static final String INFO_HEADERS_SUPPLIER = ConnectionUtils.HEADERS_SUPPLIER;
 
   private SSLContext _sslContext = null;
 
@@ -119,6 +123,12 @@ public class PinotDriver implements Driver {
       if (!headers.isEmpty()) {
         factory.setHeaders(headers);
         pinotControllerTransportFactory.setHeaders(headers);
+      }
+      // Headers obtained for every request (e.g. fresh OAuth 2.0 tokens), so a long-lived connection keeps working
+      if (info.getProperty(ConnectionUtils.HEADERS_SUPPLIER) != null) {
+        Supplier<Map<String, String>> headersSupplier = ConnectionUtils.getHeadersSupplierFromProperties(info);
+        factory.setHeadersSupplier(headersSupplier);
+        pinotControllerTransportFactory.setHeadersSupplier(headersSupplier);
       }
 
       pinotControllerTransport = pinotControllerTransportFactory

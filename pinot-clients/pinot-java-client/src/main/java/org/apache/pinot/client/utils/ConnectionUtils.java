@@ -19,8 +19,10 @@
 package org.apache.pinot.client.utils;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLContext;
@@ -49,6 +51,55 @@ public class ConnectionUtils {
             entry -> Pair.of(entry.getKey().toString().substring(INFO_HEADERS.length() + 1),
                 entry.getValue().toString()))
         .collect(Collectors.toMap(Pair::getKey, Pair::getValue));
+  }
+
+  /// Connection property naming a class that supplies request headers each time a request is sent, e.g. a fresh
+  /// OAuth 2.0 token: it must implement `Supplier<Map<String, String>>` and have a public no-argument constructor.
+  /// Its headers are added to the fixed `headers.<name>` ones and win over them.
+  public static final String HEADERS_SUPPLIER = "headersSupplier";
+
+  /// The request headers of a connection: the fixed `headers.<name>` properties and, with [#HEADERS_SUPPLIER], the
+  /// headers of that supplier, obtained again for every request.
+  ///
+  /// @throws IllegalArgumentException if the supplier class cannot be created
+  public static Supplier<Map<String, String>> getHeadersSupplierFromProperties(Properties info) {
+    Map<String, String> fixed = getHeadersFromProperties(info);
+    String className = info.getProperty(HEADERS_SUPPLIER);
+    if (className == null || className.trim().isEmpty()) {
+      return () -> fixed;
+    }
+    return combine(fixed, instantiateHeadersSupplier(className.trim()));
+  }
+
+  /// Fixed headers plus the headers of a supplier, obtained again on every call; the supplier's win.
+  public static Supplier<Map<String, String>> combine(@Nullable Map<String, String> fixed,
+      @Nullable Supplier<Map<String, String>> dynamic) {
+    Map<String, String> fixedCopy = fixed == null ? Map.of() : Map.copyOf(fixed);
+    if (dynamic == null) {
+      return () -> fixedCopy;
+    }
+    return () -> {
+      Map<String, String> headers = new HashMap<>(fixedCopy);
+      Map<String, String> supplied = dynamic.get();
+      if (supplied != null) {
+        headers.putAll(supplied);
+      }
+      return headers;
+    };
+  }
+
+  @SuppressWarnings("unchecked")
+  private static Supplier<Map<String, String>> instantiateHeadersSupplier(String className) {
+    try {
+      Object instance = Class.forName(className).getDeclaredConstructor().newInstance();
+      if (!(instance instanceof Supplier)) {
+        throw new IllegalArgumentException(HEADERS_SUPPLIER + " class " + className + " does not implement "
+            + Supplier.class.getName());
+      }
+      return (Supplier<Map<String, String>>) instance;
+    } catch (ReflectiveOperationException | LinkageError e) {
+      throw new IllegalArgumentException("Cannot create the " + HEADERS_SUPPLIER + " class " + className, e);
+    }
   }
 
   public static SSLContext getSSLContextFromProperties(Properties properties) {
