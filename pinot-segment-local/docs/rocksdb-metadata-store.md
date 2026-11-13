@@ -129,6 +129,7 @@ and dedup tables ask for different values, the first table to open a store wins 
 | `asyncTtlScan` | `true` | Run TTL scans on the maintenance pool instead of the consuming thread. |
 | `preloadSstMinKeys` | 100000 | Segments with at least this many valid keys are preloaded through a sorted SST file. 0 disables it. |
 | `preloadBatchKeys` | 500000 | Most keys of one segment buffered on the heap during preload. |
+| `snapshotSegmentLockWaitMs` | 10000 | How long a validDocIds snapshot waits for the lock of a segment that is still being committed. 0 skips the segment at once, as the in-memory managers do; replacing a segment takes longer on RocksDB, so the just-committed segment would then be skipped at almost every commit and no segment would get its first snapshot. |
 | `fallbackToInMemoryOnInitFailure` | `false` | Use the in-memory map if a store can't be opened. |
 
 ### Validation

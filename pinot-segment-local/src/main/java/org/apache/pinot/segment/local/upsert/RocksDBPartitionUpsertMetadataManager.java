@@ -28,8 +28,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 import org.apache.pinot.common.metrics.ServerMeter;
@@ -443,6 +445,25 @@ public class RocksDBPartitionUpsertMetadataManager extends BasePartitionUpsertMe
     if (numDeletedKeysWithinTTLWindowValue > 0) {
       _serverMetrics.addMeteredTableValue(_tableNameWithType, ServerMeter.DELETED_KEYS_WITHIN_TTL_WINDOW,
           numDeletedKeysWithinTTLWindowValue);
+    }
+  }
+
+  /**
+   * Waits up to {@code snapshotSegmentLockWaitMs} for the lock. The snapshot runs when the next consuming segment
+   * starts, while the committed segment's lock can still be held to finish replacing it, which takes longer on RocksDB.
+   * The holders do not wait for the consuming thread, so the bounded wait cannot deadlock.
+   */
+  @Override
+  protected boolean tryLockSegmentForSnapshot(Lock segmentLock) {
+    long waitMs = _storeConfig.getSnapshotSegmentLockWaitMs();
+    if (waitMs <= 0) {
+      return segmentLock.tryLock();
+    }
+    try {
+      return segmentLock.tryLock(waitMs, TimeUnit.MILLISECONDS);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      return false;
     }
   }
 

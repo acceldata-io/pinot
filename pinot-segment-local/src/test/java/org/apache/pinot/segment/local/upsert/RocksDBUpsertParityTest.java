@@ -28,6 +28,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.IntFunction;
 import java.util.function.IntUnaryOperator;
 import javax.annotation.Nullable;
@@ -71,6 +74,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 
@@ -648,6 +652,45 @@ public class RocksDBUpsertParityTest {
     manager.stop();
     manager.close();
     assertEquals(manager.getNumPrimaryKeys(), 1_000);
+  }
+
+  /// The snapshot taken when the next consuming segment starts must wait for the committed segment's lock instead of
+  /// skipping it, which would also skip the first snapshot of every other segment.
+  @Test
+  public void testSnapshotWaitsForSegmentLock()
+      throws Exception {
+    UpsertContext context = contextBuilder(HashFunction.NONE, false).setEnableSnapshot(true).build();
+    File dataDir = new File(TEMP_DIR, "rocksdb-snapshot-lock");
+    RocksDBPartitionUpsertMetadataManager waiting = new RocksDBPartitionUpsertMetadataManager(REALTIME_TABLE_NAME, 0,
+        context, RocksDBMetadataStoreConfig.from(null, Map.of("rocksdb.dataDir", dataDir.getAbsolutePath())));
+    RocksDBPartitionUpsertMetadataManager nonBlocking = new RocksDBPartitionUpsertMetadataManager(REALTIME_TABLE_NAME,
+        1, context, RocksDBMetadataStoreConfig.from(null,
+        Map.of("rocksdb.dataDir", dataDir.getAbsolutePath(), "rocksdb.snapshotSegmentLockWaitMs", "0")));
+    ReentrantLock segmentLock = new ReentrantLock();
+    CountDownLatch locked = new CountDownLatch(1);
+    Thread holder = new Thread(() -> {
+      segmentLock.lock();
+      try {
+        locked.countDown();
+        Thread.sleep(300);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      } finally {
+        segmentLock.unlock();
+      }
+    });
+    try {
+      holder.start();
+      assertTrue(locked.await(5, TimeUnit.SECONDS));
+      assertFalse(nonBlocking.tryLockSegmentForSnapshot(segmentLock));
+      assertTrue(waiting.tryLockSegmentForSnapshot(segmentLock));
+      assertTrue(segmentLock.isHeldByCurrentThread());
+      segmentLock.unlock();
+    } finally {
+      holder.join();
+      closeQuietly(waiting);
+      closeQuietly(nonBlocking);
+    }
   }
 
   @DataProvider
