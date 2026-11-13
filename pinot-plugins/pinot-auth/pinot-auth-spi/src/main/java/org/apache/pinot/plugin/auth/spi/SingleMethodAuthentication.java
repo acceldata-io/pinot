@@ -51,10 +51,12 @@ public final class SingleMethodAuthentication {
   public PinotPrincipal authenticate(@Nullable String authorizationHeader) {
     AuthCredential credential = AuthCredential.parse(authorizationHeader);
     if (credential == null) {
+      AuthMetrics.mark(_method.getConfigValue() + ".requestsRejected.missing");
       throw new AuthenticationException("Missing credential; this cluster accepts " + _method.getScheme()
           + " credentials", _challenge);
     }
     if (!credential.hasScheme(_method.getScheme())) {
+      AuthMetrics.mark(_method.getConfigValue() + ".requestsRejected.wrongScheme");
       throw new AuthenticationException("Credential type '" + credential.getScheme() + "' is not accepted; this "
           + "cluster uses " + AuthMethodSelector.describe(_method) + " authentication (" + _method.getScheme() + ")",
           _challenge);

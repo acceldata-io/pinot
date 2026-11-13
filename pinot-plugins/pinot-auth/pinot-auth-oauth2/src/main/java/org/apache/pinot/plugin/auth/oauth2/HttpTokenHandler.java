@@ -51,6 +51,7 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 import org.apache.pinot.plugin.auth.spi.AuthMethod;
+import org.apache.pinot.plugin.auth.spi.AuthMetrics;
 import org.apache.pinot.plugin.auth.spi.AuthenticationException;
 import org.apache.pinot.plugin.auth.spi.HandlerContext;
 import org.apache.pinot.plugin.auth.spi.OAuthTokenHandler;
@@ -492,6 +493,7 @@ final class HttpTokenHandler implements OAuthTokenHandler {
     if (_consecutiveFailures.incrementAndGet() >= _breakerFailures) {
       _breakerOpenUntilMs.set(_clock.millis() + _breakerOpenMs);
       _consecutiveFailures.set(0);
+      AuthMetrics.mark(AuthMetrics.handler(_name) + "breakerOpened");
       LOGGER.warn("Handler {}: {} consecutive provider failures, refusing tokens for {} s without calling", _name,
           _breakerFailures, _breakerOpenMs / 1000);
     }

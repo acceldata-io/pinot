@@ -38,4 +38,15 @@ public interface AuditUserIdentity {
    */
   @Nullable
   String getPrincipal();
+
+  /**
+   * Returns the authentication method that verified this identity (e.g. {@code basic}, {@code oauth2}, {@code ldap}),
+   * when known.
+   *
+   * @return the method, or {@code null} if not known
+   */
+  @Nullable
+  default String getAuthMethod() {
+    return null;
+  }
 }

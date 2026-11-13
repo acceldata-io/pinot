@@ -22,11 +22,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 import javax.annotation.Nullable;
 import org.apache.pinot.core.auth.TargetType;
 import org.apache.pinot.plugin.auth.spi.AccessRequest;
 import org.apache.pinot.plugin.auth.spi.AuthMethod;
 import org.apache.pinot.plugin.auth.spi.AuthMethodSelector;
+import org.apache.pinot.plugin.auth.spi.AuthenticationException;
 import org.apache.pinot.plugin.auth.spi.AuthorizationDecision;
 import org.apache.pinot.plugin.auth.spi.AuthorizationMode;
 import org.apache.pinot.plugin.auth.spi.AuthorizerSelector;
@@ -65,14 +67,24 @@ public final class AccessEnforcer implements AutoCloseable {
   private final boolean _enforce;
   private final Set<String> _serviceAccounts;
   private final Set<String> _unknownActionsReported = ConcurrentHashMap.newKeySet();
+  private final AuthAuditLog _audit;
+  /// Enforcers of this process, for the request audit ([PinotAuthAuditTokenResolver]).
+  private static final Set<AccessEnforcer> ACTIVE = new CopyOnWriteArraySet<>();
 
   public AccessEnforcer(PinotAuthenticator authenticator, PinotAuthorizer authorizer, boolean enforce,
       Set<String> serviceAccounts) {
+    this(authenticator, authorizer, enforce, serviceAccounts, new AuthAuditLog());
+  }
+
+  AccessEnforcer(PinotAuthenticator authenticator, PinotAuthorizer authorizer, boolean enforce,
+      Set<String> serviceAccounts, AuthAuditLog audit) {
+    _audit = audit;
     _authenticator = Objects.requireNonNull(authenticator, "authenticator");
     _authentication = new SingleMethodAuthentication(authenticator);
     _authorizer = Objects.requireNonNull(authorizer, "authorizer");
     _enforce = enforce;
     _serviceAccounts = Set.copyOf(serviceAccounts);
+    ACTIVE.add(this);
   }
 
   /// Creates the enforcer from a component configuration holding the `pinot.auth.*` and `pinot.authz.*` settings.
@@ -136,7 +148,30 @@ public final class AccessEnforcer implements AutoCloseable {
   /// @param authorizationHeader value of the `Authorization` header or gRPC metadata entry
   /// @throws AuthenticationException (HTTP 401) when the credential is missing, of another type, or rejected
   public PinotPrincipal authenticate(@Nullable String authorizationHeader) {
-    return _authentication.authenticate(authorizationHeader);
+    PinotPrincipal principal;
+    try {
+      principal = _authentication.authenticate(authorizationHeader);
+    } catch (AuthenticationException e) {
+      _audit.authenticationFailed(getMethod(), e.getMessage());
+      throw e;
+    }
+    _audit.authenticationSucceeded(principal, authorizationHeader);
+    return principal;
+  }
+
+  /// The principal that an enforcer of this process recently authenticated for the credential, or `null`.
+  @Nullable
+  static PinotPrincipal recentPrincipal(@Nullable String authorizationHeader) {
+    if (authorizationHeader == null || authorizationHeader.trim().isEmpty()) {
+      return null;
+    }
+    for (AccessEnforcer enforcer : ACTIVE) {
+      PinotPrincipal principal = enforcer._audit.recentPrincipal(authorizationHeader);
+      if (principal != null) {
+        return principal;
+      }
+    }
+    return null;
   }
 
   /// Decides a request of an authenticated principal.
@@ -154,11 +189,12 @@ public final class AccessEnforcer implements AutoCloseable {
     if (decision.isAllowed()) {
       return true;
     }
+    String mode = _authorizer.getMode().getConfigValue();
     if (!_enforce) {
-      LOGGER.warn("Audit-only: would deny user '{}' (groups {}) {}: {}", principal.getUser(), principal.getGroups(),
-          request, decision.getReason());
+      _audit.authorization(principal, request, mode, "wouldDeny", decision.getReason());
       return true;
     }
+    _audit.authorization(principal, request, mode, "denied", decision.getReason());
     LOGGER.debug("Denied user '{}' (groups {}) {}: {}", principal.getUser(), principal.getGroups(), request,
         decision.getReason());
     return false;
@@ -227,6 +263,7 @@ public final class AccessEnforcer implements AutoCloseable {
 
   @Override
   public void close() {
+    ACTIVE.remove(this);
     try {
       _authorizer.close();
     } finally {

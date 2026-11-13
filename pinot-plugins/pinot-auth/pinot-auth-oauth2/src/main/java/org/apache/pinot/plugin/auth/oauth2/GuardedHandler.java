@@ -32,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.annotation.Nullable;
 import org.apache.pinot.plugin.auth.spi.AuthMethod;
+import org.apache.pinot.plugin.auth.spi.AuthMetrics;
 import org.apache.pinot.plugin.auth.spi.AuthenticationException;
 import org.apache.pinot.plugin.auth.spi.OAuthTokenHandler;
 import org.apache.pinot.plugin.auth.spi.TokenIdentity;
@@ -54,6 +55,7 @@ final class GuardedHandler {
   private final ExecutorService _executor;
   private final long _timeoutMs;
   private final long _cacheTtlMs;
+  private final String _metrics;
   private final String _challenge =
       AuthenticationException.challengeFor(AuthMethod.OAUTH2) + ", error=\"invalid_token\"";
   private final Map<String, CachedIdentity> _cache = new LinkedHashMap<String, CachedIdentity>(16, 0.75f, true) {
@@ -76,6 +78,7 @@ final class GuardedHandler {
   GuardedHandler(String name, OAuthTokenHandler handler, ClassLoader classLoader, ExecutorService executor,
       long timeoutMs, long cacheTtlMs) {
     _name = name;
+    _metrics = AuthMetrics.handler(name);
     _handler = handler;
     _classLoader = classLoader;
     _executor = executor;
@@ -97,11 +100,12 @@ final class GuardedHandler {
       synchronized (_cache) {
         CachedIdentity cached = _cache.get(key);
         if (cached != null && cached._validUntilMs > now) {
+          AuthMetrics.mark(_metrics + "cacheHits");
           return cached._identity;
         }
       }
     }
-    TokenIdentity identity = call(token);
+    TokenIdentity identity = measuredCall(token);
     if (key != null && identity != null) {
       long until = Math.min(now + _cacheTtlMs, identity.getExpiresAt().toEpochMilli());
       if (until > now) {
@@ -117,6 +121,27 @@ final class GuardedHandler {
       throw new AuthenticationException("Invalid token (" + _name + "): expired", _challenge);
     }
     return identity;
+  }
+
+  /// Calls the handler and records the outcome: accepted, rejected, or unavailable (provider failure or timeout).
+  @Nullable
+  private TokenIdentity measuredCall(String token) {
+    long start = System.nanoTime();
+    try {
+      TokenIdentity identity = call(token);
+      if (identity != null) {
+        AuthMetrics.mark(_metrics + "accepted");
+      }
+      return identity;
+    } catch (AuthenticationException e) {
+      String message = e.getMessage();
+      boolean unavailable = message != null
+          && (message.startsWith("Identity provider unavailable") || message.startsWith("Identity provider timeout"));
+      AuthMetrics.mark(_metrics + (unavailable ? "unavailable" : "rejected"));
+      throw e;
+    } finally {
+      AuthMetrics.time(_metrics + "providerLatencyMs", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start));
+    }
   }
 
   @Nullable

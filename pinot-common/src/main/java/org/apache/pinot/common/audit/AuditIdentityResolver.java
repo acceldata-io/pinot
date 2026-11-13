@@ -112,7 +112,8 @@ public class AuditIdentityResolver {
     if (resolver != null) {
       AuditUserIdentity identity = resolver.resolve(authHeader);
       if (identity != null && StringUtils.isNotBlank(identity.getPrincipal())) {
-        return new AuditEvent.UserIdentity().setPrincipal(identity.getPrincipal());
+        return new AuditEvent.UserIdentity().setPrincipal(identity.getPrincipal())
+            .setAuthMethod(identity.getAuthMethod());
       }
     }
 

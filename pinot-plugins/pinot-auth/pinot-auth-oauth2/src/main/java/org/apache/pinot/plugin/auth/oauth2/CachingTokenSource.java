@@ -24,6 +24,7 @@ import java.time.Instant;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 import org.apache.pinot.plugin.auth.spi.AccessToken;
+import org.apache.pinot.plugin.auth.spi.AuthMetrics;
 import org.apache.pinot.plugin.auth.spi.OAuthTokenSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -116,8 +117,10 @@ final class CachingTokenSource {
       _refreshAt = now.plusMillis((long) (Math.max(0, lifetime.toMillis()) * REFRESH_AT));
       _fetchedAt = now;
       _token = fresh;
+      AuthMetrics.mark("oauth2.outbound." + _name + ".refreshes");
       return fresh.getToken();
     } catch (RuntimeException e) {
+      AuthMetrics.mark("oauth2.outbound." + _name + ".refreshFailures");
       if (current != null && _clock.instant().isBefore(current.getExpiresAt())) {
         LOGGER.warn("Token source {}: refresh failed, using the current token until it expires at {}: {}", _name,
             current.getExpiresAt(), e.toString());

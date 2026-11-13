@@ -30,6 +30,7 @@ import java.util.Map;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.HttpHeaders;
 import org.apache.pinot.spi.audit.AuditTokenResolver;
+import org.apache.pinot.spi.audit.AuditUserIdentity;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
@@ -37,6 +38,7 @@ import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertEquals;
 
 
 public class AuditIdentityResolverTest {
@@ -244,5 +246,24 @@ public class AuditIdentityResolverTest {
     signedJWT.sign(signer);
 
     return signedJWT.serialize();
+  }
+
+  @Test
+  public void testTokenResolverAuthMethodIsRecorded() {
+    AuditIdentityResolver resolver = new AuditIdentityResolver(_auditConfigManager, header -> new AuditUserIdentity() {
+      @Override
+      public String getPrincipal() {
+        return "alice";
+      }
+
+      @Override
+      public String getAuthMethod() {
+        return "oauth2";
+      }
+    });
+    when(_requestContext.getHeaderString(HttpHeaders.AUTHORIZATION)).thenReturn("Bearer opaque-token");
+    AuditEvent.UserIdentity identity = resolver.resolveIdentity(_requestContext);
+    assertEquals(identity.getPrincipal(), "alice");
+    assertEquals(identity.getAuthMethod(), "oauth2");
   }
 }

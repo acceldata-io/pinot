@@ -33,15 +33,19 @@ import java.nio.file.Path;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.pinot.plugin.auth.oauth2.testhandlers.ScriptedHandler;
 import org.apache.pinot.plugin.auth.spi.AuthCredential;
+import org.apache.pinot.plugin.auth.spi.AuthMetrics;
 import org.apache.pinot.plugin.auth.spi.AuthenticationException;
 import org.apache.pinot.plugin.auth.spi.PinotPrincipal;
 import org.apache.pinot.plugin.auth.spi.SecretResolver;
 import org.apache.pinot.spi.env.PinotConfiguration;
+import org.apache.pinot.spi.metrics.PinotMetricUtils;
+import org.apache.pinot.spi.metrics.PinotMetricsRegistry;
 import org.apache.pinot.spi.plugin.PluginManager;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
@@ -70,7 +74,7 @@ public class CustomHandlerTest {
     _handlersDir = Files.createTempDirectory("pinot-auth-handlers").toFile();
     URL classUrl = ScriptedHandler.class.getResource("ScriptedHandler.class");
     File packageDir = new File(classUrl.toURI()).getParentFile();
-    for (String name : new String[]{"custom", "phonepe", "opaque", "other"}) {
+    for (String name : new String[]{"custom", "phonepe", "opaque", "other", "metered"}) {
       File dir = new File(_handlersDir, name);
       assertTrue(dir.mkdirs());
       try (JarOutputStream jar = new JarOutputStream(new FileOutputStream(new File(dir, "custom-handler.jar")))) {
@@ -267,6 +271,25 @@ public class CustomHandlerTest {
     assertEquals(principal.getClaims().get("token_user"), "alice");
     assertEquals(principal.getClaims().get("handler"), "custom");
     authenticator.close();
+  }
+
+  @Test
+  public void testHandlerMetrics() {
+    OAuth2Authenticator authenticator = authenticator("metered", java("metered", "accept"));
+    auth(authenticator, "ok-alice");
+    auth(authenticator, "ok-alice");
+    expectThrows(AuthenticationException.class, () -> auth(authenticator, "bad-token"));
+    authenticator.close();
+    assertEquals(meter("oauth2.handler.metered.accepted"), 1);
+    // java handlers are cached: the second call is a cache hit
+    assertEquals(meter("oauth2.handler.metered.cacheHits"), 1);
+    assertEquals(meter("oauth2.handler.metered.rejected"), 1);
+  }
+
+  private static long meter(String name) {
+    PinotMetricsRegistry registry = PinotMetricUtils.getPinotMetricsRegistry();
+    return registry.newMeter(PinotMetricUtils.makePinotMetricName(AuthMetrics.class, AuthMetrics.PREFIX + name),
+        "events", TimeUnit.SECONDS).count();
   }
 
   @Test

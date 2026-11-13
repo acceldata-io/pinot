@@ -54,6 +54,13 @@
       <groupId>com.jayway.jsonpath</groupId>
       <artifactId>json-path</artifactId>
     </dependency>
+    <!-- Pinot's default metrics implementation, so that the tests check the recorded authentication metrics -->
+    <dependency>
+      <groupId>org.apache.pinot</groupId>
+      <artifactId>pinot-dropwizard</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
     <!-- AuthConfig / AuthProvider plumbing of Pinot's outbound calls; provided by every Pinot component -->
     <dependency>
       <groupId>org.apache.pinot</groupId>

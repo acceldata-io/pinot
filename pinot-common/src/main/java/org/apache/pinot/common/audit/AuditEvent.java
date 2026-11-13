@@ -223,5 +223,18 @@ public class AuditEvent {
       _principal = principal;
       return this;
     }
+
+    @JsonProperty("authMethod")
+    private String _authMethod;
+
+    @Override
+    public String getAuthMethod() {
+      return _authMethod;
+    }
+
+    public UserIdentity setAuthMethod(String authMethod) {
+      _authMethod = authMethod;
+      return this;
+    }
   }
 }
