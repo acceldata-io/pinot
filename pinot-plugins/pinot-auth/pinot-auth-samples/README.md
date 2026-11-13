@@ -110,7 +110,7 @@ cluster: the SPI is stable within a Pinot line, not across lines.
 
 On **every** Pinot host (controller, broker, server, minion):
 
-1. Copy the jar (and any library it needs) to `<plugins dir>/pinot-auth-handlers/<handler name>/`, owned by the Pinot
+1. Copy the jar (and any library it needs) to `<Pinot home>/auth-handlers/<handler name>/` (next to the `plugins` directory, never inside it), owned by the Pinot
    user, mode 0644. Only jars in that directory are loaded for that handler.
 2. Store the secrets in Pinot's credential store under the aliases you configure (`hmac.secret.alias`,
    `client.secret.alias`) with the cluster management tooling. Configuration holds aliases, never secrets.
@@ -151,7 +151,7 @@ at start. Moving from Basic authentication to `oauth2`:
 
 | Symptom | Log line (role log) | Likely cause | Action |
 |---|---|---|---|
-| Role does not start | `No handler jars in …` | Jar missing on this host | Copy the jar to `<plugins dir>/pinot-auth-handlers/<name>/` |
+| Role does not start | `No handler jars in …` | Jar missing on this host | Copy the jar to `<Pinot home>/auth-handlers/<name>/` |
 | Role does not start | `… is not available to token handlers; bundle it in the handler jar` | Handler uses a library Pinot does not expose | Add the library jar next to the handler jar |
 | Role does not start | `Unknown alias …` / `a configured secret is empty` | Secret not in the credential store on this host | Store the secret under the configured alias |
 | Role does not start | `set hmac.secret.alias, validation.url or both` | Handler would trust unverified tokens | Configure verification |

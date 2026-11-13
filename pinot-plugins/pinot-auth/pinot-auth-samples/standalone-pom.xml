@@ -27,7 +27,7 @@
 
   Requires JDK 17 and access to a Maven repository that has the Pinot artifacts of that version (add it under
   <repositories> below or in ~/.m2/settings.xml). Rename groupId / artifactId / package when you adapt the code.
-  The jar in target/ is what goes to <plugins dir>/pinot-auth-handlers/<handler name>/ on every Pinot host.
+  The jar in target/ is what goes to <Pinot home>/auth-handlers/<handler name>/ on every Pinot host.
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>

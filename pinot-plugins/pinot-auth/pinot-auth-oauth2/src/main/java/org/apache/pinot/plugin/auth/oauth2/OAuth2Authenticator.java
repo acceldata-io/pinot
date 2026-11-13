@@ -61,7 +61,8 @@ import org.apache.pinot.spi.plugin.PluginManager;
 ///
 /// Settings (`pinot.auth.oauth2.*`):
 /// - `handlers`: comma-separated handler names, in order; `max.token.bytes`; `handlers.dir`: directory of custom
-///   handler jars (default `<plugins.dir>/pinot-auth-handlers`)
+///   handler jars (default `auth-handlers` next to the first plugins directory, e.g. `<Pinot home>/auth-handlers`;
+///   never inside a plugins directory, whose jars Pinot puts on its own classpath)
 /// - `handler.<name>.type`: `jwt` (default, see [JwtTokenHandler]), `google` (see [GoogleHandlerPreset]),
 ///   `introspection` (see [IntrospectionTokenHandler]), `http` (see [HttpTokenHandler]) or `java`
 /// - for `java`: `handler.<name>.class` (required), `handler.<name>.jar.dir` (default `<handlers.dir>/<name>`),
@@ -70,7 +71,7 @@ import org.apache.pinot.spi.plugin.PluginManager;
 ///   handlers shipped with Pinot)
 public class OAuth2Authenticator implements PinotAuthenticator {
   public static final int DEFAULT_MAX_TOKEN_BYTES = 16 * 1024;
-  public static final String HANDLERS_DIR_NAME = "pinot-auth-handlers";
+  public static final String HANDLERS_DIR_NAME = "auth-handlers";
   static final String TYPE_JAVA = "java";
 
   private final Map<String, GuardedHandler> _handlersByIssuer = new LinkedHashMap<>();
@@ -111,8 +112,9 @@ public class OAuth2Authenticator implements PinotAuthenticator {
     if (names == null || JwtTokenHandler.csv(names).isEmpty()) {
       throw new IllegalArgumentException("pinot.auth.oauth2.handlers must name at least one token handler");
     }
-    File handlersDir = new File(config.getProperty("handlers.dir",
-        System.getProperty(PluginManager.PLUGINS_DIR_PROPERTY_NAME, "plugins") + File.separator + HANDLERS_DIR_NAME));
+    String handlersDirSetting = config.getProperty("handlers.dir");
+    File handlersDir = handlersDirSetting != null && !handlersDirSetting.trim().isEmpty()
+        ? new File(handlersDirSetting.trim()) : defaultHandlersDir();
     for (String name : JwtTokenHandler.csv(names)) {
       addHandler(name, config.subset("handler." + name), secretResolver, handlersDir);
     }
@@ -199,6 +201,21 @@ public class OAuth2Authenticator implements PinotAuthenticator {
       _issuerlessHandlers.add(new RoutedHandler(guarded,
           pattern == null || pattern.trim().isEmpty() ? null : Pattern.compile(pattern.trim())));
     }
+  }
+
+  /// The default directory of custom handler jars: `auth-handlers` next to the first plugins directory
+  /// (`plugins.dir`), e.g. `<Pinot home>/auth-handlers`. Handler jars must not live inside a plugins directory: Pinot's
+  /// launcher puts every jar found there on Pinot's own classpath and the plugin manager registers each such
+  /// directory as a plugin, which would undo the isolation of handlers from Pinot's dependencies.
+  static File defaultHandlersDir() {
+    String pluginsDirs = System.getProperty(PluginManager.PLUGINS_DIR_PROPERTY_NAME);
+    if (pluginsDirs != null && !pluginsDirs.trim().isEmpty()) {
+      File parent = new File(pluginsDirs.split(";")[0].trim()).getAbsoluteFile().getParentFile();
+      if (parent != null) {
+        return new File(parent, HANDLERS_DIR_NAME);
+      }
+    }
+    return new File(HANDLERS_DIR_NAME).getAbsoluteFile();
   }
 
   private static OAuthTokenHandler instantiate(String name, String className, ClassLoader classLoader) {

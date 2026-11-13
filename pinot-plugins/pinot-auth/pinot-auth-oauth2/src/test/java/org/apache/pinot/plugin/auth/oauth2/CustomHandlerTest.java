@@ -42,6 +42,7 @@ import org.apache.pinot.plugin.auth.spi.AuthenticationException;
 import org.apache.pinot.plugin.auth.spi.PinotPrincipal;
 import org.apache.pinot.plugin.auth.spi.SecretResolver;
 import org.apache.pinot.spi.env.PinotConfiguration;
+import org.apache.pinot.spi.plugin.PluginManager;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -252,5 +253,22 @@ public class CustomHandlerTest {
     authenticator.close();
     Path unused = _handlersDir.toPath();
     assertTrue(Files.isDirectory(unused));
+  }
+
+  @Test
+  public void testDefaultHandlersDirIsOutsideThePluginsDirectory() {
+    String previous = System.getProperty(PluginManager.PLUGINS_DIR_PROPERTY_NAME);
+    try {
+      System.setProperty(PluginManager.PLUGINS_DIR_PROPERTY_NAME, "/opt/pinot/plugins;/opt/extra/plugins");
+      assertEquals(OAuth2Authenticator.defaultHandlersDir(), new File("/opt/pinot/auth-handlers"));
+      System.clearProperty(PluginManager.PLUGINS_DIR_PROPERTY_NAME);
+      assertEquals(OAuth2Authenticator.defaultHandlersDir(), new File("auth-handlers").getAbsoluteFile());
+    } finally {
+      if (previous != null) {
+        System.setProperty(PluginManager.PLUGINS_DIR_PROPERTY_NAME, previous);
+      } else {
+        System.clearProperty(PluginManager.PLUGINS_DIR_PROPERTY_NAME);
+      }
+    }
   }
 }

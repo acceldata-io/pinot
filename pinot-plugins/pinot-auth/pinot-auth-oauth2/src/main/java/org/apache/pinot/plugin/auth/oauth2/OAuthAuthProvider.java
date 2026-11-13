@@ -30,7 +30,6 @@ import org.apache.pinot.plugin.auth.spi.OAuthTokenSource;
 import org.apache.pinot.plugin.auth.spi.SecretResolver;
 import org.apache.pinot.spi.auth.AuthProvider;
 import org.apache.pinot.spi.env.PinotConfiguration;
-import org.apache.pinot.spi.plugin.PluginManager;
 
 
 /// [AuthProvider] for Pinot's own calls between components on an OAuth 2.0 cluster: every outbound request carries
@@ -102,9 +101,8 @@ public class OAuthAuthProvider implements AuthProvider {
         if (className == null || className.trim().isEmpty()) {
           throw new IllegalArgumentException("Token source " + name + ": source java needs class");
         }
-        File jarDir = new File(config.getProperty("jar.dir", new File(new File(
-            System.getProperty(PluginManager.PLUGINS_DIR_PROPERTY_NAME, "plugins"),
-            OAuth2Authenticator.HANDLERS_DIR_NAME), name).getPath()));
+        File jarDir = new File(config.getProperty("jar.dir",
+            new File(OAuth2Authenticator.defaultHandlersDir(), name).getPath()));
         classLoader = HandlerClassLoader.forDirectory(jarDir, classLoader);
         try {
           Object instance = Class.forName(className.trim(), true, classLoader).getDeclaredConstructor().newInstance();
