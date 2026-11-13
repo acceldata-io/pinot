@@ -20,14 +20,10 @@ package org.apache.pinot.plugin.auth.oauth2;
 
 import com.nimbusds.jose.util.JSONObjectUtils;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -82,20 +78,7 @@ final class IntrospectionTokenHandler implements OAuthTokenHandler {
   private Set<String> _audiences;
   private String _userClaim;
   private String _groupsClaim;
-  private long _cacheTtlMs;
-  private long _negativeCacheMs;
-  private Map<String, Cached> _cache;
-
-  private static final class Cached {
-    @Nullable
-    final TokenIdentity _identity;
-    final long _validUntilMs;
-
-    Cached(@Nullable TokenIdentity identity, long validUntilMs) {
-      _identity = identity;
-      _validUntilMs = validUntilMs;
-    }
-  }
+  private TokenResultCache _cache;
 
   @Override
   public void init(HandlerContext context) {
@@ -118,15 +101,7 @@ final class IntrospectionTokenHandler implements OAuthTokenHandler {
     _audiences = JwtTokenHandler.csv(config.getProperty("audiences", ""));
     _userClaim = config.getProperty("user.claim", "username").trim();
     _groupsClaim = config.getProperty("groups.claim", "groups").trim();
-    _cacheTtlMs = config.getProperty("cache.ttl.seconds", 60L) * 1000;
-    _negativeCacheMs = config.getProperty("negative.cache.seconds", 10L) * 1000;
-    int maxEntries = config.getProperty("cache.max.entries", 10_000);
-    _cache = Collections.synchronizedMap(new LinkedHashMap<String, Cached>(16, 0.75f, true) {
-      @Override
-      protected boolean removeEldestEntry(Map.Entry<String, Cached> eldest) {
-        return size() > maxEntries;
-      }
-    });
+    _cache = new TokenResultCache(config);
     String url = trimToNull(config.getProperty("introspection.url"));
     _url = url != null ? url : discover();
     LOGGER.info("Introspection handler {} ready: endpoint={}, issuer={}, client={}", _name, _url, _issuer, _clientId);
@@ -140,10 +115,10 @@ final class IntrospectionTokenHandler implements OAuthTokenHandler {
   @Nullable
   @Override
   public TokenIdentity validate(String token) {
-    String key = sha256(token);
+    String key = TokenResultCache.key(token);
     long nowMs = _clock.millis();
-    Cached cached = _cache.get(key);
-    if (cached != null && cached._validUntilMs > nowMs) {
+    TokenResultCache.Entry cached = _cache.get(key, nowMs);
+    if (cached != null) {
       if (cached._identity == null) {
         throw reject("not active (cached)");
       }
@@ -151,14 +126,11 @@ final class IntrospectionTokenHandler implements OAuthTokenHandler {
     }
     Map<String, Object> answer = introspect(token);
     if (!Boolean.TRUE.equals(answer.get("active"))) {
-      _cache.put(key, new Cached(null, nowMs + _negativeCacheMs));
+      _cache.putRejected(key, nowMs);
       throw reject("not active");
     }
     TokenIdentity identity = toIdentity(answer, nowMs);
-    long validUntilMs = Math.min(nowMs + _cacheTtlMs, identity.getExpiresAt().toEpochMilli());
-    if (validUntilMs > nowMs) {
-      _cache.put(key, new Cached(identity, validUntilMs));
-    }
+    _cache.putAccepted(key, identity, nowMs);
     return identity;
   }
 
@@ -213,7 +185,7 @@ final class IntrospectionTokenHandler implements OAuthTokenHandler {
       }
     } else {
       // No exp in the answer: trust it for one cache period only
-      expiresAt = Instant.ofEpochMilli(nowMs + Math.max(_cacheTtlMs, 1000));
+      expiresAt = Instant.ofEpochMilli(nowMs + Math.max(_cache.getTtlMs(), 1000));
     }
     Object user = answer.get(_userClaim);
     if (!(user instanceof String) || ((String) user).trim().isEmpty()) {
@@ -269,15 +241,6 @@ final class IntrospectionTokenHandler implements OAuthTokenHandler {
       }
     }
     return result;
-  }
-
-  static String sha256(String token) {
-    try {
-      byte[] digest = MessageDigest.getInstance("SHA-256").digest(token.getBytes(StandardCharsets.UTF_8));
-      return Base64.getEncoder().encodeToString(digest);
-    } catch (NoSuchAlgorithmException e) {
-      throw new IllegalStateException(e);
-    }
   }
 
   private AuthenticationException reject(String reason) {

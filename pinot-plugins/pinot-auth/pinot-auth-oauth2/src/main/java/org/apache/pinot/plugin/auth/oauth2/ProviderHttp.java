@@ -29,6 +29,8 @@ import java.time.Duration;
 import java.util.Base64;
 import java.util.Map;
 import java.util.StringJoiner;
+import javax.annotation.Nullable;
+import javax.net.ssl.SSLContext;
 
 
 /// HTTP calls from token handlers to an identity provider: connect and request timeouts, no redirects (a redirect is
@@ -41,9 +43,19 @@ final class ProviderHttp {
   private final int _maxResponseBytes;
 
   ProviderHttp(long timeoutMs, int maxResponseBytes) {
+    this(timeoutMs, maxResponseBytes, null);
+  }
+
+  /// @param sslContext TLS context for the provider (own key for mutual TLS, own trust store), or `null` for the JVM's
+  ProviderHttp(long timeoutMs, int maxResponseBytes, @Nullable SSLContext sslContext) {
     _timeout = Duration.ofMillis(timeoutMs);
     _maxResponseBytes = maxResponseBytes;
-    _client = HttpClient.newBuilder().connectTimeout(_timeout).followRedirects(HttpClient.Redirect.NEVER).build();
+    HttpClient.Builder builder =
+        HttpClient.newBuilder().connectTimeout(_timeout).followRedirects(HttpClient.Redirect.NEVER);
+    if (sslContext != null) {
+      builder.sslContext(sslContext);
+    }
+    _client = builder.build();
   }
 
   /// Status and body of a provider answer.
@@ -59,6 +71,10 @@ final class ProviderHttp {
     boolean isOk() {
       return _status >= 200 && _status < 300;
     }
+  }
+
+  long getTimeoutMs() {
+    return _timeout.toMillis();
   }
 
   Answer get(String url, Map<String, String> headers)

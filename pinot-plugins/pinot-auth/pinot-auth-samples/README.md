@@ -33,7 +33,7 @@ samples are yours to change.
 | `support/Json`, `support/JsonMapping` | A small JSON reader and dotted-path mapping, so the samples need only the JDK. |
 | `support/HttpCalls`, `support/Jwts` | Provider calls with timeouts and size cap; HMAC JWT parsing and verification. |
 | `src/test/…` | Tests against a mock identity provider (valid, invalid, expired, revoked, provider down, slow), and a test that loads the packed jar through the `java` handler type. |
-| `examples/*.properties` | Configuration for the java variant, the http-only variant and several providers side by side. |
+| `examples/*.properties` | Configuration for the java variant, the http-only variant (built-in `http` handler) and several providers side by side. |
 
 ## 1. Pick the handler
 
@@ -42,10 +42,11 @@ Go down the list and stop at the first that fits. Each step down means more code
 1. **`jwt`** (built in) – the provider issues JWTs signed with keys published as JWKS (RS / PS / ES), or with a shared
    secret, and the token itself carries the user (and ideally groups). Configuration only.
 2. **`google`** (built in) – Google ID tokens for your OAuth client.
-3. **`http`** (built in, preview) – the provider has an API that confirms a token and returns the user; nothing has to
+3. **`introspection`** (built in) – the provider has a standard RFC 7662 introspection endpoint.
+4. **`http`** (built in) – the provider has an API that confirms a token and returns the user; nothing has to
    be checked inside Pinot. Configuration only: request template plus JSON mapping
    (`examples/custom-idp-http-only.properties`).
-4. **`java`** with these samples – everything else, for example: the token is an HMAC JWT **without a user name**,
+5. **`java`** with these samples – everything else, for example: the token is an HMAC JWT **without a user name**,
    so Pinot must verify the signature locally *and* look the user up; the provider signals errors in a non-standard
    way; several calls are needed; or groups come from a separate directory.
 
