@@ -49,6 +49,11 @@
       <groupId>org.apache.pinot</groupId>
       <artifactId>pinot-minion</artifactId>
     </dependency>
+    <!-- OAuth 2.0 authentication method: ships with the distribution, used by every component and OAuthCheck -->
+    <dependency>
+      <groupId>org.apache.pinot</groupId>
+      <artifactId>pinot-auth-oauth2</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.apache.pinot</groupId>
       <artifactId>pinot-minion-builtin-tasks</artifactId>

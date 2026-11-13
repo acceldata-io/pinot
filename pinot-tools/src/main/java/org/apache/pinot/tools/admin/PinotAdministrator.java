@@ -47,6 +47,7 @@ import org.apache.pinot.tools.admin.command.LaunchBackfillIngestionJobCommand;
 import org.apache.pinot.tools.admin.command.LaunchDataIngestionJobCommand;
 import org.apache.pinot.tools.admin.command.LaunchSparkDataIngestionJobCommand;
 import org.apache.pinot.tools.admin.command.MoveReplicaGroup;
+import org.apache.pinot.tools.admin.command.OAuthCheckCommand;
 import org.apache.pinot.tools.admin.command.OfflineSegmentIntervalCheckerCommand;
 import org.apache.pinot.tools.admin.command.OperateClusterConfigCommand;
 import org.apache.pinot.tools.admin.command.PostQueryCommand;
@@ -98,6 +99,7 @@ public class PinotAdministrator {
   static {
     JvmDefaultSslContext.initDefaultSslContext();
     SUBCOMMAND_MAP.put("QuickStart", new QuickStartCommand());
+    SUBCOMMAND_MAP.put("OAuthCheck", new OAuthCheckCommand());
     SUBCOMMAND_MAP.put("OperateClusterConfig", new OperateClusterConfigCommand());
     SUBCOMMAND_MAP.put("GenerateData", new GenerateDataCommand());
     SUBCOMMAND_MAP.put("LaunchDataIngestionJob", new LaunchDataIngestionJobCommand());
