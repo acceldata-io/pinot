@@ -27,6 +27,7 @@ import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.core.HttpHeaders;
 import org.apache.pinot.broker.api.AccessControl;
 import org.apache.pinot.common.request.BrokerRequest;
+import org.apache.pinot.core.auth.Actions;
 import org.apache.pinot.core.auth.TargetType;
 import org.apache.pinot.core.auth.authz.AccessEnforcer;
 import org.apache.pinot.plugin.auth.spi.AuthenticationException;
@@ -111,7 +112,14 @@ public class PinotAuthAccessControlFactory extends AccessControlFactory {
     }
 
     @Override
-    public boolean hasAccess(HttpHeaders httpHeaders, TargetType targetType, String targetId, String action) {
+    public boolean hasAccess(@Nullable HttpHeaders httpHeaders, TargetType targetType, String targetId,
+        String action) {
+      if (httpHeaders == null && targetType == TargetType.TABLE && Actions.Table.QUERY.equals(action)) {
+        // A query that did not come over HTTP (gRPC) has no headers here. Its caller and every table it reads were
+        // already checked through the requester identity by authorize(identity, tables), with the same requirement
+        // as this action (READ, access type query), so there is nothing left to decide.
+        return true;
+      }
       return _enforcer.isAllowed(authenticate(authorization(httpHeaders)), targetType, targetId, action);
     }
 

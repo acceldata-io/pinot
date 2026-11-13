@@ -37,11 +37,13 @@ public class BrokerCommonExceptionMapper implements ExceptionMapper<Throwable> {
 
   @Override
   public Response toResponse(Throwable t) {
-    int status = DEFAULT_STATUS;
     if (t instanceof WebApplicationException) {
-      status = ((WebApplicationException) t).getResponse().getStatus();
+      // Keep the headers of the exception's response, e.g. the WWW-Authenticate challenge a 401 must carry
+      Response response = ((WebApplicationException) t).getResponse();
+      return Response.fromResponse(response).entity(new SimpleHttpErrorInfo(response.getStatus(), t.getMessage()))
+          .type(MediaType.APPLICATION_JSON).build();
     }
-    SimpleHttpErrorInfo errorInfo = new SimpleHttpErrorInfo(status, t.getMessage());
-    return Response.status(status).entity(errorInfo).type(MediaType.APPLICATION_JSON).build();
+    return Response.status(DEFAULT_STATUS).entity(new SimpleHttpErrorInfo(DEFAULT_STATUS, t.getMessage()))
+        .type(MediaType.APPLICATION_JSON).build();
   }
 }

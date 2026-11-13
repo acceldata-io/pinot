@@ -18,11 +18,15 @@
  */
 package org.apache.pinot.broker.grpc;
 
+import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.List;
+import javax.ws.rs.NotAuthorizedException;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
 import org.apache.pinot.broker.requesthandler.BrokerRequestHandler;
 import org.apache.pinot.common.metrics.BrokerMeter;
 import org.apache.pinot.common.metrics.BrokerMetrics;
@@ -225,5 +229,15 @@ public class BrokerGrpcServerTest {
       return null;
     }).when(observer).onNext(any());
     return observer;
+  }
+
+  @Test
+  public void testAccessStatus() {
+    assertEquals(BrokerGrpcServer.accessStatus(new NotAuthorizedException("no credential", "Basic realm=\"pinot\"")),
+        Status.UNAUTHENTICATED);
+    assertEquals(BrokerGrpcServer.accessStatus(new WebApplicationException("denied", Response.Status.FORBIDDEN)),
+        Status.PERMISSION_DENIED);
+    assertNull(BrokerGrpcServer.accessStatus(new WebApplicationException("boom", 500)));
+    assertNull(BrokerGrpcServer.accessStatus(new IllegalStateException("boom")));
   }
 }

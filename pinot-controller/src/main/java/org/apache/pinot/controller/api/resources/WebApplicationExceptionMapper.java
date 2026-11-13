@@ -34,13 +34,14 @@ public class WebApplicationExceptionMapper implements ExceptionMapper<Throwable>
 
   @Override
   public Response toResponse(Throwable t) {
-    int status = 500;
     if (!(t instanceof WebApplicationException)) {
       LOGGER.error("Server error: ", t);
-    } else {
-      status = ((WebApplicationException) t).getResponse().getStatus();
+      return Response.status(500).entity(new SimpleHttpErrorInfo(500, t.getMessage()))
+          .type(MediaType.APPLICATION_JSON).build();
     }
-    SimpleHttpErrorInfo errorInfo = new SimpleHttpErrorInfo(status, t.getMessage());
-    return Response.status(status).entity(errorInfo).type(MediaType.APPLICATION_JSON).build();
+    // Keep the headers of the exception's response, e.g. the WWW-Authenticate challenge a 401 must carry
+    Response response = ((WebApplicationException) t).getResponse();
+    return Response.fromResponse(response).entity(new SimpleHttpErrorInfo(response.getStatus(), t.getMessage()))
+        .type(MediaType.APPLICATION_JSON).build();
   }
 }

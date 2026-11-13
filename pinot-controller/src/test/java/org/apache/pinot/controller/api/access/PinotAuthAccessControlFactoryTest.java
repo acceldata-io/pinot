@@ -19,6 +19,10 @@
 package org.apache.pinot.controller.api.access;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.Map;
 import org.apache.pinot.common.exception.HttpErrorStatusException;
@@ -67,12 +71,18 @@ public class PinotAuthAccessControlFactoryTest extends ControllerTest {
   }
 
   @Test
-  public void testAuthentication() {
+  public void testAuthentication()
+      throws Exception {
     String url = _controllerBaseApiUrl + "/tables";
     assertStatus(401, () -> sendGetRequest(url));
     assertStatus(401, () -> sendGetRequest(url, bearer("bad")));
     // A credential of another type than the cluster's method
     assertStatus(401, () -> sendGetRequest(url, Map.of("Authorization", "Basic YWRtaW46dmVyeXNlY3JldA==")));
+    // The 401 carries the method's challenge
+    HttpResponse<String> response = HttpClient.newHttpClient().send(
+        HttpRequest.newBuilder(URI.create(url)).GET().build(), HttpResponse.BodyHandlers.ofString());
+    assertEquals(response.statusCode(), 401);
+    assertEquals(response.headers().firstValue("WWW-Authenticate").orElse(null), "Bearer realm=\"pinot\"");
     // Health stays open for load balancers
     assertOk(() -> sendGetRequest(_controllerBaseApiUrl + "/health"));
   }

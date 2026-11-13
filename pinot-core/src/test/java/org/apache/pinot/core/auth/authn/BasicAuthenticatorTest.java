@@ -71,6 +71,9 @@ public class BasicAuthenticatorTest {
     assertEquals(admin.getMethod(), AuthMethod.BASIC);
     assertFalse(admin.isServiceAccount());
     assertTrue(authenticator.authenticate(basic("svc_pinot:s3rvice")).isServiceAccount());
+    // Padding is normalized as BasicAuth does
+    assertEquals(authenticator.authenticate(AuthCredential.parse("Basic YWRtaW46dmVyeXNlY3JldA=====")).getUser(),
+        "admin");
     // A colon in the password
     assertEquals(authenticator.authenticate(basic("alice:a:b")).getGroups(), Set.of("analysts", "ops"));
 

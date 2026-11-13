@@ -18,6 +18,7 @@
  */
 package org.apache.pinot.broker.api.resources;
 
+import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import org.apache.pinot.common.utils.SimpleHttpErrorInfo;
@@ -73,5 +74,14 @@ public class BrokerCommonExceptionMapperTest {
     SimpleHttpErrorInfo errorInfo = (SimpleHttpErrorInfo) response.getEntity();
     assertEquals(errorInfo.getCode(), 500);
     assertEquals(errorInfo.getError(), "Internal Server Error");
+  }
+
+  @Test
+  public void testAuthenticationChallengeIsKept() {
+    Response response = _exceptionMapper.toResponse(
+        new NotAuthorizedException("Missing credential", "Bearer realm=\"pinot\""));
+    assertEquals(response.getStatus(), 401);
+    assertEquals(response.getHeaderString("WWW-Authenticate"), "Bearer realm=\"pinot\"");
+    assertEquals(((SimpleHttpErrorInfo) response.getEntity()).getError(), "Missing credential");
   }
 }

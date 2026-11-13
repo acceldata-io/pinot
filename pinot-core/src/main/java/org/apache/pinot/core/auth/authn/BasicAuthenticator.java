@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
+import org.apache.pinot.common.auth.BasicAuthTokenUtils;
 import org.apache.pinot.plugin.auth.spi.AuthCredential;
 import org.apache.pinot.plugin.auth.spi.AuthMethod;
 import org.apache.pinot.plugin.auth.spi.AuthenticationException;
@@ -98,7 +99,9 @@ public class BasicAuthenticator implements PinotAuthenticator {
   public PinotPrincipal authenticate(AuthCredential credential) {
     String decoded;
     try {
-      decoded = new String(Base64.getDecoder().decode(credential.getValue()), StandardCharsets.UTF_8);
+      // Padding is normalized as BasicAuth does, so clients that send extra or no '=' keep working
+      decoded = new String(Base64.getDecoder().decode(BasicAuthTokenUtils.normalizeBase64Token(credential.getValue())),
+          StandardCharsets.UTF_8);
     } catch (IllegalArgumentException e) {
       throw new AuthenticationException("Malformed Basic credential", CHALLENGE);
     }

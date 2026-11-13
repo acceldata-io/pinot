@@ -40,6 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import javax.ws.rs.NotAuthorizedException;
 import nl.altindag.ssl.SSLFactory;
 import org.apache.pinot.common.config.GrpcConfig;
 import org.apache.pinot.common.config.TlsConfig;
@@ -252,7 +253,15 @@ public class GrpcQueryServer extends PinotQueryServerGrpc.PinotQueryServerImplBa
 
     // Table level access control
     GrpcRequesterIdentity requestIdentity = new GrpcRequesterIdentity(request.getMetadataMap());
-    if (!_accessControl.hasDataAccess(requestIdentity, queryRequest.getTableNameWithType())) {
+    boolean hasDataAccess;
+    try {
+      hasDataAccess = _accessControl.hasDataAccess(requestIdentity, queryRequest.getTableNameWithType());
+    } catch (NotAuthorizedException e) {
+      _serverMetrics.addMeteredGlobalValue(ServerMeter.NO_TABLE_ACCESS, 1);
+      responseObserver.onError(Status.UNAUTHENTICATED.withDescription(e.getMessage()).asException());
+      return;
+    }
+    if (!hasDataAccess) {
       Exception unsupportedOperationException = new UnsupportedOperationException(
           String.format("No access to table %s while processing request %d: %s from broker: %s",
               queryRequest.getTableNameWithType(), queryRequest.getRequestId(), queryRequest.getQueryContext(),

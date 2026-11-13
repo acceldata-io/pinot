@@ -29,6 +29,8 @@ import org.apache.pinot.broker.api.HttpRequesterIdentity;
 import org.apache.pinot.broker.grpc.GrpcRequesterIdentity;
 import org.apache.pinot.common.request.BrokerRequest;
 import org.apache.pinot.common.request.QuerySource;
+import org.apache.pinot.core.auth.Actions;
+import org.apache.pinot.core.auth.TargetType;
 import org.apache.pinot.core.auth.authz.TestAuth;
 import org.apache.pinot.spi.auth.TableAuthorizationResult;
 import org.apache.pinot.spi.auth.broker.RequesterIdentity;
@@ -108,6 +110,17 @@ public class PinotAuthAccessControlFactoryTest {
     assertFalse(accessControl.getRowColFilters(http("Bearer auditor"), "orders").getRLSFilters().isPresent());
     assertTrue(accessControl.authorize(http("Bearer alice:south"), Set.of("orders")).hasAccess());
     assertFalse(accessControl.authorize(http("Bearer alice:south"), Set.of("payments")).hasAccess());
+  }
+
+  @Test
+  public void testQueryWithoutHttpHeaders() {
+    AccessControl accessControl = accessControl();
+    // gRPC queries: tables are decided through the identity, the header-based query check has nothing to add
+    assertTrue(accessControl.hasAccess(null, TargetType.TABLE, "orders", Actions.Table.QUERY));
+    assertFalse(accessControl.authorize(grpc("Bearer alice"), Set.of("orders")).hasAccess());
+    // Any other action still needs a credential
+    expectThrows(NotAuthorizedException.class,
+        () -> accessControl.hasAccess(null, TargetType.TABLE, "orders", Actions.Table.GET_SCHEMA));
   }
 
   @Test

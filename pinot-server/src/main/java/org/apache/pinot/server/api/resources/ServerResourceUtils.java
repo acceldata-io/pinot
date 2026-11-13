@@ -67,6 +67,9 @@ public class ServerResourceUtils {
       AccessControl accessControl = accessControlFactory.create();
       RequesterIdentity httpRequestIdentity = new HttpRequesterIdentity(httpHeaders);
       hasDataAccess = accessControl.hasDataAccess(httpRequestIdentity, tableNameWithType);
+    } catch (WebApplicationException e) {
+      // The access control's own answer, e.g. 401 with a challenge for a missing or rejected credential
+      throw e;
     } catch (Exception e) {
       throw new WebApplicationException("Caught exception while validating access to table: " + tableNameWithType,
           Response.Status.INTERNAL_SERVER_ERROR);

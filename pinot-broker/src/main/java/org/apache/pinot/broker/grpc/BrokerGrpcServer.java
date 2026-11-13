@@ -40,6 +40,9 @@ import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
 import nl.altindag.ssl.SSLFactory;
 import org.apache.pinot.broker.requesthandler.BrokerRequestHandler;
 import org.apache.pinot.common.compression.CompressionFactory;
@@ -256,6 +259,12 @@ public class BrokerGrpcServer extends PinotQueryBrokerGrpc.PinotQueryBrokerImplB
               null);
     } catch (Exception e) {
       _brokerMetrics.addMeteredGlobalValue(BrokerMeter.GRPC_QUERY_EXCEPTIONS, 1);
+      Status accessStatus = accessStatus(e);
+      if (accessStatus != null) {
+        // The access control's answer (missing / rejected credential, denied table), not a server error
+        responseObserver.onError(accessStatus.withDescription(e.getMessage()).asRuntimeException());
+        return;
+      }
       LOGGER.error("Error handling DQL request:\n{}\nException: {}", requestJsonNode, e);
       responseObserver.onError(
           Status.INTERNAL.withDescription(e.getMessage()).withCause(e)
@@ -408,5 +417,22 @@ public class BrokerGrpcServer extends PinotQueryBrokerGrpc.PinotQueryBrokerImplB
       return secureGrpcPort;
     }
     return brokerConf.getProperty(CommonConstants.Broker.Grpc.KEY_OF_GRPC_PORT, -1);
+  }
+
+  /// gRPC status for an access-control answer: HTTP 401 becomes `UNAUTHENTICATED`, 403 `PERMISSION_DENIED`.
+  ///
+  /// @return the status, or `null` for any other exception
+  @Nullable
+  static Status accessStatus(Exception e) {
+    if (e instanceof WebApplicationException) {
+      int status = ((WebApplicationException) e).getResponse().getStatus();
+      if (status == Response.Status.UNAUTHORIZED.getStatusCode()) {
+        return Status.UNAUTHENTICATED;
+      }
+      if (status == Response.Status.FORBIDDEN.getStatusCode()) {
+        return Status.PERMISSION_DENIED;
+      }
+    }
+    return null;
   }
 }
