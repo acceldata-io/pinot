@@ -245,6 +245,8 @@ public class ServerSegmentCompletionProtocolHandler {
       // Catch all exceptions, we want the protocol to handle the case assuming the request was never sent.
       response = SegmentCompletionProtocol.RESP_NOT_SENT;
       LOGGER.error("Could not send request {}", url, e);
+      // Renewable credentials rejected by the controller are replaced before the protocol retries
+      AuthProviderUtils.onUnauthorized(_authProvider, e);
       // Invalidate controller leader cache, as exception could be because of leader being down (deployment/failure)
       // and hence unable to send {@link SegmentCompletionProtocol.ControllerResponseStatus.NOT_LEADER}
       // If cache is not invalidated, we will not recover from exceptions until the controller comes back up
@@ -270,6 +272,8 @@ public class ServerSegmentCompletionProtocolHandler {
       // Catch all exceptions, we want the protocol to handle the case assuming the request was never sent.
       response = SegmentCompletionProtocol.RESP_NOT_SENT;
       LOGGER.error("Could not send request {}", url, e);
+      // Renewable credentials rejected by the controller are replaced before the protocol retries
+      AuthProviderUtils.onUnauthorized(_authProvider, e);
       // Invalidate controller leader cache, as exception could be because of leader being down (deployment/failure)
       // and hence unable to send {@link SegmentCompletionProtocol.ControllerResponseStatus.NOT_LEADER}
       // If cache is not invalidated, we will not recover from exceptions until the controller comes back up

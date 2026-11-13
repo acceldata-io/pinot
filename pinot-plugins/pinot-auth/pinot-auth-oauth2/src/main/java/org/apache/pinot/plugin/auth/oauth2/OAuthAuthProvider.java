@@ -80,6 +80,12 @@ public class OAuthAuthProvider implements AuthProvider {
     return "Bearer " + _source.get();
   }
 
+  /// The token was rejected by a peer (e.g. revoked at the provider): fetch a new one for the next request.
+  @Override
+  public boolean onUnauthorized() {
+    return _source.invalidate();
+  }
+
   private static CachingTokenSource createSource(Map<String, String> settings) {
     PinotConfiguration config = new PinotConfiguration(new HashMap<>(settings));
     String type = config.getProperty("source", ClientCredentialsTokenSource.TYPE).trim();

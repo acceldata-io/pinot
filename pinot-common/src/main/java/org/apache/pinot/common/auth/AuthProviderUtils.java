@@ -28,6 +28,7 @@ import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.http.message.BasicHeader;
+import org.apache.pinot.common.exception.HttpErrorStatusException;
 import org.apache.pinot.spi.auth.AuthProvider;
 import org.apache.pinot.spi.env.PinotConfiguration;
 
@@ -238,5 +239,25 @@ public final class AuthProviderUtils {
       return path.substring(0, matrixIndex);
     }
     return path;
+  }
+
+  /**
+   * Tells the provider when a request made with its credentials failed with HTTP 401, so that renewable credentials
+   * are replaced before the next request.
+   *
+   * @param failure the failure of the request; an {@link HttpErrorStatusException} with status 401 anywhere in its
+   *     cause chain counts
+   * @return {@code true} if the provider will use new credentials, so that retrying the request is worthwhile
+   */
+  public static boolean onUnauthorized(@Nullable AuthProvider authProvider, @Nullable Throwable failure) {
+    if (authProvider == null) {
+      return false;
+    }
+    for (Throwable t = failure; t != null; t = t.getCause()) {
+      if (t instanceof HttpErrorStatusException && ((HttpErrorStatusException) t).getStatusCode() == 401) {
+        return authProvider.onUnauthorized();
+      }
+    }
+    return false;
   }
 }

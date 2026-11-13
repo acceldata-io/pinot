@@ -32,4 +32,15 @@ public interface AuthProvider {
   Map<String, Object> getRequestHeaders();
 
   String getTaskToken();
+
+  /**
+   * Called when a peer answered HTTP 401 to a request made with these credentials. A provider whose credentials can be
+   * renewed (for example short-lived OAuth 2.0 tokens) drops them, so that the next request carries new ones. The
+   * default does nothing: static credentials cannot be renewed.
+   *
+   * @return {@code true} if the next request will carry new credentials, so that retrying the request is worthwhile
+   */
+  default boolean onUnauthorized() {
+    return false;
+  }
 }

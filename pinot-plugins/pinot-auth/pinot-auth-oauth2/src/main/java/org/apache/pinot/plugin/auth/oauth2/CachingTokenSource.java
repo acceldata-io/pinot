@@ -37,6 +37,9 @@ final class CachingTokenSource {
   private static final Logger LOGGER = LoggerFactory.getLogger(CachingTokenSource.class);
   static final double REFRESH_AT = 0.8;
   static final int ATTEMPTS = 3;
+  /// A token rejected sooner than this after it was fetched is not dropped: a fresh token being refused points to a
+  /// configuration problem that a new token would not fix, and dropping it would flood the token endpoint.
+  static final Duration MIN_AGE_TO_DROP = Duration.ofSeconds(10);
 
   private final String _name;
   private final OAuthTokenSource _source;
@@ -46,6 +49,7 @@ final class CachingTokenSource {
   @Nullable
   private volatile AccessToken _token;
   private volatile Instant _refreshAt = Instant.MIN;
+  private volatile Instant _fetchedAt = Instant.MIN;
   private final AtomicBoolean _refreshing = new AtomicBoolean();
 
   CachingTokenSource(String name, OAuthTokenSource source, Clock clock, long initialBackoffMs) {
@@ -84,12 +88,33 @@ final class CachingTokenSource {
     }
   }
 
+  /// Drops the current token after a peer rejected it (e.g. the provider revoked it), so the next caller fetches a
+  /// new one.
+  ///
+  /// @return `true` if the next call will fetch a new token; `false` if the token was fetched too recently to be
+  ///     replaced
+  synchronized boolean invalidate() {
+    if (_token == null) {
+      return true;
+    }
+    if (_clock.instant().isBefore(_fetchedAt.plus(MIN_AGE_TO_DROP))) {
+      LOGGER.warn("Token source {}: a token fetched less than {} s ago was rejected; not fetching another", _name,
+          MIN_AGE_TO_DROP.getSeconds());
+      return false;
+    }
+    LOGGER.info("Token source {}: current token rejected by a peer, fetching a new one", _name);
+    _token = null;
+    _refreshAt = Instant.MIN;
+    return true;
+  }
+
   private String refresh(@Nullable AccessToken current) {
     Instant now = _clock.instant();
     try {
       AccessToken fresh = fetchWithRetry();
       Duration lifetime = Duration.between(now, fresh.getExpiresAt());
       _refreshAt = now.plusMillis((long) (Math.max(0, lifetime.toMillis()) * REFRESH_AT));
+      _fetchedAt = now;
       _token = fresh;
       return fresh.getToken();
     } catch (RuntimeException e) {

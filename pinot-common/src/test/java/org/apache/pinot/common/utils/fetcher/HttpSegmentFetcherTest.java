@@ -21,19 +21,29 @@ package org.apache.pinot.common.utils.fetcher;
 import java.io.File;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import org.apache.commons.io.FileUtils;
+import org.apache.pinot.common.auth.AuthConfig;
+import org.apache.pinot.common.exception.HttpErrorStatusException;
 import org.apache.pinot.common.utils.FileUploadDownloadClient;
+import org.apache.pinot.spi.auth.AuthProvider;
 import org.apache.pinot.spi.env.PinotConfiguration;
 import org.apache.pinot.spi.utils.retry.AttemptsExceededException;
+import org.apache.pinot.spi.utils.retry.RetriableOperationException;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import static org.apache.pinot.common.utils.fetcher.HttpSegmentFetcher.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 
@@ -125,5 +135,68 @@ public class HttpSegmentFetcherTest {
     HttpSegmentFetcher segmentFetcher = getSegmentFetcher(client);
     List<URI> uris = List.of();
     segmentFetcher.fetchSegmentToLocal(SEGMENT_NAME, () -> uris, SEGMENT_FILE);
+  }
+
+  /// An auth provider whose credentials can be renewed, counting renewals.
+  public static class RenewableAuthProvider implements AuthProvider {
+    static final AtomicInteger RENEWALS = new AtomicInteger();
+    static volatile boolean _renewable = true;
+
+    public RenewableAuthProvider(AuthConfig authConfig) {
+    }
+
+    @Override
+    public Map<String, Object> getRequestHeaders() {
+      return Map.of("Authorization", "Bearer token-" + RENEWALS.get());
+    }
+
+    @Override
+    public String getTaskToken() {
+      return "Bearer token-" + RENEWALS.get();
+    }
+
+    @Override
+    public boolean onUnauthorized() {
+      RENEWALS.incrementAndGet();
+      return _renewable;
+    }
+  }
+
+  private HttpSegmentFetcher getSegmentFetcherWithRenewableAuth(FileUploadDownloadClient client) {
+    PinotConfiguration config = _fetcherConfig.clone();
+    config.setProperty("auth.provider.class", RenewableAuthProvider.class.getName());
+    HttpSegmentFetcher segmentFetcher = new HttpSegmentFetcher();
+    segmentFetcher.init(config);
+    segmentFetcher.setHttpClient(client);
+    return segmentFetcher;
+  }
+
+  @Test
+  public void testRejectedRenewableCredentialsAreRenewedAndRetried()
+      throws Exception {
+    RenewableAuthProvider.RENEWALS.set(0);
+    RenewableAuthProvider._renewable = true;
+    FileUploadDownloadClient client = mock(FileUploadDownloadClient.class);
+    when(client.downloadFile(any(URI.class), any(File.class), any(), anyList(), anyInt(), anyInt()))
+        .thenThrow(new HttpErrorStatusException("Unauthorized", 401)).thenReturn(200);
+    getSegmentFetcherWithRenewableAuth(client).fetchSegmentToLocal(new URI("http://127.0.0.1:8080/segments/t/s"),
+        SEGMENT_FILE);
+    Assert.assertEquals(RenewableAuthProvider.RENEWALS.get(), 1);
+  }
+
+  @Test
+  public void testRejectedStaticCredentialsAreNotRetried()
+      throws Exception {
+    RenewableAuthProvider.RENEWALS.set(0);
+    RenewableAuthProvider._renewable = false;
+    FileUploadDownloadClient client = mock(FileUploadDownloadClient.class);
+    when(client.downloadFile(any(URI.class), any(File.class), any(), anyList(), anyInt(), anyInt()))
+        .thenThrow(new HttpErrorStatusException("Unauthorized", 401)).thenReturn(200);
+    // A 401 that renewal cannot fix stays a permanent error, as before
+    RetriableOperationException e = Assert.expectThrows(RetriableOperationException.class,
+        () -> getSegmentFetcherWithRenewableAuth(client).fetchSegmentToLocal(
+            new URI("http://127.0.0.1:8080/segments/t/s"), SEGMENT_FILE));
+    Assert.assertEquals(((HttpErrorStatusException) e.getCause()).getStatusCode(), 401);
+    verify(client, times(1)).downloadFile(any(URI.class), any(File.class), any(), anyList(), anyInt(), anyInt());
   }
 }

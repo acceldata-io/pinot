@@ -147,7 +147,7 @@ public class HttpClient implements AutoCloseable {
         requestBuilder.addHeader(header.getKey(), header.getValue());
       }
     }
-    return sendRequest(requestBuilder.build(), GET_REQUEST_SOCKET_TIMEOUT_MS);
+    return notifyIfUnauthorized(sendRequest(requestBuilder.build(), GET_REQUEST_SOCKET_TIMEOUT_MS), authProvider);
   }
 
   /**
@@ -175,7 +175,7 @@ public class HttpClient implements AutoCloseable {
         requestBuilder.addHeader(header.getKey(), header.getValue());
       }
     }
-    return sendRequest(requestBuilder.build(), DELETE_REQUEST_SOCKET_TIMEOUT_MS);
+    return notifyIfUnauthorized(sendRequest(requestBuilder.build(), DELETE_REQUEST_SOCKET_TIMEOUT_MS), authProvider);
   }
 
   /**
@@ -202,7 +202,7 @@ public class HttpClient implements AutoCloseable {
         requestBuilder.addHeader(header.getKey(), header.getValue());
       }
     }
-    return sendRequest(requestBuilder.build(), DEFAULT_SOCKET_TIMEOUT_MS);
+    return notifyIfUnauthorized(sendRequest(requestBuilder.build(), DEFAULT_SOCKET_TIMEOUT_MS), authProvider);
   }
 
   /**
@@ -228,7 +228,7 @@ public class HttpClient implements AutoCloseable {
         requestBuilder.addHeader(header.getKey(), header.getValue());
       }
     }
-    return sendRequest(requestBuilder.build(), DELETE_REQUEST_SOCKET_TIMEOUT_MS);
+    return notifyIfUnauthorized(sendRequest(requestBuilder.build(), DELETE_REQUEST_SOCKET_TIMEOUT_MS), authProvider);
   }
 
   // --------------------------------------------------------------------------
@@ -275,6 +275,16 @@ public class HttpClient implements AutoCloseable {
     HttpEntity entity =
         jsonRequestBody == null ? null : new StringEntity(jsonRequestBody, ContentType.APPLICATION_JSON);
     return sendPutRequest(uri, entity, headersWrapper, authProvider);
+  }
+
+  /// Tells the provider when its credentials were rejected (HTTP 401), so that renewable credentials are replaced
+  /// before the next request.
+  private static SimpleHttpResponse notifyIfUnauthorized(SimpleHttpResponse response,
+      @Nullable AuthProvider authProvider) {
+    if (authProvider != null && response.getStatusCode() == 401) {
+      authProvider.onUnauthorized();
+    }
+    return response;
   }
 
   // --------------------------------------------------------------------------

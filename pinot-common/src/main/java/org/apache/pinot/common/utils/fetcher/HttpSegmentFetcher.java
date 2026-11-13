@@ -99,8 +99,9 @@ public class HttpSegmentFetcher extends BaseSegmentFetcher {
         if (!InetAddresses.isInetAddress(hostName)) {
           httpHeaders.add(new BasicHeader(HttpHeaders.HOST, hostName + ":" + port));
         }
-        int statusCode = _httpClient.downloadFile(uri, dest, _authProvider, httpHeaders, _connectionRequestTimeoutMs,
-            _socketTimeoutMs);
+        int statusCode = withCredentialRenewal(uri,
+            () -> _httpClient.downloadFile(uri, dest, _authProvider, httpHeaders, _connectionRequestTimeoutMs,
+                _socketTimeoutMs));
         _logger.info("Downloaded segment from: {} to: {} of size: {}; Response status code: {}", uri, dest,
             dest.length(), statusCode);
         return true;
@@ -160,8 +161,8 @@ public class HttpSegmentFetcher extends BaseSegmentFetcher {
               if (!InetAddresses.isInetAddress(hostName)) {
                 httpHeaders.add(new BasicHeader(HttpHeaders.HOST, hostName + ":" + port));
               }
-              ret.set(_httpClient.downloadUntarFileStreamed(uri, dest, _authProvider, httpHeaders, maxStreamRateInByte,
-                  _connectionRequestTimeoutMs, _socketTimeoutMs));
+              ret.set(withCredentialRenewal(uri, () -> _httpClient.downloadUntarFileStreamed(uri, dest, _authProvider,
+                  httpHeaders, maxStreamRateInByte, _connectionRequestTimeoutMs, _socketTimeoutMs)));
 
               return true;
             } catch (HttpErrorStatusException e) {
@@ -214,6 +215,29 @@ public class HttpSegmentFetcher extends BaseSegmentFetcher {
     } catch (Exception e) {
       _logger.warn("Caught exception while downloading segment from: {} to: {}", uri, dest, e);
       throw e;
+    }
+  }
+
+  /// A download that may be repeated once with renewed credentials.
+  @FunctionalInterface
+  private interface Download<T> {
+    T run()
+        throws IOException, HttpErrorStatusException;
+  }
+
+  /// Runs the download; when the server rejects the credentials (HTTP 401) and the auth provider can renew them (e.g. a
+  /// revoked OAuth 2.0 token), repeats it once with the new credentials. This does not depend on the attempts left in
+  /// the retry policy, which are bounded by the number of addresses of the download host.
+  private <T> T withCredentialRenewal(URI uri, Download<T> download)
+      throws IOException, HttpErrorStatusException {
+    try {
+      return download.run();
+    } catch (HttpErrorStatusException e) {
+      if (e.getStatusCode() != HttpStatus.SC_UNAUTHORIZED || !_authProvider.onUnauthorized()) {
+        throw e;
+      }
+      _logger.warn("Credentials rejected while downloading segment from: {}, retrying with renewed credentials", uri);
+      return download.run();
     }
   }
 }

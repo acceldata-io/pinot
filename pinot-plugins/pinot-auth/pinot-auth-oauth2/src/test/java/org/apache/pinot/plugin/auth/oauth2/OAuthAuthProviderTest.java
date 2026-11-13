@@ -60,6 +60,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.expectThrows;
 
@@ -206,6 +207,23 @@ public class OAuthAuthProviderTest {
     // Back up: a new token
     source._fail = false;
     assertTrue(cache.get().startsWith("t"));
+  }
+
+  @Test
+  public void testRejectedTokenIsReplaced() {
+    TestClock clock = new TestClock();
+    ScriptedSource source = new ScriptedSource(clock);
+    CachingTokenSource cache = new CachingTokenSource("test", source, clock, 1);
+    assertEquals(cache.get(), "t1");
+    // Rejected right after it was fetched: not replaced (a fresh token being refused is not fixed by another one)
+    clock.advance(5);
+    assertFalse(cache.invalidate());
+    assertEquals(cache.get(), "t1");
+    // Rejected later (e.g. revoked at the provider): the next caller gets a new token
+    clock.advance(15);
+    assertTrue(cache.invalidate());
+    assertEquals(cache.get(), "t2");
+    assertEquals(source._fetches.get(), 2);
   }
 
   @Test
