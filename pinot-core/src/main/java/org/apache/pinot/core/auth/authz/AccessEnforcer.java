@@ -18,6 +18,7 @@
  */
 package org.apache.pinot.core.auth.authz;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,6 +28,7 @@ import org.apache.pinot.plugin.auth.spi.AccessRequest;
 import org.apache.pinot.plugin.auth.spi.AuthMethod;
 import org.apache.pinot.plugin.auth.spi.AuthMethodSelector;
 import org.apache.pinot.plugin.auth.spi.AuthorizationDecision;
+import org.apache.pinot.plugin.auth.spi.AuthorizationMode;
 import org.apache.pinot.plugin.auth.spi.AuthorizerSelector;
 import org.apache.pinot.plugin.auth.spi.ConfigSecretResolver;
 import org.apache.pinot.plugin.auth.spi.Permission;
@@ -78,6 +80,30 @@ public final class AccessEnforcer implements AutoCloseable {
   ///
   /// @throws IllegalStateException if `pinot.auth.method` is not set, or the method or authorizer cannot be created
   public static AccessEnforcer create(PinotConfiguration config) {
+    return create(config, null);
+  }
+
+  /// Like [#create(PinotConfiguration)], and takes over the component's BasicAuth principals, so a BasicAuth cluster
+  /// keeps its users and access when it moves to this framework: with the `basic` method they become its principals
+  /// (unless `pinot.auth.basic.principals` is set), and in `native` mode they become rules
+  /// (`pinot.authz.native.legacy.principals`, passwords left out).
+  ///
+  /// @param basicAuthPrincipalsPrefix where this component's BasicAuth principals are configured, e.g.
+  ///     `controller.admin.access.control.principals`, or `null`
+  public static AccessEnforcer create(PinotConfiguration config, @Nullable String basicAuthPrincipalsPrefix) {
+    if (basicAuthPrincipalsPrefix != null && config.getProperty(basicAuthPrincipalsPrefix) != null) {
+      config = config.clone();
+      PinotConfiguration principals = config.subset(basicAuthPrincipalsPrefix);
+      String basicTarget = AuthMethodSelector.CONFIG_PREFIX + "." + AuthMethod.BASIC.getConfigValue() + ".principals";
+      boolean basicMethod = AuthMethodSelector.getConfiguredMethod(config) == AuthMethod.BASIC;
+      if (basicMethod && config.getProperty(basicTarget) == null) {
+        copy(config, basicAuthPrincipalsPrefix, principals, basicTarget, true);
+      }
+      if (AuthorizerSelector.getConfiguredMode(config) == AuthorizationMode.NATIVE) {
+        copy(config, basicAuthPrincipalsPrefix, principals,
+            AuthorizerSelector.CONFIG_PREFIX + ".native." + NativeAuthorizer.LEGACY_PRINCIPALS, false);
+      }
+    }
     PinotAuthenticator authenticator = AuthMethodSelector.create(config, new ConfigSecretResolver(config));
     if (authenticator == null) {
       throw new IllegalStateException(AuthMethodSelector.METHOD_CONFIG + " must be set to use this access control");
@@ -171,6 +197,28 @@ public final class AccessEnforcer implements AutoCloseable {
       return new AccessRequest(ResourceType.DATABASE, targetId, null, action, permission, accessType);
     }
     return new AccessRequest(ResourceType.CLUSTER, null, null, action, permission, accessType);
+  }
+
+  private static void copy(PinotConfiguration config, String sourcePrefix, PinotConfiguration source, String target,
+      boolean withPasswords) {
+    config.setProperty(target, config.getProperty(sourcePrefix));
+    for (String key : source.getKeys()) {
+      if (withPasswords || !key.endsWith(".password")) {
+        config.setProperty(target + "." + key, source.getRawProperty(key, null));
+      }
+    }
+  }
+
+  /// Row filters for a principal querying a table: none for service accounts, otherwise the authorizer's. The broker
+  /// requires every returned filter.
+  ///
+  /// @param tableName table name with or without database and type suffix
+  public List<String> getRowFilters(PinotPrincipal principal, String tableName) {
+    if (principal.isServiceAccount() || _serviceAccounts.contains(principal.getUser())) {
+      return List.of();
+    }
+    AccessRequest table = request(TargetType.TABLE, tableName, null, Permission.READ, "query");
+    return _authorizer.getRowFilters(principal, table.getDatabase(), table.getTable());
   }
 
   public PinotAuthorizer getAuthorizer() {

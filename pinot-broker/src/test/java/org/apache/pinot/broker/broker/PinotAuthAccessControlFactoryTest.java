@@ -20,6 +20,8 @@ package org.apache.pinot.broker.broker;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.ws.rs.NotAuthorizedException;
 import org.apache.pinot.broker.api.AccessControl;
@@ -84,6 +86,28 @@ public class PinotAuthAccessControlFactoryTest {
     expectThrows(NotAuthorizedException.class, () -> accessControl.authorize(grpc("Basic YWRtaW46YWRtaW4=")));
     assertTrue(accessControl.authorize(http("Bearer alice")).hasAccess());
     assertTrue(accessControl.authorize(grpc("Bearer alice")).hasAccess());
+  }
+
+  @Test
+  public void testRowFiltersFromNativeRules() {
+    Map<String, Object> settings = TestAuth.settings();
+    settings.remove("pinot.authz.native.authorizer.class");
+    settings.put("pinot.authz.native.rules", "south,all");
+    settings.put("pinot.authz.native.rule.south.groups", "south");
+    settings.put("pinot.authz.native.rule.south.permissions", "READ");
+    settings.put("pinot.authz.native.rule.south.tables", "orders");
+    settings.put("pinot.authz.native.rule.south.rowFilter.orders", "region = 'south'");
+    settings.put("pinot.authz.native.rule.all.users", "auditor");
+    settings.put("pinot.authz.native.rule.all.permissions", "READ");
+    settings.put("pinot.authz.native.rule.all.tables", "*");
+    PinotAuthAccessControlFactory factory = new PinotAuthAccessControlFactory();
+    factory.init(new PinotConfiguration(settings));
+    AccessControl accessControl = factory.create();
+    assertEquals(accessControl.getRowColFilters(http("Bearer alice:south"), "orders").getRLSFilters().get(),
+        List.of("region = 'south'"));
+    assertFalse(accessControl.getRowColFilters(http("Bearer auditor"), "orders").getRLSFilters().isPresent());
+    assertTrue(accessControl.authorize(http("Bearer alice:south"), Set.of("orders")).hasAccess());
+    assertFalse(accessControl.authorize(http("Bearer alice:south"), Set.of("payments")).hasAccess());
   }
 
   @Test

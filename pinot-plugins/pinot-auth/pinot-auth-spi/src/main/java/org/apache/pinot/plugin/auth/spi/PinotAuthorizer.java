@@ -35,8 +35,12 @@ public interface PinotAuthorizer extends AutoCloseable {
 
   AuthorizationDecision authorize(PinotPrincipal principal, AccessRequest request);
 
-  /// Row filters to apply when the principal queries a table it may read; several filters are OR-ed.
+  /// Row filters to apply when the principal queries a table it may read. The broker requires every returned filter
+  /// (they are AND-ed), so an authorizer that grants access through several rules with different filters combines
+  /// them itself, for example into one `(a) OR (b)` filter.
   ///
+  /// @param database the table's database (`default` when the name has none)
+  /// @param table the raw table name, without database and type suffix
   /// @return the filters, empty when the principal sees every row
   default List<String> getRowFilters(PinotPrincipal principal, String database, String table) {
     return Collections.emptyList();

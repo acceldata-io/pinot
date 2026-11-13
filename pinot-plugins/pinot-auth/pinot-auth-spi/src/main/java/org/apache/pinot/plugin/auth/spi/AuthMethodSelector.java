@@ -37,7 +37,7 @@ public final class AuthMethodSelector {
   public static final String AUTHENTICATOR_CLASS_SUFFIX = "authenticator.class";
 
   /// Default implementation class per method, provided by the method modules.
-  public static final String DEFAULT_BASIC_AUTHENTICATOR = "org.apache.pinot.plugin.auth.basic.BasicAuthenticator";
+  public static final String DEFAULT_BASIC_AUTHENTICATOR = "org.apache.pinot.core.auth.authn.BasicAuthenticator";
   public static final String DEFAULT_OAUTH2_AUTHENTICATOR = "org.apache.pinot.plugin.auth.oauth2.OAuth2Authenticator";
   public static final String DEFAULT_LDAP_AUTHENTICATOR = "org.apache.pinot.plugin.auth.ldap.LdapAuthenticator";
 

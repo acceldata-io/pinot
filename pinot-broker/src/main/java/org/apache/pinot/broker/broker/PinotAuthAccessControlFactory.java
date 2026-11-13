@@ -35,6 +35,8 @@ import org.apache.pinot.plugin.auth.spi.PinotPrincipal;
 import org.apache.pinot.spi.auth.AuthorizationResult;
 import org.apache.pinot.spi.auth.BasicAuthorizationResultImpl;
 import org.apache.pinot.spi.auth.TableAuthorizationResult;
+import org.apache.pinot.spi.auth.TableRowColAccessResult;
+import org.apache.pinot.spi.auth.TableRowColAccessResultImpl;
 import org.apache.pinot.spi.auth.broker.RequesterIdentity;
 import org.apache.pinot.spi.env.PinotConfiguration;
 
@@ -47,11 +49,16 @@ import org.apache.pinot.spi.env.PinotConfiguration;
 /// A missing or rejected credential raises [NotAuthorizedException] (HTTP 401) with the method's challenge; a table
 /// the caller may not query is reported as failed (HTTP 403).
 public class PinotAuthAccessControlFactory extends AccessControlFactory {
+  /// Where the broker's BasicAuth principals are configured, relative to `pinot.broker.access.control`.
+  static final String BASIC_AUTH_PRINCIPALS = "principals";
+
   private AccessControl _accessControl;
 
   @Override
   public void init(PinotConfiguration configuration) {
-    _accessControl = new PinotAuthAccessControl(AccessEnforcer.create(configuration));
+    // Existing BasicAuth principals (pinot.broker.access.control.principals) keep their access under the native
+    // authorizer
+    _accessControl = new PinotAuthAccessControl(AccessEnforcer.create(configuration, BASIC_AUTH_PRINCIPALS));
   }
 
   @Override
@@ -112,6 +119,15 @@ public class PinotAuthAccessControlFactory extends AccessControlFactory {
     public boolean hasAccess(HttpHeaders httpHeaders, TargetType targetType) {
       authenticate(authorization(httpHeaders));
       return true;
+    }
+
+    /// Row filters of the authorizer for the table, applied by the broker when
+    /// `pinot.broker.enable.row.column.level.auth` is set.
+    @Override
+    public TableRowColAccessResult getRowColFilters(RequesterIdentity requesterIdentity, String table) {
+      List<String> filters = _enforcer.getRowFilters(authenticate(requesterIdentity), table);
+      // A new result per call: the unrestricted instance is shared and must never carry filters
+      return filters.isEmpty() ? TableRowColAccessResultImpl.unrestricted() : new TableRowColAccessResultImpl(filters);
     }
 
     private boolean canQuery(PinotPrincipal principal, String table) {

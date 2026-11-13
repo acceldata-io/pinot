@@ -52,7 +52,8 @@ public class PinotAuthAccessFactory implements AccessControlFactory {
 
   @Override
   public void init(PinotConfiguration configuration) {
-    _accessControl = new PinotAuthAccessControl(AccessEnforcer.create(configuration));
+    // Existing BasicAuth principals (<prefix>.principals) keep their access under the native authorizer
+    _accessControl = new PinotAuthAccessControl(AccessEnforcer.create(configuration, "principals"));
   }
 
   @Override

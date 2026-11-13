@@ -41,11 +41,15 @@ import org.apache.pinot.spi.env.PinotConfiguration;
 /// some tables cannot reach cluster state (apache/pinot#14595). A missing or rejected credential is answered with
 /// HTTP 401 and the method's challenge; a denied request with 403.
 public class PinotAuthAccessControlFactory implements AccessControlFactory {
+  /// Where the controller's BasicAuth principals are configured.
+  static final String BASIC_AUTH_PRINCIPALS = "controller.admin.access.control.principals";
+
   private AccessControl _accessControl;
 
   @Override
   public void init(PinotConfiguration configuration) {
-    _accessControl = new PinotAuthAccessControl(AccessEnforcer.create(configuration));
+    // Existing BasicAuth principals keep their access under the native authorizer
+    _accessControl = new PinotAuthAccessControl(AccessEnforcer.create(configuration, BASIC_AUTH_PRINCIPALS));
   }
 
   @Override
