@@ -163,8 +163,43 @@ val data = spark.read
 |--------|-------------|----------|---------|
 | `authHeader` | Custom authentication header name | No | `Authorization` (when `authToken` is provided) |
 | `authToken` | Authentication token/value | No | None |
+| `authConfig.<key>` | Auth provider settings; current credentials for every request (see below) | No | None |
 
 **Note:** If only `authToken` is provided without `authHeader`, the connector will automatically use `Authorization: Bearer <token>`.
+
+### Renewing credentials (OAuth 2.0)
+
+A fixed `authToken` is sent unchanged for the whole job, so a read that runs longer than the token's lifetime fails
+once the token expires. Configure an auth provider instead with `authConfig.*` options: the driver and every executor
+ask it for the current credentials before each request (controller, broker and server gRPC calls). If Pinot answers
+401 / `UNAUTHENTICATED` (for example, a token revoked before its expiry), the request is retried once with new credentials.
+The keys after `authConfig.` are those of Pinot's outbound auth settings, so the same provider that Pinot uses for its
+own calls works here:
+
+```scala
+val data = spark.read
+  .format("pinot")
+  .option("table", "airlineStats")
+  .option("tableType", "offline")
+  .option("authConfig.provider.class", "org.apache.pinot.plugin.auth.oauth2.OAuthAuthProvider")
+  .option("authConfig.source", "client_credentials")
+  .option("authConfig.token.url", "https://idp.example.com/oauth2/token")
+  .option("authConfig.client.id", "spark-reporting")
+  .option("authConfig.client.secret", sys.env("PINOT_CLIENT_SECRET"))
+  .load()
+```
+
+- Put the provider's jar on the driver and executor classpath (for `OAuthAuthProvider`, the `pinot-auth-oauth2`
+  plugin jar, e.g. with `--jars`).
+- Each JVM creates the provider once per configuration and shares its token between tasks; the token is renewed
+  before it expires.
+- When `authConfig.*` is set it is used instead of `authToken`. Without `authConfig.*`, `authToken` / `authHeader`
+  behave as before.
+- With gRPC reads (`useGrpcServer`), the credentials are sent in the query request, where the server authenticates
+  it. Reads without gRPC use Pinot's internal server transport, which does not carry credentials.
+- Keep the client secret out of code and notebooks (environment, secret manager). The connector never prints
+  `authConfig` values, but Spark may show data source options in its UI and event logs unless they match
+  `spark.redaction.regex` (by default, keys containing `secret`, `password` or `token` are redacted).
 
 ## Pinot Proxy Support
 

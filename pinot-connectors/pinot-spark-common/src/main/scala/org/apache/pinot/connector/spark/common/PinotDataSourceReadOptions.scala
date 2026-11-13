@@ -27,7 +27,7 @@ import scala.util.Random
 /**
  * To create serializable datasource reader options from spark datasource options.
  */
-object PinotDataSourceReadOptions {
+object PinotDataSourceReadOptions extends Logging {
   val CONFIG_TABLE_NAME = "table"
   val CONFIG_TABLE_TYPE = "tableType"
   val CONFIG_CONTROLLER = "controller"
@@ -120,6 +120,16 @@ object PinotDataSourceReadOptions {
     val truststorePassword = Option(options.get(CONFIG_TRUSTSTORE_PASSWORD)).filter(_.nonEmpty)
     val authHeader = Option(options.get(CONFIG_AUTH_HEADER)).filter(_.nonEmpty)
     val authToken = Option(options.get(CONFIG_AUTH_TOKEN)).filter(_.nonEmpty)
+    // Auth provider settings (authConfig.*): current credentials for every request instead of a fixed token
+    val authConfig = PinotCredentials.authConfigFrom(options)
+    val credentials = PinotCredentials(authHeader, authToken, authConfig)
+    if (authConfig.nonEmpty) {
+      if (authToken.nonEmpty) {
+        logWarning(s"Both $CONFIG_AUTH_TOKEN and ${PinotCredentials.AUTH_CONFIG_PREFIX}* are set; using the auth provider")
+      }
+      // Fail on the driver, before any task starts, if the provider cannot be created
+      PinotCredentials.provider(authConfig)
+    }
     
     // Parse proxy configuration
     val proxyEnabled = options.getBoolean(CONFIG_PROXY_ENABLED, DEFAULT_PROXY_ENABLED)
@@ -150,7 +160,7 @@ object PinotDataSourceReadOptions {
 
     val broker = options.get(PinotDataSourceReadOptions.CONFIG_BROKER) match {
       case s if s == null || s.isEmpty =>
-        val brokerInstances = PinotClusterClient.getBrokerInstances(controller, tableName, useHttps, authHeader, authToken, proxyEnabled)
+        val brokerInstances = PinotClusterClient.getBrokerInstances(controller, tableName, useHttps, credentials, proxyEnabled)
         Random.shuffle(brokerInstances).head
       case s => s
     }
@@ -195,7 +205,8 @@ object PinotDataSourceReadOptions {
       grpcTlsTruststorePath,
       grpcTlsTruststorePassword,
       grpcTlsSslProvider,
-      grpcProxyUri
+      grpcProxyUri,
+      authConfig
     )
   }
 }
@@ -230,4 +241,13 @@ private[pinot] case class PinotDataSourceReadOptions(
     grpcTlsTruststorePath: Option[String],
     grpcTlsTruststorePassword: Option[String],
     grpcTlsSslProvider: String,
-    grpcProxyUri: Option[String])
+    grpcProxyUri: Option[String],
+    authConfig: Map[String, String] = Map.empty) {
+
+  /** The credentials to send to Pinot; ask them for the headers right before each request. */
+  def credentials: PinotCredentials = PinotCredentials(authHeader, authToken, authConfig)
+
+  // authConfig and passwords may hold secrets: never print them
+  override def toString: String = s"PinotDataSourceReadOptions(table=$tableName, controller=$controller, " +
+    s"broker=$broker, credentials=$credentials)"
+}

@@ -54,13 +54,13 @@ class PinotScan(
   override def toBatch: Batch = this
 
   override def planInputPartitions(): Array[InputPartition] = {
-    val routingTable = PinotClusterClient.getRoutingTable(readParameters.broker, query, readParameters.useHttps, readParameters.authHeader, readParameters.authToken, readParameters.proxyEnabled)
+    val routingTable = PinotClusterClient.getRoutingTable(readParameters.broker, query, readParameters.useHttps, readParameters.credentials, readParameters.proxyEnabled)
 
     val instanceInfo : Map[String, InstanceInfo] = Map()
     val instanceInfoReader = (instance:String) => { // cached reader to reduce network round trips
       instanceInfo.getOrElseUpdate(
         instance,
-        PinotClusterClient.getInstanceInfo(readParameters.controller, instance, readParameters.useHttps, readParameters.authHeader, readParameters.authToken, readParameters.proxyEnabled)
+        PinotClusterClient.getInstanceInfo(readParameters.controller, instance, readParameters.useHttps, readParameters.credentials, readParameters.proxyEnabled)
       )
     }
 

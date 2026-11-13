@@ -18,17 +18,18 @@
  */
 package org.apache.pinot.connector.spark.common.reader
 
-import io.grpc.{ManagedChannelBuilder, Metadata}
+import io.grpc.{ManagedChannelBuilder, Metadata, Status, StatusRuntimeException}
 import io.grpc.stub.MetadataUtils
 import org.apache.pinot.common.datatable.{DataTable, DataTableFactory}
 import org.apache.pinot.common.proto.PinotQueryServerGrpc
-import org.apache.pinot.common.proto.Server.ServerRequest
-import org.apache.pinot.connector.spark.common.{AuthUtils, Logging, PinotDataSourceReadOptions}
+import org.apache.pinot.common.proto.Server.{ServerRequest, ServerResponse}
+import org.apache.pinot.connector.spark.common.{Logging, PinotDataSourceReadOptions}
 import org.apache.pinot.connector.spark.common.partition.PinotSplit
 import org.apache.pinot.spi.config.table.TableType
 
 import java.io.Closeable
 import java.net.URI
+import java.util.Locale
 import scala.collection.JavaConverters._
 
 /**
@@ -62,36 +63,37 @@ private[reader] class PinotGrpcServerDataFetcher(pinotSplit: PinotSplit, readOpt
     builder.build()
   }
 
-  private val pinotServerBlockingStub = {
+  private val credentials = readOptions.credentials
+
+  // A stub carrying the current credentials as call headers (for the proxy), and proxy forwarding headers when the
+  // proxy is enabled. Built per request: credentials may be renewed during a long read.
+  private def pinotServerBlockingStub(authHeaders: Seq[(String, String)]): PinotQueryServerGrpc.PinotQueryServerBlockingStub = {
     val baseStub = PinotQueryServerGrpc.newBlockingStub(channel)
-
-    // Attach proxy forwarding headers when proxy is enabled
-    val withProxyHeaders =
-      if (readOptions.proxyEnabled && readOptions.grpcProxyUri.nonEmpty) {
-        val md = new Metadata()
-        val forwardHostKey = Metadata.Key.of("forward_host", Metadata.ASCII_STRING_MARSHALLER)
-        val forwardPortKey = Metadata.Key.of("forward_port", Metadata.ASCII_STRING_MARSHALLER)
-        md.put(forwardHostKey, pinotSplit.serverAndSegments.serverHost)
-        md.put(forwardPortKey, pinotSplit.serverAndSegments.serverGrpcPort.toString)
-
-        // Optional: Authorization header if provided
-        AuthUtils.buildAuthHeader(readOptions.authHeader, readOptions.authToken) match {
-          case Some((name, value)) =>
-            val key = Metadata.Key.of(name.toLowerCase, Metadata.ASCII_STRING_MARSHALLER)
-            md.put(key, value)
-          case None =>
-        }
-        baseStub.withInterceptors(MetadataUtils.newAttachHeadersInterceptor(md))
-      } else baseStub
-    withProxyHeaders
+    if (readOptions.proxyEnabled && readOptions.grpcProxyUri.nonEmpty) {
+      val md = new Metadata()
+      val forwardHostKey = Metadata.Key.of("forward_host", Metadata.ASCII_STRING_MARSHALLER)
+      val forwardPortKey = Metadata.Key.of("forward_port", Metadata.ASCII_STRING_MARSHALLER)
+      md.put(forwardHostKey, pinotSplit.serverAndSegments.serverHost)
+      md.put(forwardPortKey, pinotSplit.serverAndSegments.serverGrpcPort.toString)
+      authHeaders.foreach { case (name, value) =>
+        md.put(Metadata.Key.of(name.toLowerCase(Locale.ROOT), Metadata.ASCII_STRING_MARSHALLER), value)
+      }
+      baseStub.withInterceptors(MetadataUtils.newAttachHeadersInterceptor(md))
+    } else baseStub
   }
 
-  def fetchData(): Iterator[DataTable] = {
-    val request = ServerRequest.newBuilder()
+  private def submit(): java.util.Iterator[ServerResponse] = {
+    val authHeaders = credentials.currentHeaders()
+    val requestBuilder = ServerRequest.newBuilder()
       .putMetadata("enableStreaming", "true")
       // Also include forwarding info in request metadata for compatibility with proxies that inspect payload
       .putMetadata("FORWARD_HOST", pinotSplit.serverAndSegments.serverHost)
       .putMetadata("FORWARD_PORT", pinotSplit.serverAndSegments.serverGrpcPort.toString)
+    // The server authenticates gRPC queries with the request metadata (lower-case keys), not with call headers
+    authHeaders.foreach { case (name, value) =>
+      requestBuilder.putMetadata(name.toLowerCase(Locale.ROOT), value)
+    }
+    val request = requestBuilder
       .addAllSegments(pinotSplit.serverAndSegments.segments.asJava)
       .setSql(
         pinotSplit.serverAndSegments.serverType match {
@@ -102,20 +104,34 @@ private[reader] class PinotGrpcServerDataFetcher(pinotSplit: PinotSplit, readOpt
         }
       )
       .build()
-    val serverResponse = pinotServerBlockingStub.submit(request)
-    try {
-      val dataTables = for {
-        serverResponse <- serverResponse.asScala
-        if serverResponse.getMetadataMap.get("responseType") == "data"
-      } yield DataTableFactory.getDataTable(serverResponse.getPayload.toByteArray)
+    val responses = pinotServerBlockingStub(authHeaders).submit(request)
+    // The server checks access before it streams anything: surface a refusal here, not while Spark consumes rows
+    responses.hasNext
+    responses
+  }
 
-      dataTables.filter(_.getNumberOfRows > 0)
-
+  def fetchData(): Iterator[DataTable] = {
+    val serverResponse = try {
+      try {
+        submit()
+      } catch {
+        // Credentials rejected (e.g. a token revoked before its expiry): retry once if the provider renewed them
+        case e: StatusRuntimeException
+          if e.getStatus.getCode == Status.Code.UNAUTHENTICATED && credentials.onUnauthorized() =>
+          logInfo("Pinot server refused the credentials, retrying once with renewed credentials")
+          submit()
+      }
     } catch {
-      case e: io.grpc.StatusRuntimeException =>
+      case e: StatusRuntimeException =>
         logError(s"Caught exception when reading data from ${pinotSplit.serverAndSegments.serverHost}:${pinotSplit.serverAndSegments.serverGrpcPort}: ${e}")
         throw e
     }
+    val dataTables = for {
+      serverResponse <- serverResponse.asScala
+      if serverResponse.getMetadataMap.get("responseType") == "data"
+    } yield DataTableFactory.getDataTable(serverResponse.getPayload.toByteArray)
+
+    dataTables.filter(_.getNumberOfRows > 0)
   }
 
   def close(): Unit = {

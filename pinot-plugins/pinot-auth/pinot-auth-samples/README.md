@@ -147,8 +147,10 @@ Every client sends `Authorization: Bearer <token>` and must replace the token be
   users need `READ` on all tables, or a dedicated reporting identity that has it.
 - **Trino Pinot connector**: supports only no authentication or a user name and password towards Pinot, not a bearer
   token. Querying an OAuth 2.0 cluster from Trino needs a change in the connector.
-- **Superset (pinotdb) and the Spark connector**: whether they can send a bearer token, and refresh it, has not been
-  checked yet.
+- **Spark connector (Spark 3)**: `authToken` is a fixed token. For reads that outlive a token, configure the
+  connector's `authConfig.*` options with `OAuthAuthProvider` (see the connector README); batch ingestion jobs use the
+  job spec's `authConfig`.
+- **Superset (pinotdb)**: whether it can send a bearer token, and refresh it, has not been checked yet.
 - **Controller UI**: opened directly it shows "Authentication required"; open it through the sign-in gateway (an
   authenticating proxy in front of the controller that adds the bearer token).
 

@@ -113,18 +113,36 @@ private[pinot] object HttpUtils extends Logging {
   }
 
   def sendGetRequest(uri: URI): String = {
-    sendGetRequest(uri, None, None)
+    sendGetRequest(uri, PinotCredentials.NONE)
   }
 
   def sendGetRequest(uri: URI, authHeader: Option[String], authToken: Option[String]): String = {
-    val requestBuilder = ClassicRequestBuilder.get(uri)
-    
-    // Add authentication header if provided
-    AuthUtils.buildAuthHeader(authHeader, authToken).foreach { case (name, value) =>
-      requestBuilder.addHeader(name, value)
+    sendGetRequest(uri, PinotCredentials(authHeader, authToken))
+  }
+
+  /** GET with the current credentials; retried once with new credentials if Pinot answers 401 and they were renewed. */
+  def sendGetRequest(uri: URI, credentials: PinotCredentials): String = {
+    withCredentialRenewal(credentials) {
+      val requestBuilder = ClassicRequestBuilder.get(uri)
+      credentials.currentHeaders().foreach { case (name, value) =>
+        requestBuilder.addHeader(name, value)
+      }
+      executeRequest(requestBuilder.build(), uri.getScheme.toLowerCase == "https")
     }
-    
-    executeRequest(requestBuilder.build(), uri.getScheme.toLowerCase == "https")
+  }
+
+  /**
+   * Runs a request; if Pinot answered 401 and the credentials can be renewed (e.g. the token was revoked before its
+   * expiry), runs it once more with new credentials.
+   */
+  private[common] def withCredentialRenewal[T](credentials: PinotCredentials)(request: => T): T = {
+    try {
+      request
+    } catch {
+      case e: HttpStatusCodeException if e.statusCode == 401 && credentials.onUnauthorized() =>
+        logInfo("Pinot answered 401, retrying once with renewed credentials")
+        request
+    }
   }
 
   /**
@@ -136,10 +154,17 @@ private[pinot] object HttpUtils extends Logging {
                                     authToken: Option[String],
                                     serviceType: String,
                                     targetHost: String): String = {
+    sendGetRequestWithProxyHeaders(uri, PinotCredentials(authHeader, authToken), serviceType, targetHost)
+  }
+
+  def sendGetRequestWithProxyHeaders(uri: URI,
+                                    credentials: PinotCredentials,
+                                    serviceType: String,
+                                    targetHost: String): String = withCredentialRenewal(credentials) {
     val requestBuilder = ClassicRequestBuilder.get(uri)
-    
-    // Add authentication header if provided
-    AuthUtils.buildAuthHeader(authHeader, authToken).foreach { case (name, value) =>
+
+    // Add the current authentication headers, if any
+    credentials.currentHeaders().foreach { case (name, value) =>
       requestBuilder.addHeader(name, value)
     }
     
