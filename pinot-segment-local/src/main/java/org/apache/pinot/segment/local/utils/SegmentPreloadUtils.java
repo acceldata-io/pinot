@@ -102,6 +102,34 @@ public class SegmentPreloadUtils {
     return preloadedSegments;
   }
 
+  /**
+   * The sealed segments {@link #preloadSegments} would load for this partition, with the CRC recorded for each one.
+   * A checkpoint can be reused only when it covers exactly this set.
+   */
+  public static Map<String, Long> getOnlineSegmentCrcs(TableDataManager tableDataManager, int partitionId,
+      HelixManager helixManager, @Nullable BiPredicate<String, SegmentZKMetadata> segmentSelector) {
+    String tableNameWithType = tableDataManager.getTableName();
+    String instanceId = getInstanceId(tableDataManager);
+    Map<String, Map<String, String>> segmentAssignment = getSegmentAssignment(tableNameWithType, helixManager);
+    Map<String, SegmentZKMetadata> segmentMetadataMap = getSegmentsZKMetadata(tableNameWithType, helixManager);
+    Map<String, Long> segmentCrcs = new HashMap<>();
+    for (Map.Entry<String, Map<String, String>> entry : segmentAssignment.entrySet()) {
+      String segmentName = entry.getKey();
+      if (!isSegmentOnlineOnRequestedInstance(segmentName, instanceId, entry.getValue())) {
+        continue;
+      }
+      SegmentZKMetadata segmentZKMetadata = segmentMetadataMap.get(segmentName);
+      if (!isSegmentFromRequestedPartition(segmentName, tableNameWithType, partitionId, segmentZKMetadata)) {
+        continue;
+      }
+      if (segmentSelector != null && !segmentSelector.test(segmentName, segmentZKMetadata)) {
+        continue;
+      }
+      segmentCrcs.put(segmentName, segmentZKMetadata.getCrc());
+    }
+    return segmentCrcs;
+  }
+
   private static void preloadSegment(String segmentName, TableDataManager tableDataManager, int partitionId,
       IndexLoadingConfig indexLoadingConfig, SegmentZKMetadata segmentZKMetadata) {
     String tableNameWithType = tableDataManager.getTableName();

@@ -158,6 +158,42 @@ public class RocksDBPartitionStoreTest {
   }
 
   @Test
+  public void testCheckpointReopensWithTheSameKeys()
+      throws Exception {
+    File dir = new File(_tempDir, "p0");
+    byte[] key = bytes("a");
+    byte[] value = bytes("1");
+    RocksDBRecoveryManifest manifest = new RocksDBRecoveryManifest("fp", 1.5, 1,
+        Map.of("seg", new RocksDBRecoveryManifest.Segment(9L, 3, 1)));
+    try (RocksDBPartitionStore store = new RocksDBPartitionStore(dir, List.of("default", "previous"),
+        RocksDBMetadataStoreConfig.defaults())) {
+      store.put(0, key, value);
+      store.put(1, key, bytes("prev"));
+      assertTrue(store.getLookupCount() >= 0);
+      store.checkpoint(manifest);
+    }
+    assertFalse(dir.exists());
+    File recovery = RocksDBPartitionStore.recoveryDir(dir);
+    RocksDBRecoveryManifest written =
+        RocksDBRecoveryManifest.read(new File(recovery, RocksDBRecoveryManifest.FILE_NAME));
+    assertEquals(written.getNumPrimaryKeys(), 1);
+
+    try (RocksDBPartitionStore reopened = new RocksDBPartitionStore(dir, List.of("default", "previous"),
+        RocksDBMetadataStoreConfig.defaults())) {
+      assertNull(reopened.get(0, key));
+      RocksDBRecoveryManifest read = reopened.readRecoveryManifest();
+      assertEquals(read.mismatch("fp", Map.of("seg", 9L)), null);
+      assertEquals(read.mismatch("other", Map.of("seg", 9L)), "table key config changed");
+      assertTrue(read.mismatch("fp", Map.of("seg", 8L)).contains("changed"));
+      reopened.adoptRecovery();
+      assertEquals(reopened.get(0, key), value);
+      assertEquals(reopened.get(1, key), bytes("prev"));
+      // The checkpoint stays, so a later restart can reopen it again.
+      assertTrue(new File(recovery, "db").isDirectory());
+    }
+  }
+
+  @Test
   public void testConfigFromInstanceAndTable() {
     PinotConfiguration instanceConfig = new PinotConfiguration(
         Map.of("rocksdb.blockCacheSizeBytes", "1000", "rocksdb.maxRetries", "5", "rocksdb.dataDir", "/data/rocks"));

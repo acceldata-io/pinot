@@ -19,6 +19,7 @@
 package org.apache.pinot.segment.local.rocksdb;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -83,6 +84,29 @@ public final class SegmentRegistry {
     }
     _lastLookup = new LastLookup(segment, id);
     return id;
+  }
+
+  /**
+   * Binds {@code segment} to an id restored from a checkpoint. Ids assigned afterwards stay above it, so a restored id
+   * is never handed to a different segment.
+   */
+  public synchronized void bind(IndexSegment segment, int id, long refCount) {
+    IndexSegment existing = _idToSegment.get(id);
+    if (existing == segment) {
+      return;
+    }
+    Preconditions.checkState(existing == null, "Segment id %s is already bound to %s", id,
+        existing != null ? existing.getSegmentName() : null);
+    Preconditions.checkState(!_segmentToId.containsKey(segment), "Segment %s is already registered",
+        segment.getSegmentName());
+    _segmentToId.put(segment, id);
+    _idToSegment.put(id, segment);
+    if (refCount > 0) {
+      _refCounts.put(id, new AtomicLong(refCount));
+    }
+    if (id >= _nextId) {
+      _nextId = id + 1;
+    }
   }
 
   /// Returns the id of a registered segment, or -1 if the segment was never registered.

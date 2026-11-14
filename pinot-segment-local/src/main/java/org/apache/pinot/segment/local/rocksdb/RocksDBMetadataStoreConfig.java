@@ -78,6 +78,9 @@ public final class RocksDBMetadataStoreConfig {
   /// segment takes longer on RocksDB, so a non-blocking attempt usually misses the segment just committed, and a missed
   /// segment blocks first snapshots of all others. 0 keeps the non-blocking attempt of the in-memory managers.
   public static final String SNAPSHOT_SEGMENT_LOCK_WAIT_MS = "snapshotSegmentLockWaitMs";
+  /// Keep a checkpoint of the key store so a restart can reopen it instead of reading every key from the segments.
+  /// The checkpoint is used only when the sealed segments still match it. {@code false} rebuilds from segments.
+  public static final String PERSIST_ACROSS_RESTART = "persistAcrossRestart";
   /// Use the in-memory manager if a partition store cannot be opened. Off by default: a table sized for RocksDB can
   /// exhaust the heap, so an open failure fails the table on that server instead.
   public static final String FALLBACK_TO_IN_MEMORY_ON_INIT_FAILURE = "fallbackToInMemoryOnInitFailure";
@@ -115,6 +118,7 @@ public final class RocksDBMetadataStoreConfig {
   private final int _preloadSstMinKeys;
   private final int _preloadBatchKeys;
   private final long _snapshotSegmentLockWaitMs;
+  private final boolean _persistAcrossRestart;
   private final boolean _fallbackToInMemoryOnInitFailure;
   private final boolean _enabled;
 
@@ -137,6 +141,7 @@ public final class RocksDBMetadataStoreConfig {
     _preloadBatchKeys = (int) getLong(values, PRELOAD_BATCH_KEYS, DEFAULT_PRELOAD_BATCH_KEYS, 1);
     _snapshotSegmentLockWaitMs =
         getLong(values, SNAPSHOT_SEGMENT_LOCK_WAIT_MS, DEFAULT_SNAPSHOT_SEGMENT_LOCK_WAIT_MS, 0);
+    _persistAcrossRestart = Boolean.parseBoolean(values.getOrDefault(normalize(PERSIST_ACROSS_RESTART), "true"));
     _fallbackToInMemoryOnInitFailure =
         Boolean.parseBoolean(values.get(normalize(FALLBACK_TO_IN_MEMORY_ON_INIT_FAILURE)));
     _enabled = Boolean.parseBoolean(values.getOrDefault(normalize(ENABLED), "true"));
@@ -173,11 +178,11 @@ public final class RocksDBMetadataStoreConfig {
   private static final Set<String> SERVER_ONLY_KEYS =
       normalizeAll(BLOCK_CACHE_SIZE_BYTES, WRITE_BUFFER_MANAGER_BYTES, BACKGROUND_THREADS, MAINTENANCE_THREADS);
   private static final Set<String> BOOLEAN_KEYS =
-      normalizeAll(ASYNC_TTL_SCAN, FALLBACK_TO_IN_MEMORY_ON_INIT_FAILURE, ENABLED);
+      normalizeAll(ASYNC_TTL_SCAN, PERSIST_ACROSS_RESTART, FALLBACK_TO_IN_MEMORY_ON_INIT_FAILURE, ENABLED);
   private static final Set<String> TABLE_KEYS =
       normalizeAll(DATA_DIR, WRITE_BUFFER_SIZE_BYTES, BLOOM_BITS_PER_KEY, BLOCK_SIZE_BYTES, MAX_RETRIES,
           RETRY_BACKOFF_MS, TTL_SCAN_MAX_KEYS_PER_SECOND, ASYNC_TTL_SCAN, PRELOAD_SST_MIN_KEYS, PRELOAD_BATCH_KEYS,
-          SNAPSHOT_SEGMENT_LOCK_WAIT_MS, FALLBACK_TO_IN_MEMORY_ON_INIT_FAILURE, ENABLED);
+          SNAPSHOT_SEGMENT_LOCK_WAIT_MS, PERSIST_ACROSS_RESTART, FALLBACK_TO_IN_MEMORY_ON_INIT_FAILURE, ENABLED);
 
   private static Set<String> normalizeAll(String... keys) {
     Set<String> normalized = new HashSet<>();
@@ -303,6 +308,10 @@ public final class RocksDBMetadataStoreConfig {
 
   public long getSnapshotSegmentLockWaitMs() {
     return _snapshotSegmentLockWaitMs;
+  }
+
+  public boolean isPersistAcrossRestart() {
+    return _persistAcrossRestart;
   }
 
   public boolean isFallbackToInMemoryOnInitFailure() {

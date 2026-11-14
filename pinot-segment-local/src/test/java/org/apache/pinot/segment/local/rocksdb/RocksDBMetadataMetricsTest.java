@@ -63,7 +63,8 @@ public class RocksDBMetadataMetricsTest {
       RocksDBMetadataMetrics.registerPartitionGauges(serverMetrics, "t_REALTIME", 3, store, () -> 7L);
       assertEquals(gauges.keySet(), Set.of(ServerGauge.ROCKSDB_METADATA_DISK_SIZE_BYTES,
           ServerGauge.ROCKSDB_METADATA_STORE_RETRIES, ServerGauge.ROCKSDB_METADATA_STORE_FAILURES,
-          ServerGauge.ROCKSDB_METADATA_STALE_LOCATIONS));
+          ServerGauge.ROCKSDB_METADATA_STALE_LOCATIONS, ServerGauge.ROCKSDB_METADATA_LOOKUP_COUNT,
+          ServerGauge.ROCKSDB_METADATA_LOOKUP_TIME_NS));
       for (int i = 0; i < 1000; i++) {
         store.put(0, ("key-" + i).getBytes(StandardCharsets.UTF_8), new byte[16]);
       }

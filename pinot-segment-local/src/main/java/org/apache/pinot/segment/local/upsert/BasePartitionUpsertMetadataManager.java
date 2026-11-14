@@ -891,10 +891,11 @@ public abstract class BasePartitionUpsertMetadataManager implements PartitionUps
     }
     try {
       long startTime = System.currentTimeMillis();
-      doTakeSnapshot();
+      boolean complete = doTakeSnapshot();
       long duration = System.currentTimeMillis() - startTime;
       _serverMetrics.addTimedTableValue(_tableNameWithType, ServerTimer.UPSERT_SNAPSHOT_TIME_MS, duration,
           TimeUnit.MILLISECONDS);
+      onSnapshotTaken(complete);
     } catch (Exception e) {
       _logger.warn("Caught exception while taking snapshot", e);
     } finally {
@@ -902,7 +903,12 @@ public abstract class BasePartitionUpsertMetadataManager implements PartitionUps
     }
   }
 
-  protected void doTakeSnapshot() {
+  /// Called after a snapshot attempt. {@code complete} is false when any segment was skipped.
+  protected void onSnapshotTaken(boolean complete) {
+  }
+
+  /// @return false when any segment was skipped, so the snapshots on disk are not a consistent set
+  protected boolean doTakeSnapshot() {
     int numTrackedSegments = _trackedSegments.size();
     long numPrimaryKeysInSnapshot = 0L;
     long numQueryableDocIdsInSnapshot = 0L;
@@ -1038,6 +1044,7 @@ public abstract class BasePartitionUpsertMetadataManager implements PartitionUps
     _logger.info("Finished taking snapshot for {} immutable segments with {} primary keys (out of {} total segments, "
             + "{} are consuming segments) in {} ms", numImmutableSegments, numPrimaryKeysInSnapshot, numTrackedSegments,
         numConsumingSegments, System.currentTimeMillis() - startTimeMs);
+    return !isSegmentSkipped;
   }
 
   /**
