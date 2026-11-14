@@ -32,7 +32,9 @@ import org.apache.pinot.common.metrics.ServerMetrics;
 public final class RocksDBMetadataMetrics {
   private static final List<ServerGauge> PARTITION_GAUGES =
       List.of(ServerGauge.ROCKSDB_METADATA_DISK_SIZE_BYTES, ServerGauge.ROCKSDB_METADATA_STORE_RETRIES,
-          ServerGauge.ROCKSDB_METADATA_STORE_FAILURES, ServerGauge.ROCKSDB_METADATA_STALE_LOCATIONS);
+          ServerGauge.ROCKSDB_METADATA_STORE_FAILURES, ServerGauge.ROCKSDB_METADATA_STALE_LOCATIONS,
+          ServerGauge.ROCKSDB_METADATA_LOOKUP_COUNT, ServerGauge.ROCKSDB_METADATA_LOOKUP_TIME_NS,
+          ServerGauge.ROCKSDB_METADATA_RECOVERED);
 
   private RocksDBMetadataMetrics() {
   }
@@ -47,6 +49,11 @@ public final class RocksDBMetadataMetrics {
         ServerGauge.ROCKSDB_METADATA_STORE_FAILURES, store::getNumFailures);
     serverMetrics.setOrUpdatePartitionGauge(tableNameWithType, partitionId,
         ServerGauge.ROCKSDB_METADATA_STALE_LOCATIONS, numStaleLocations::getAsLong);
+    serverMetrics.setOrUpdatePartitionGauge(tableNameWithType, partitionId, ServerGauge.ROCKSDB_METADATA_LOOKUP_COUNT,
+        store::getLookupCount);
+    serverMetrics.setOrUpdatePartitionGauge(tableNameWithType, partitionId,
+        ServerGauge.ROCKSDB_METADATA_LOOKUP_TIME_NS, store::getAverageLookupTimeNs);
+    serverMetrics.setValueOfPartitionGauge(tableNameWithType, partitionId, ServerGauge.ROCKSDB_METADATA_RECOVERED, 0);
   }
 
   public static void removePartitionGauges(ServerMetrics serverMetrics, String tableNameWithType, int partitionId) {

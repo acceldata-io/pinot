@@ -19,14 +19,17 @@
 package org.apache.pinot.segment.local.upsert;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -34,20 +37,29 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
+import org.apache.helix.HelixManager;
+import org.apache.pinot.common.metadata.segment.SegmentZKMetadata;
+import org.apache.pinot.common.metrics.ServerGauge;
 import org.apache.pinot.common.metrics.ServerMeter;
+import org.apache.pinot.segment.local.data.manager.TableDataManager;
 import org.apache.pinot.segment.local.indexsegment.immutable.ImmutableSegmentImpl;
 import org.apache.pinot.segment.local.rocksdb.MetadataCodec;
 import org.apache.pinot.segment.local.rocksdb.PrimaryKeyLocationStore;
 import org.apache.pinot.segment.local.rocksdb.PrimaryKeyLocationStore.Location;
 import org.apache.pinot.segment.local.rocksdb.RocksDBMetadataMetrics;
 import org.apache.pinot.segment.local.rocksdb.RocksDBMetadataStoreConfig;
+import org.apache.pinot.segment.local.rocksdb.RocksDBRecoveryManifest;
+import org.apache.pinot.segment.local.segment.index.loader.IndexLoadingConfig;
 import org.apache.pinot.segment.local.segment.readers.LazyRow;
 import org.apache.pinot.segment.local.segment.readers.PrimaryKeyReader;
 import org.apache.pinot.segment.local.utils.HashUtils;
+import org.apache.pinot.segment.local.utils.SegmentPreloadUtils;
 import org.apache.pinot.segment.spi.ImmutableSegment;
 import org.apache.pinot.segment.spi.IndexSegment;
 import org.apache.pinot.segment.spi.MutableSegment;
+import org.apache.pinot.segment.spi.V1Constants;
 import org.apache.pinot.segment.spi.index.mutable.ThreadSafeMutableRoaringBitmap;
+import org.apache.pinot.spi.config.table.TableConfig;
 import org.apache.pinot.spi.data.readers.GenericRow;
 import org.apache.pinot.spi.data.readers.PrimaryKey;
 import org.roaringbitmap.buffer.MutableRoaringBitmap;
@@ -62,8 +74,9 @@ import org.roaringbitmap.buffer.MutableRoaringBitmap;
  * {@code ConcurrentHashMap.compute} becomes {@link PrimaryKeyLocationStore#compute}, which holds a per-key stripe lock
  * around the RocksDB read-modify-write. Segments are referenced by small ids from a per-partition registry.
  *
- * <p>The store is rebuilt from segments (or from validDocIds snapshots with preload) on every start and deleted on
- * close; nothing in it is needed across restarts. Thread-safe.
+ * <p>When a snapshot completes, the key map is checkpointed. A restart reopens that checkpoint instead of reading the
+ * keys back out of the segments, as long as the sealed segments still match it. Otherwise the store is rebuilt from
+ * the segments. The live store is deleted on close. Thread-safe.
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
 @ThreadSafe
@@ -78,6 +91,8 @@ public class RocksDBPartitionUpsertMetadataManager extends BasePartitionUpsertMe
   final PrimaryKeyLocationStore _store;
   private final RocksDBMetadataStoreConfig _storeConfig;
   private final AtomicBoolean _ttlScanRunning = new AtomicBoolean();
+  private volatile boolean _recoveredFromCheckpoint;
+  private Map<String, RocksDBRecoveryManifest.Segment> _recoveredSegments = Map.of();
 
   public RocksDBPartitionUpsertMetadataManager(String tableNameWithType, int partitionId, UpsertContext context,
       RocksDBMetadataStoreConfig storeConfig) {
@@ -87,7 +102,138 @@ public class RocksDBPartitionUpsertMetadataManager extends BasePartitionUpsertMe
         storeConfig);
     RocksDBMetadataMetrics.registerPartitionGauges(_serverMetrics, tableNameWithType, partitionId,
         _store.getPartitionStore(), _store::getNumStaleLocations);
+    if (!storeConfig.isPersistAcrossRestart()) {
+      _store.getPartitionStore().deleteRecovery();
+    }
     _logger.info("Using RocksDB upsert metadata store in: {}", _store.getPartitionStore().getDir());
+  }
+
+  @Override
+  protected void doPreloadSegments(TableDataManager tableDataManager, IndexLoadingConfig indexLoadingConfig,
+      HelixManager helixManager, ExecutorService segmentPreloadExecutor)
+      throws Exception {
+    TableConfig tableConfig = indexLoadingConfig.getTableConfig();
+    Map<String, Long> onlineSegmentCrcs = SegmentPreloadUtils.getOnlineSegmentCrcs(tableDataManager, _partitionId,
+        helixManager, (segmentName, segmentZKMetadata) -> hasSnapshot(tableDataManager, tableConfig, segmentName,
+            segmentZKMetadata));
+    if (!tryRecover(onlineSegmentCrcs)) {
+      _recoveredFromCheckpoint = false;
+      if (_storeConfig.isPersistAcrossRestart()) {
+        _store.getPartitionStore().deleteRecovery();
+      }
+    }
+    super.doPreloadSegments(tableDataManager, indexLoadingConfig, helixManager, segmentPreloadExecutor);
+  }
+
+  private static boolean hasSnapshot(TableDataManager tableDataManager, TableConfig tableConfig, String segmentName,
+      SegmentZKMetadata segmentZKMetadata) {
+    return SegmentPreloadUtils.hasValidDocIdsSnapshot(tableDataManager, tableConfig, segmentName,
+        segmentZKMetadata.getTier());
+  }
+
+  /**
+   * Reopens the checkpoint when it covers exactly {@code onlineSegmentCrcs}. The segments are still loaded afterwards,
+   * but only so their valid-doc bitmaps are attached; their keys are not read.
+   */
+  @VisibleForTesting
+  boolean tryRecover(Map<String, Long> onlineSegmentCrcs) {
+    if (!_storeConfig.isPersistAcrossRestart()) {
+      return false;
+    }
+    RocksDBRecoveryManifest manifest = _store.getPartitionStore().readRecoveryManifest();
+    if (manifest == null) {
+      return false;
+    }
+    String mismatch = manifest.mismatch(recoveryFingerprint(), onlineSegmentCrcs);
+    if (mismatch != null) {
+      _logger.info("RocksDB checkpoint not used ({}), rebuilding from segments", mismatch);
+      return false;
+    }
+    try {
+      _store.getPartitionStore().adoptRecovery();
+    } catch (RuntimeException e) {
+      _logger.warn("Failed to open the RocksDB checkpoint, rebuilding from segments", e);
+      return false;
+    }
+    _store.restoreNumPrimaryKeys(manifest.getNumPrimaryKeys());
+    setWatermark(manifest.getWatermark());
+    _recoveredSegments = manifest.getSegments();
+    _recoveredFromCheckpoint = true;
+    updatePrimaryKeyGauge();
+    _serverMetrics.setValueOfPartitionGauge(_tableNameWithType, _partitionId, ServerGauge.ROCKSDB_METADATA_RECOVERED,
+        1);
+    _logger.info("Recovered {} primary keys from the RocksDB checkpoint for {} segments", manifest.getNumPrimaryKeys(),
+        manifest.getSegments().size());
+    return true;
+  }
+
+  @Override
+  protected void doPreloadSegment(ImmutableSegmentImpl segment) {
+    if (!_recoveredFromCheckpoint) {
+      super.doPreloadSegment(segment);
+      return;
+    }
+    String segmentName = segment.getSegmentName();
+    _logger.info("Attaching recovered segment: {}, current primary key count: {}", segmentName, getNumPrimaryKeys());
+    MutableRoaringBitmap validDocIds = segment.loadDocIdsFromSnapshot(V1Constants.VALID_DOC_IDS_SNAPSHOT_FILE_NAME);
+    Preconditions.checkState(validDocIds != null, "Snapshot of validDocIds is required to recover segment: %s",
+        segmentName);
+    RocksDBRecoveryManifest.Segment recovered = _recoveredSegments.get(segmentName);
+    if (recovered != null && recovered.getId() >= 0) {
+      _store.getSegmentRegistry().bind(segment, recovered.getId(), recovered.getRefCount());
+    }
+    if (validDocIds.isEmpty()) {
+      segment.enableUpsert(this, new ThreadSafeMutableRoaringBitmap(), null);
+      return;
+    }
+    if (isTTLEnabled() && !_comparisonColumns.isEmpty()) {
+      double maxComparisonValue = getMaxComparisonValue(segment);
+      _largestSeenComparisonValue.getAndUpdate(v -> Math.max(v, maxComparisonValue));
+      if (isOutOfMetadataTTL(maxComparisonValue) && skipPreloadSegmentOutOfTTL(segment, validDocIds)) {
+        return;
+      }
+    }
+    MutableRoaringBitmap queryableDocIds = getQueryableDocIds(segment, validDocIds);
+    segment.enableUpsert(this, new ThreadSafeMutableRoaringBitmap(validDocIds),
+        queryableDocIds != null ? new ThreadSafeMutableRoaringBitmap(queryableDocIds) : null);
+    updatePrimaryKeyGauge();
+  }
+
+  @Override
+  protected void onSnapshotTaken(boolean complete) {
+    if (!complete || !_storeConfig.isPersistAcrossRestart()) {
+      return;
+    }
+    Map<String, RocksDBRecoveryManifest.Segment> segments = new LinkedHashMap<>();
+    for (IndexSegment segment : _trackedSegments) {
+      if (!(segment instanceof ImmutableSegment)) {
+        continue;
+      }
+      long crc;
+      try {
+        crc = Long.parseLong(segment.getSegmentMetadata().getCrc());
+      } catch (NumberFormatException e) {
+        _logger.warn("Skip RocksDB checkpoint; segment {} has no numeric crc", segment.getSegmentName());
+        return;
+      }
+      int id = _store.getSegmentRegistry().getId(segment);
+      long refCount = id >= 0 ? _store.getSegmentRegistry().getRefCount(id) : 0;
+      segments.put(segment.getSegmentName(), new RocksDBRecoveryManifest.Segment(crc, id, refCount));
+    }
+    RocksDBRecoveryManifest manifest =
+        new RocksDBRecoveryManifest(recoveryFingerprint(), getWatermark(), getNumPrimaryKeys(), segments);
+    try {
+      _store.getPartitionStore().checkpoint(manifest);
+    } catch (RuntimeException e) {
+      _logger.warn("Failed to checkpoint the RocksDB metadata store; restart will rebuild from segments", e);
+    }
+  }
+
+  /// Identifies the key schema. A checkpoint written for a different schema is never reopened.
+  @VisibleForTesting
+  String recoveryFingerprint() {
+    return _hashFunction + "|" + _primaryKeyColumns + "|" + _comparisonColumns + "|" + _deleteRecordColumn + "|"
+        + _metadataTTL + "|" + _deletedKeysTTL;
   }
 
   @VisibleForTesting

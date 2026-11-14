@@ -32,6 +32,8 @@ import org.rocksdb.Env;
 import org.rocksdb.LRUCache;
 import org.rocksdb.Priority;
 import org.rocksdb.RocksDB;
+import org.rocksdb.Statistics;
+import org.rocksdb.TickerType;
 import org.rocksdb.WriteBufferManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,6 +60,7 @@ public final class RocksDBEnvironment {
   private final RocksDBMetadataStoreConfig _config;
   private final Cache _blockCache;
   private final WriteBufferManager _writeBufferManager;
+  private final Statistics _statistics = new Statistics();
   private final ExecutorService _maintenanceExecutor;
   @GuardedBy("LOCK")
   private int _refCount;
@@ -111,6 +114,17 @@ public final class RocksDBEnvironment {
         () -> currentValue(RocksDBEnvironment::getBlockCachePinnedUsageBytes));
     serverMetrics.setOrUpdateGlobalGauge(ServerGauge.ROCKSDB_BLOCK_CACHE_CAPACITY_BYTES,
         () -> currentValue(environment -> environment._config.getBlockCacheSizeBytes()));
+    serverMetrics.setOrUpdateGlobalGauge(ServerGauge.ROCKSDB_BLOCK_CACHE_HITS,
+        () -> currentValue(RocksDBEnvironment::getBlockCacheHitCount));
+    serverMetrics.setOrUpdateGlobalGauge(ServerGauge.ROCKSDB_BLOCK_CACHE_MISSES,
+        () -> currentValue(RocksDBEnvironment::getBlockCacheMissCount));
+    serverMetrics.setOrUpdateGlobalGauge(ServerGauge.ROCKSDB_BLOCK_CACHE_HIT_RATIO_PERMILLE, () -> {
+      long hits = currentValue(RocksDBEnvironment::getBlockCacheHitCount);
+      long misses = currentValue(RocksDBEnvironment::getBlockCacheMissCount);
+      long total = hits + misses;
+      // 1000 until the first lookup, so an empty server does not look like a cache failure.
+      return total == 0 ? 1000 : hits * 1000 / total;
+    });
   }
 
   private static long currentValue(ToLongFunction<RocksDBEnvironment> function) {
@@ -125,6 +139,7 @@ public final class RocksDBEnvironment {
         _maintenanceExecutor.shutdownNow();
         _writeBufferManager.close();
         _blockCache.close();
+        _statistics.close();
         if (_instance == this) {
           _instance = null;
         }
@@ -135,6 +150,19 @@ public final class RocksDBEnvironment {
 
   public Cache getBlockCache() {
     return _blockCache;
+  }
+
+  /// Shared by every store, so block-cache hit and miss counts cover the whole server.
+  public Statistics getStatistics() {
+    return _statistics;
+  }
+
+  public long getBlockCacheHitCount() {
+    return _statistics.getTickerCount(TickerType.BLOCK_CACHE_HIT);
+  }
+
+  public long getBlockCacheMissCount() {
+    return _statistics.getTickerCount(TickerType.BLOCK_CACHE_MISS);
   }
 
   public WriteBufferManager getWriteBufferManager() {

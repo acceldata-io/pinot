@@ -366,6 +366,11 @@ public class PrimaryKeyLocationStore implements AutoCloseable {
     return _numPrimaryKeys.get();
   }
 
+  /// Restores the count from a checkpoint. The checkpoint's entries are not re-counted.
+  public void restoreNumPrimaryKeys(long numPrimaryKeys) {
+    _numPrimaryKeys.set(numPrimaryKeys);
+  }
+
   public int getNumPreviousKeys() {
     return (int) Math.min(Integer.MAX_VALUE, _numPreviousKeys.get());
   }

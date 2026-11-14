@@ -130,6 +130,7 @@ and dedup tables ask for different values, the first table to open a store wins 
 | `preloadSstMinKeys` | 100000 | Segments with at least this many valid keys are preloaded through a sorted SST file. 0 disables it. |
 | `preloadBatchKeys` | 500000 | Most keys of one segment buffered on the heap during preload. |
 | `snapshotSegmentLockWaitMs` | 10000 | How long a validDocIds snapshot waits for the lock of a segment that is still being committed. 0 skips the segment at once, as the in-memory managers do; replacing a segment takes longer on RocksDB, so the just-committed segment would then be skipped at almost every commit and no segment would get its first snapshot. |
+| `persistAcrossRestart` | `true` | Checkpoint the key store when a snapshot completes, and reopen it on restart when the sealed segments still match. `false` rebuilds the store from the segments on every start. |
 | `fallbackToInMemoryOnInitFailure` | `false` | Use the in-memory map if a store can't be opened. |
 
 ### Validation
@@ -189,10 +190,16 @@ or dedup table. Both are off by default.
 | `ROCKSDB_METADATA_STORE_RETRIES` | table, partition | Cumulative retried store operations |
 | `ROCKSDB_METADATA_STORE_FAILURES` | table, partition | Cumulative operations that failed after all retries |
 | `ROCKSDB_METADATA_STALE_LOCATIONS` | table, partition | Cumulative keys found pointing at a released segment |
+| `ROCKSDB_METADATA_LOOKUP_COUNT` | table, partition | Cumulative key lookups |
+| `ROCKSDB_METADATA_LOOKUP_TIME_NS` | table, partition | Average key lookup time, in nanoseconds |
+| `ROCKSDB_METADATA_RECOVERED` | table, partition | 1 if this start reopened a checkpoint, 0 if it rebuilt from segments |
 | `ROCKSDB_METADATA_IN_MEMORY_FALLBACK` | table | 1 if the table is configured for RocksDB but uses the in-memory map |
 | `ROCKSDB_BLOCK_CACHE_USAGE_BYTES` | server | Bytes in the shared block cache |
 | `ROCKSDB_BLOCK_CACHE_PINNED_USAGE_BYTES` | server | Bytes pinned in the shared block cache |
 | `ROCKSDB_BLOCK_CACHE_CAPACITY_BYTES` | server | Capacity of the shared block cache |
+| `ROCKSDB_BLOCK_CACHE_HITS` | server | Cumulative block cache hits |
+| `ROCKSDB_BLOCK_CACHE_MISSES` | server | Cumulative block cache misses |
+| `ROCKSDB_BLOCK_CACHE_HIT_RATIO_PERMILLE` | server | Hits per 1000 lookups. 1000 before the first lookup |
 
 Partition gauges are removed when the partition closes. The existing upsert and dedup gauges, such as
 `UPSERT_PRIMARY_KEYS_COUNT` and `DEDUP_PRIMARY_KEYS_COUNT`, keep working.
@@ -219,15 +226,26 @@ Suggested alerts:
 - **The kill switch** `enabled=false` (server or table level) switches to the in-memory map on the next start of the
   table on that server. Only use it for tables whose keys fit on the heap.
 
-## Restart and preload
+## Restart
 
-On start, each partition deletes its old store and rebuilds it from the segments on disk. With `enableSnapshot` and
-`enablePreload`, sealed segments are loaded through the preload path. Their valid keys are written with batched
-inserts, and segments with at least `preloadSstMinKeys` keys are written as sorted SST files and ingested directly,
-skipping memtables and compaction. Without preload, segments are replayed through the normal upsert path, which is
-slower for large tables.
+When `persistAcrossRestart` is on (the default) and snapshots are enabled, each completed snapshot also writes a
+RocksDB checkpoint of the key map beside the live store. The live store is still deleted on shutdown. On the next
+start the checkpoint is reopened, and the sealed segments are attached from their validDocIds snapshots, without
+reading their keys, when all of these hold:
 
-Expect startup to be bound by disk throughput. Measure it on a staging server before rolling out.
+- the checkpoint's segments are exactly the sealed segments of that partition on this server,
+- each segment's CRC is unchanged,
+- the primary key, comparison columns, hash function, delete column and TTL settings are unchanged.
+
+Startup then depends on opening the checkpoint and loading the segments, not on the number of keys. A partition that
+reopened its checkpoint reports `ROCKSDB_METADATA_RECOVERED` as 1.
+
+Anything else discards the checkpoint and rebuilds. With `enablePreload`, that rebuild writes valid keys in batches,
+and segments with at least `preloadSstMinKeys` keys are ingested as sorted SST files. Without preload, segments are
+replayed through the normal upsert path. A partition that moved to another server always rebuilds there, because the
+checkpoint is local.
+
+Dedup stores are still rebuilt from their segments on every start.
 
 ## Limitations
 
