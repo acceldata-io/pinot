@@ -251,12 +251,22 @@ public class RocksDBPartitionDedupMetadataManager extends BasePartitionDedupMeta
   }
 
   /// Also retires out-of-TTL segments, whose keys the base class leaves for the TTL scan.
+  ///
+  /// Shutdown stops this manager before the segments are offloaded, and offload still calls here. That call must not
+  /// rewrite the checkpoint: the sealed segments are coming back on the next start.
   @Override
   public void removeSegment(IndexSegment segment) {
-    super.removeSegment(segment);
-    _store.getSegmentRegistry().retire(segment);
-    untrack(segment);
-    checkpointIfSteady();
+    if (!startOperation()) {
+      return;
+    }
+    try {
+      super.removeSegment(segment);
+      _store.getSegmentRegistry().retire(segment);
+      untrack(segment);
+      checkpointIfSteady();
+    } finally {
+      finishOperation();
+    }
   }
 
   @VisibleForTesting
