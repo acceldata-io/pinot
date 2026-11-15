@@ -23,10 +23,14 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.apache.commons.io.FileUtils;
 import org.apache.pinot.segment.local.data.manager.TableDataManager;
 import org.apache.pinot.segment.local.rocksdb.RocksDBMetadataStoreConfig;
 import org.apache.pinot.segment.local.rocksdb.RocksDBRecoveryManifest;
+import org.apache.pinot.segment.spi.ImmutableSegment;
+import org.apache.pinot.segment.spi.IndexSegment;
+import org.apache.pinot.segment.spi.SegmentMetadata;
 import org.apache.pinot.spi.config.table.TableConfig;
 import org.apache.pinot.spi.data.Schema;
 import org.testng.annotations.Test;
@@ -77,6 +81,43 @@ public class RocksDBDedupRecoveryTest {
         assertNull(mismatched._store.getPartitionStore().get(0, KEY));
       } finally {
         close(mismatched);
+      }
+    } finally {
+      FileUtils.deleteDirectory(tempDir);
+    }
+  }
+
+  @Test
+  public void testConsumingSegmentCloseKeepsTheCommittedSegment()
+      throws Exception {
+    File tempDir = Files.createTempDirectory("rocksdb-dedup-untrack").toFile();
+    try {
+      DedupContext context = context(tempDir);
+      RocksDBMetadataStoreConfig config = RocksDBMetadataStoreConfig.from(null,
+          Map.of("rocksdb.dataDir", new File(tempDir, "data").getAbsolutePath()));
+      RocksDBPartitionDedupMetadataManager manager =
+          new RocksDBPartitionDedupMetadataManager("t_REALTIME", 0, context, config);
+      try {
+        SegmentMetadata metadata = mock(SegmentMetadata.class);
+        when(metadata.getCrc()).thenReturn("5");
+        ImmutableSegment committed = mock(ImmutableSegment.class);
+        when(committed.getSegmentName()).thenReturn("seg");
+        when(committed.getSegmentMetadata()).thenReturn(metadata);
+        manager.trackSealed(committed);
+
+        IndexSegment consuming = mock(IndexSegment.class);
+        when(consuming.getSegmentName()).thenReturn("seg");
+        manager.untrack(consuming);
+        manager.checkpointIfSteady();
+        RocksDBRecoveryManifest manifest = manager._store.getPartitionStore().readRecoveryManifest();
+        assertEquals(manifest.getSegments().keySet(), Set.of("seg"));
+        assertEquals(manifest.getSegments().get("seg").getCrc(), 5L);
+
+        manager.untrack(committed);
+        manager.checkpointIfSteady();
+        assertTrue(manager._store.getPartitionStore().readRecoveryManifest().getSegments().isEmpty());
+      } finally {
+        close(manager);
       }
     } finally {
       FileUtils.deleteDirectory(tempDir);
