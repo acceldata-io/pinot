@@ -116,6 +116,13 @@ public class RocksDBDedupRecoveryTest {
         manager.untrack(committed);
         manager.checkpointIfSteady();
         assertTrue(manager._store.getPartitionStore().readRecoveryManifest().getSegments().isEmpty());
+
+        manager.trackSealed(committed);
+        manager.checkpointIfSteady();
+        manager.stop();
+        manager.removeSegment(consuming);
+        manager.removeSegment(committed);
+        assertEquals(manager._store.getPartitionStore().readRecoveryManifest().getSegments().keySet(), Set.of("seg"));
       } finally {
         close(manager);
       }
