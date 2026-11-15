@@ -83,6 +83,7 @@ public class RocksDBMetadataConfigValidationTest {
         Map.of("rocksdb.dataDir", "/mnt/disk1/pinot/rocksdb", "rocksdb.ttlScanMaxKeysPerSecond", "200000",
             "rocksdb.bloomBitsPerKey", "12.5", "rocksdb.enabled", "TRUE", "rocksdb.preload_batch_keys", "100000",
             "rocksdb.snapshotSegmentLockWaitMs", "0", "rocksdb.persistAcrossRestart", "false",
+            "rocksdb.writeBatchKeys", "128",
             "otherManagerConfig", "kept")), SCHEMA);
     TableConfigUtils.validateUpsertAndDedupConfig(dedupTable(Map.of("rocksdb.asyncTtlScan", "false")), SCHEMA);
     // rocksdb.* keys are not checked when the in-memory manager is selected

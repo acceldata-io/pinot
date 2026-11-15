@@ -108,6 +108,29 @@ public class RocksDBPartitionStoreTest {
   }
 
   @Test
+  public void testBufferedWritesAreVisibleBeforeFlush() {
+    RocksDBMetadataStoreConfig config = RocksDBMetadataStoreConfig.from(null, Map.of("rocksdb.writeBatchKeys", "100"));
+    try (RocksDBPartitionStore store = new RocksDBPartitionStore(new File(_tempDir, "buf"), List.of("default"),
+        config)) {
+      store.put(0, bytes("k"), bytes("v1"));
+      store.put(0, bytes("k"), bytes("v2"));
+      store.put(0, bytes("other"), bytes("o"));
+      store.delete(0, bytes("other"));
+      assertEquals(store.get(0, bytes("k")), bytes("v2"));
+      assertNull(store.get(0, bytes("other")));
+      int count = 0;
+      try (RocksIterator iterator = store.newIterator(0)) {
+        for (iterator.seekToFirst(); iterator.isValid(); iterator.next()) {
+          count++;
+          assertEquals(iterator.key(), bytes("k"));
+          assertEquals(iterator.value(), bytes("v2"));
+        }
+      }
+      assertEquals(count, 1);
+    }
+  }
+
+  @Test
   public void testIngestSorted() {
     try (RocksDBPartitionStore store = new RocksDBPartitionStore(new File(_tempDir, "p0"), List.of("default"),
         RocksDBMetadataStoreConfig.defaults())) {
@@ -202,6 +225,8 @@ public class RocksDBPartitionStoreTest {
     assertEquals(config.getBlockCacheSizeBytes(), 1000);
     assertEquals(config.getMaxRetries(), 1);
     assertEquals(config.getTtlScanMaxKeysPerSecond(), 500);
+    assertEquals(RocksDBMetadataStoreConfig.defaults().getWriteBatchKeys(),
+        RocksDBMetadataStoreConfig.DEFAULT_WRITE_BATCH_KEYS);
     assertEquals(config.resolveDataDir(new File("/ignored")), new File("/data/rocks"));
     assertEquals(RocksDBMetadataStoreConfig.defaults().resolveDataDir(new File("/srv")),
         new File("/srv", RocksDBMetadataStoreConfig.DEFAULT_DATA_DIR_NAME));

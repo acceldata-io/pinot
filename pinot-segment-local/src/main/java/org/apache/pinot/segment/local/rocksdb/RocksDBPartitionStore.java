@@ -26,8 +26,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -67,6 +70,10 @@ import org.slf4j.LoggerFactory;
  * can reopen the keys instead of reading them out of the segments. Block cache, memtable budget and background threads
  * come from the shared {@link RocksDBEnvironment}.
  *
+ * <p>Puts and deletes are grouped into one RocksDB write per {@code writeBatchKeys} keys. A following read of the same
+ * store sees those keys before the batch is flushed, so ingestion still observes its own updates. Iterating, ingesting
+ * an SST file and checkpointing flush the batch first.
+ *
  * <p>Failed operations are retried with exponential backoff and then surface as
  * {@link RocksDBMetadataStoreException}. All methods are thread-safe; per-key read-modify-write atomicity is the
  * caller's job (see {@link StripedLocks}).
@@ -91,6 +98,9 @@ public class RocksDBPartitionStore implements AutoCloseable {
   private final AtomicLong _sstFileCounter = new AtomicLong();
   private final AtomicLong _lookupCount = new AtomicLong();
   private final AtomicLong _lookupTimeNs = new AtomicLong();
+  private final Object _pendingLock = new Object();
+  private Map<BufferKey, BufferedWrite> _pending = new HashMap<>();
+  private final Map<BufferKey, BufferedWrite> _flushing = new HashMap<>();
   private volatile boolean _closed;
 
   /**
@@ -217,9 +227,14 @@ public class RocksDBPartitionStore implements AutoCloseable {
 
   @Nullable
   public byte[] get(int columnFamily, byte[] key) {
-    ColumnFamilyHandle handle = _handles.get(columnFamily);
+    Preconditions.checkState(!_closed, "RocksDB metadata store in: %s is closed", _dir);
     long startNs = System.nanoTime();
     try {
+      BufferHit hit = readBuffered(columnFamily, key);
+      if (hit._found) {
+        return hit._value;
+      }
+      ColumnFamilyHandle handle = _handles.get(columnFamily);
       return withRetry("get", () -> _db.get(handle, _readOptions, key));
     } finally {
       _lookupTimeNs.addAndGet(System.nanoTime() - startNs);
@@ -239,27 +254,19 @@ public class RocksDBPartitionStore implements AutoCloseable {
   }
 
   public void put(int columnFamily, byte[] key, byte[] value) {
-    ColumnFamilyHandle handle = _handles.get(columnFamily);
-    withRetry("put", () -> {
-      _db.put(handle, _writeOptions, key, value);
-      return null;
-    });
+    Preconditions.checkArgument(value != null, "RocksDB metadata value must not be null");
+    enqueue(columnFamily, key, BufferedWrite.of(value));
   }
 
   public void delete(int columnFamily, byte[] key) {
-    ColumnFamilyHandle handle = _handles.get(columnFamily);
-    withRetry("delete", () -> {
-      _db.delete(handle, _writeOptions, key);
-      return null;
-    });
+    enqueue(columnFamily, key, BufferedWrite.DELETE);
   }
 
-  /// Applies a batch built by {@link #newWriteBatch()}. The batch is closed by the caller.
+  /// Applies a batch built by {@link #newWriteBatch()}. The batch is closed by the caller. Buffered ingestion writes
+  /// are flushed first, so they are not overwritten by this batch.
   public void write(WriteBatch batch) {
-    withRetry("write batch", () -> {
-      _db.write(_writeOptions, batch);
-      return null;
-    });
+    flushPending(true);
+    writeThrough(batch);
   }
 
   public WriteBatch newWriteBatch() {
@@ -272,6 +279,7 @@ public class RocksDBPartitionStore implements AutoCloseable {
 
   /// Returns an iterator over a column family. The caller must close it, and must not use it after {@link #close()}.
   public RocksIterator newIterator(int columnFamily) {
+    flushPending(true);
     Preconditions.checkState(!_closed, "RocksDB metadata store in: %s is closed", _dir);
     return _db.newIterator(_handles.get(columnFamily));
   }
@@ -285,6 +293,7 @@ public class RocksDBPartitionStore implements AutoCloseable {
     if (keys.isEmpty()) {
       return;
     }
+    flushPending(true);
     File sstFile = new File(_dir, "ingest_" + _sstFileCounter.incrementAndGet() + ".sst");
     try {
       withRetry("SST ingest", () -> {
@@ -352,6 +361,7 @@ public class RocksDBPartitionStore implements AutoCloseable {
    */
   public synchronized void checkpoint(RocksDBRecoveryManifest manifest) {
     Preconditions.checkState(!_closed, "RocksDB metadata store in: %s is closed", _dir);
+    flushPending(true);
     File recovery = recoveryDir(_dir);
     File tmp = new File(recovery.getParentFile(), recovery.getName() + ".tmp");
     FileUtils.deleteQuietly(tmp);
@@ -470,6 +480,145 @@ public class RocksDBPartitionStore implements AutoCloseable {
       sizeBytes += getLongProperty(i, "rocksdb.cur-size-all-mem-tables");
     }
     return sizeBytes;
+  }
+
+  private void enqueue(int columnFamily, byte[] key, BufferedWrite write) {
+    Preconditions.checkState(!_closed, "RocksDB metadata store in: %s is closed", _dir);
+    int pendingSize;
+    synchronized (_pendingLock) {
+      _pending.put(new BufferKey(columnFamily, key), write);
+      pendingSize = _pending.size();
+    }
+    if (pendingSize >= _config.getWriteBatchKeys()) {
+      flushPending(false);
+    }
+  }
+
+  /// Reads a write that has not reached the database yet. {@link BufferHit#_found} is false when the key is absent
+  /// from the buffer, which is different from a buffered delete.
+  private BufferHit readBuffered(int columnFamily, byte[] key) {
+    BufferKey lookup = new BufferKey(columnFamily, key);
+    synchronized (_pendingLock) {
+      BufferedWrite write = _pending.get(lookup);
+      if (write == null) {
+        write = _flushing.get(lookup);
+      }
+      return write == null ? BufferHit.MISS : new BufferHit(true, write._value);
+    }
+  }
+
+  /// Writes the buffered keys. {@code force} also writes a partial batch. Callers that snapshot the database
+  /// (iteration, SST ingest, checkpoint, an explicit batch) pass {@code true}.
+  private synchronized void flushPending(boolean force) {
+    if (_closed) {
+      return;
+    }
+    Map<BufferKey, BufferedWrite> snapshot;
+    synchronized (_pendingLock) {
+      if (_pending.isEmpty() || (!force && _pending.size() < _config.getWriteBatchKeys())) {
+        return;
+      }
+      snapshot = _pending;
+      _pending = new HashMap<>();
+      _flushing.putAll(snapshot);
+    }
+    try {
+      try (WriteBatch batch = new WriteBatch()) {
+        for (Map.Entry<BufferKey, BufferedWrite> entry : snapshot.entrySet()) {
+          ColumnFamilyHandle handle = _handles.get(entry.getKey()._columnFamily);
+          byte[] value = entry.getValue()._value;
+          if (value == null) {
+            batch.delete(handle, entry.getKey()._key);
+          } else {
+            batch.put(handle, entry.getKey()._key, value);
+          }
+        }
+        writeThrough(batch);
+      }
+    } catch (RuntimeException | RocksDBException e) {
+      synchronized (_pendingLock) {
+        for (Map.Entry<BufferKey, BufferedWrite> entry : snapshot.entrySet()) {
+          _pending.putIfAbsent(entry.getKey(), entry.getValue());
+          if (_flushing.get(entry.getKey()) == entry.getValue()) {
+            _flushing.remove(entry.getKey());
+          }
+        }
+      }
+      if (e instanceof RuntimeException) {
+        throw (RuntimeException) e;
+      }
+      throw new RocksDBMetadataStoreException("Failed to batch RocksDB writes in: " + _dir, e);
+    }
+    synchronized (_pendingLock) {
+      for (Map.Entry<BufferKey, BufferedWrite> entry : snapshot.entrySet()) {
+        if (_flushing.get(entry.getKey()) == entry.getValue()) {
+          _flushing.remove(entry.getKey());
+        }
+      }
+    }
+  }
+
+  private void writeThrough(WriteBatch batch) {
+    withRetry("write batch", () -> {
+      _db.write(_writeOptions, batch);
+      return null;
+    });
+  }
+
+  /// One buffered key. The key bytes are copied so a reused caller buffer cannot change the map key.
+  private static final class BufferKey {
+    private final int _columnFamily;
+    private final byte[] _key;
+    private final int _hash;
+
+    private BufferKey(int columnFamily, byte[] key) {
+      _columnFamily = columnFamily;
+      _key = Arrays.copyOf(key, key.length);
+      _hash = 31 * columnFamily + Arrays.hashCode(_key);
+    }
+
+    @Override
+    public boolean equals(Object other) {
+      if (this == other) {
+        return true;
+      }
+      if (!(other instanceof BufferKey)) {
+        return false;
+      }
+      BufferKey that = (BufferKey) other;
+      return _columnFamily == that._columnFamily && Arrays.equals(_key, that._key);
+    }
+
+    @Override
+    public int hashCode() {
+      return _hash;
+    }
+  }
+
+  /// A buffered put, or a delete when {@link #_value} is null.
+  private static final class BufferedWrite {
+    private static final BufferedWrite DELETE = new BufferedWrite(null);
+    private final byte[] _value;
+
+    private BufferedWrite(byte[] value) {
+      _value = value;
+    }
+
+    private static BufferedWrite of(byte[] value) {
+      return new BufferedWrite(Arrays.copyOf(value, value.length));
+    }
+  }
+
+  /// Distinguishes a key missing from the buffer from a buffered delete, whose value is null.
+  private static final class BufferHit {
+    private static final BufferHit MISS = new BufferHit(false, null);
+    private final boolean _found;
+    private final byte[] _value;
+
+    private BufferHit(boolean found, byte[] value) {
+      _found = found;
+      _value = value;
+    }
   }
 
   private static void closeQuietly(AutoCloseable... closeables) {
