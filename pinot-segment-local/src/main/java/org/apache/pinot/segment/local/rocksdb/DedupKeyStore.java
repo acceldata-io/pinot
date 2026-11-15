@@ -206,6 +206,11 @@ public class DedupKeyStore implements AutoCloseable {
     return _numKeys.get();
   }
 
+  /// Restores the count from a checkpoint. The checkpoint's entries are not re-counted.
+  public void restoreNumKeys(long numKeys) {
+    _numKeys.set(numKeys);
+  }
+
   public long getNumStaleEntries() {
     return _numStaleEntries.get();
   }

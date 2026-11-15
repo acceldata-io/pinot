@@ -46,7 +46,7 @@ that small tables don't need.
 |---|---|---|
 | Full and partial upsert, comparison columns, delete record column | Yes | n/a |
 | `metadataTTL` and `deletedKeysTTL` | Yes, scanned off the consuming thread | `metadataTTL` yes |
-| Snapshot and preload (`enableSnapshot`, `enablePreload`) | Yes, with SST bulk load | Yes, one key at a time |
+| Snapshot and preload (`enableSnapshot`, `enablePreload`) | Yes, with SST bulk load and checkpoint restart | Yes, checkpoint restart; a rebuild writes keys in batches |
 | `dropOutOfOrderRecord`, `outOfOrderRecordColumn` | Yes | n/a |
 | `enableDeletedKeysCompactionConsistency` | No, rejected at table create | n/a |
 
@@ -54,8 +54,11 @@ that small tables don't need.
 
 - One RocksDB store per table partition on each server, in `<dataDir>/<tableNameWithType>/upsert_<partition>` or
   `.../dedup_<partition>`.
-- The store is derived data. It is deleted and rebuilt from the segments every time the partition starts, so it has
-  no write-ahead log and needs no backup. Losing the disk loses nothing.
+- The live store is deleted on shutdown and has no write-ahead log. A checkpoint beside it is reused on restart when
+  the sealed segments still match; otherwise the store is rebuilt from the segments. Losing the disk loses nothing the
+  segments cannot rebuild.
+- Ingestion groups key writes into batches of `writeBatchKeys`, so a row does not pay for its own RocksDB write. A
+  read of the same store sees those writes before the batch is flushed.
 - All stores on a server share one LRU block cache, one write buffer manager (memtables are charged to the block
   cache), one flush and compaction pool, and one maintenance pool for TTL scans.
 - Segments are stored as small integer ids with reference counts, so keys don't hold segment objects and released
@@ -129,8 +132,9 @@ and dedup tables ask for different values, the first table to open a store wins 
 | `asyncTtlScan` | `true` | Run TTL scans on the maintenance pool instead of the consuming thread. |
 | `preloadSstMinKeys` | 100000 | Segments with at least this many valid keys are preloaded through a sorted SST file. 0 disables it. |
 | `preloadBatchKeys` | 500000 | Most keys of one segment buffered on the heap during preload. |
+| `writeBatchKeys` | 1024 | How many ingestion writes are grouped into one RocksDB write. 1 writes every key on its own. |
 | `snapshotSegmentLockWaitMs` | 10000 | How long a validDocIds snapshot waits for the lock of a segment that is still being committed. 0 skips the segment at once, as the in-memory managers do; replacing a segment takes longer on RocksDB, so the just-committed segment would then be skipped at almost every commit and no segment would get its first snapshot. |
-| `persistAcrossRestart` | `true` | Checkpoint the key store when a snapshot completes, and reopen it on restart when the sealed segments still match. `false` rebuilds the store from the segments on every start. |
+| `persistAcrossRestart` | `true` | Checkpoint the key store and reopen it on restart when the sealed segments still match. Upsert checkpoints when a snapshot completes. Dedup checkpoints when the sealed segment set changes. `false` rebuilds the store from the segments on every start. |
 | `fallbackToInMemoryOnInitFailure` | `false` | Use the in-memory map if a store can't be opened. |
 
 ### Validation
@@ -228,27 +232,28 @@ Suggested alerts:
 
 ## Restart
 
-When `persistAcrossRestart` is on (the default) and snapshots are enabled, each completed snapshot also writes a
-RocksDB checkpoint of the key map beside the live store. The live store is still deleted on shutdown. On the next
-start the checkpoint is reopened, and the sealed segments are attached from their validDocIds snapshots, without
-reading their keys, when all of these hold:
+When `persistAcrossRestart` is on (the default), the server keeps a RocksDB checkpoint of the key map beside the live
+store. Upsert writes that checkpoint when a validDocIds snapshot completes. Dedup writes it when a sealed segment is
+added, replaced or removed, which requires `enablePreload` to reopen it. The live store is still deleted on shutdown.
+On the next start the checkpoint is reopened without reading the keys back out of the segments, when all of these hold:
 
 - the checkpoint's segments are exactly the sealed segments of that partition on this server,
 - each segment's CRC is unchanged,
-- the primary key, comparison columns, hash function, delete column and TTL settings are unchanged.
+- the primary-key columns, hash function and TTL settings are unchanged. Upsert also checks the comparison columns
+  and the delete column. Dedup also checks the dedup time column.
 
 Startup then depends on opening the checkpoint and loading the segments, not on the number of keys. A partition that
-reopened its checkpoint reports `ROCKSDB_METADATA_RECOVERED` as 1.
+reopened its checkpoint reports `ROCKSDB_METADATA_RECOVERED` as 1. Upsert attaches the sealed segments from their
+validDocIds snapshots. Dedup loads the sealed segments and does not read their documents.
 
-Anything else discards the checkpoint and rebuilds. With `enablePreload`, that rebuild writes valid keys in batches,
-and segments with at least `preloadSstMinKeys` keys are ingested as sorted SST files. Without preload, segments are
-replayed through the normal upsert path. A partition that moved to another server always rebuilds there, because the
-checkpoint is local.
-
-Dedup stores are still rebuilt from their segments on every start.
+Anything else discards the checkpoint and rebuilds. With `enablePreload`, an upsert rebuild writes valid keys in
+batches, and segments with at least `preloadSstMinKeys` keys are ingested as sorted SST files. A dedup rebuild writes
+its keys through the same ingestion batches. Without preload, segments are replayed through the normal upsert or dedup
+path. A partition that moved to another server always rebuilds there, because the checkpoint is local.
 
 ## Limitations
 
 - `enableDeletedKeysCompactionConsistency` is not supported.
-- Dedup preload writes one key at a time; there is no SST bulk load for dedup.
+- Dedup preload does not use sorted SST files, because a key can already be present from an earlier segment. The
+  rebuild still groups those writes into batches.
 - The store is local to a server. Moving a partition to another server rebuilds it there from the segments.

@@ -74,6 +74,9 @@ public final class RocksDBMetadataStoreConfig {
   public static final String PRELOAD_SST_MIN_KEYS = "preloadSstMinKeys";
   /// Preload buffers at most this many keys of a segment on the heap before writing them to the store.
   public static final String PRELOAD_BATCH_KEYS = "preloadBatchKeys";
+  /// Ingestion groups this many key writes into one RocksDB write. Reads see their own writes before the batch is
+  /// flushed. 1 writes every key on its own.
+  public static final String WRITE_BATCH_KEYS = "writeBatchKeys";
   /// How long a validDocIds snapshot waits for the lock of a segment that is being committed or replaced. Replacing a
   /// segment takes longer on RocksDB, so a non-blocking attempt usually misses the segment just committed, and a missed
   /// segment blocks first snapshots of all others. 0 keeps the non-blocking attempt of the in-memory managers.
@@ -100,6 +103,7 @@ public final class RocksDBMetadataStoreConfig {
   public static final long DEFAULT_TTL_SCAN_MAX_KEYS_PER_SECOND = 0;
   public static final int DEFAULT_PRELOAD_SST_MIN_KEYS = 100_000;
   public static final int DEFAULT_PRELOAD_BATCH_KEYS = 500_000;
+  public static final int DEFAULT_WRITE_BATCH_KEYS = 1024;
   public static final long DEFAULT_SNAPSHOT_SEGMENT_LOCK_WAIT_MS = 10_000;
 
   @Nullable
@@ -117,6 +121,7 @@ public final class RocksDBMetadataStoreConfig {
   private final boolean _asyncTtlScan;
   private final int _preloadSstMinKeys;
   private final int _preloadBatchKeys;
+  private final int _writeBatchKeys;
   private final long _snapshotSegmentLockWaitMs;
   private final boolean _persistAcrossRestart;
   private final boolean _fallbackToInMemoryOnInitFailure;
@@ -139,6 +144,7 @@ public final class RocksDBMetadataStoreConfig {
     _ttlScanMaxKeysPerSecond = getLong(values, TTL_SCAN_MAX_KEYS_PER_SECOND, DEFAULT_TTL_SCAN_MAX_KEYS_PER_SECOND, 0);
     _preloadSstMinKeys = (int) getLong(values, PRELOAD_SST_MIN_KEYS, DEFAULT_PRELOAD_SST_MIN_KEYS, 0);
     _preloadBatchKeys = (int) getLong(values, PRELOAD_BATCH_KEYS, DEFAULT_PRELOAD_BATCH_KEYS, 1);
+    _writeBatchKeys = (int) getLong(values, WRITE_BATCH_KEYS, DEFAULT_WRITE_BATCH_KEYS, 1);
     _snapshotSegmentLockWaitMs =
         getLong(values, SNAPSHOT_SEGMENT_LOCK_WAIT_MS, DEFAULT_SNAPSHOT_SEGMENT_LOCK_WAIT_MS, 0);
     _persistAcrossRestart = Boolean.parseBoolean(values.getOrDefault(normalize(PERSIST_ACROSS_RESTART), "true"));
@@ -182,7 +188,8 @@ public final class RocksDBMetadataStoreConfig {
   private static final Set<String> TABLE_KEYS =
       normalizeAll(DATA_DIR, WRITE_BUFFER_SIZE_BYTES, BLOOM_BITS_PER_KEY, BLOCK_SIZE_BYTES, MAX_RETRIES,
           RETRY_BACKOFF_MS, TTL_SCAN_MAX_KEYS_PER_SECOND, ASYNC_TTL_SCAN, PRELOAD_SST_MIN_KEYS, PRELOAD_BATCH_KEYS,
-          SNAPSHOT_SEGMENT_LOCK_WAIT_MS, PERSIST_ACROSS_RESTART, FALLBACK_TO_IN_MEMORY_ON_INIT_FAILURE, ENABLED);
+          WRITE_BATCH_KEYS, SNAPSHOT_SEGMENT_LOCK_WAIT_MS, PERSIST_ACROSS_RESTART,
+          FALLBACK_TO_IN_MEMORY_ON_INIT_FAILURE, ENABLED);
 
   private static Set<String> normalizeAll(String... keys) {
     Set<String> normalized = new HashSet<>();
@@ -300,6 +307,10 @@ public final class RocksDBMetadataStoreConfig {
 
   public int getPreloadBatchKeys() {
     return _preloadBatchKeys;
+  }
+
+  public int getWriteBatchKeys() {
+    return _writeBatchKeys;
   }
 
   public int getPreloadSstMinKeys() {
