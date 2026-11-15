@@ -259,7 +259,8 @@ public class RocksDBPartitionDedupMetadataManager extends BasePartitionDedupMeta
     checkpointIfSteady();
   }
 
-  private void trackSealed(IndexSegment segment) {
+  @VisibleForTesting
+  void trackSealed(IndexSegment segment) {
     if (!(segment instanceof ImmutableSegment)) {
       return;
     }
@@ -276,8 +277,14 @@ public class RocksDBPartitionDedupMetadataManager extends BasePartitionDedupMeta
     }
   }
 
-  private void untrack(IndexSegment segment) {
+  /// Drops {@code segment} from the checkpoint set. A committed segment keeps the consuming segment's name, and
+  /// closing that consuming segment must not drop the committed one.
+  @VisibleForTesting
+  void untrack(IndexSegment segment) {
     synchronized (_segmentSetLock) {
+      if (_sealedSegments.get(segment.getSegmentName()) != segment) {
+        return;
+      }
       _onlineSegmentCrcs.remove(segment.getSegmentName());
       _sealedSegments.remove(segment.getSegmentName());
     }
@@ -285,7 +292,8 @@ public class RocksDBPartitionDedupMetadataManager extends BasePartitionDedupMeta
 
   /// Checkpoints once the sealed-segment set stops changing. A checkpoint started earlier is not overwritten by a
   /// stale copy of the set.
-  private void checkpointIfSteady() {
+  @VisibleForTesting
+  void checkpointIfSteady() {
     if (_checkpointingPreload || !_storeConfig.isPersistAcrossRestart()) {
       return;
     }
