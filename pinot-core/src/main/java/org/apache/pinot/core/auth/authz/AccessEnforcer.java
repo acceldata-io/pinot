@@ -67,6 +67,7 @@ public final class AccessEnforcer implements AutoCloseable {
   private final PinotAuthorizer _authorizer;
   private final boolean _enforce;
   private final Set<String> _serviceAccounts;
+  private final boolean _auditAllowed;
   private final Set<String> _unknownActionsReported = ConcurrentHashMap.newKeySet();
   private final AuthAuditLog _audit;
   /// Enforcers of this process, for the request audit ([PinotAuthAuditTokenResolver]).
@@ -74,12 +75,19 @@ public final class AccessEnforcer implements AutoCloseable {
 
   public AccessEnforcer(PinotAuthenticator authenticator, PinotAuthorizer authorizer, boolean enforce,
       Set<String> serviceAccounts) {
-    this(authenticator, authorizer, enforce, serviceAccounts, new AuthAuditLog());
+    this(authenticator, authorizer, enforce, serviceAccounts, false, new AuthAuditLog());
+  }
+
+  /// @param auditAllowed whether allowed decisions are audited too (`pinot.authz.audit=all`), not only denials
+  public AccessEnforcer(PinotAuthenticator authenticator, PinotAuthorizer authorizer, boolean enforce,
+      Set<String> serviceAccounts, boolean auditAllowed) {
+    this(authenticator, authorizer, enforce, serviceAccounts, auditAllowed, new AuthAuditLog());
   }
 
   AccessEnforcer(PinotAuthenticator authenticator, PinotAuthorizer authorizer, boolean enforce,
-      Set<String> serviceAccounts, AuthAuditLog audit) {
+      Set<String> serviceAccounts, boolean auditAllowed, AuthAuditLog audit) {
     _audit = audit;
+    _auditAllowed = auditAllowed;
     _authenticator = Objects.requireNonNull(authenticator, "authenticator");
     _authentication = new SingleMethodAuthentication(authenticator);
     _authorizer = Objects.requireNonNull(authorizer, "authorizer");
@@ -128,13 +136,22 @@ public final class AccessEnforcer implements AutoCloseable {
       authenticator.close();
       throw e;
     }
-    boolean enforce = AuthorizerSelector.isEnforced(config);
+    boolean enforce;
+    boolean auditAllowed;
+    try {
+      enforce = AuthorizerSelector.isEnforced(config);
+      auditAllowed = AuthorizerSelector.auditsAllowedDecisions(config);
+    } catch (RuntimeException e) {
+      authenticator.close();
+      throw e;
+    }
     Set<String> serviceAccounts = AuthorizerSelector.getServiceAccounts(config);
-    LOGGER.info("Access enforcement: authentication {}, authorization {}{}, {} service account(s)",
+    LOGGER.info("Access enforcement: authentication {}, authorization {}{}, {} service account(s), audit of {} "
+            + "decisions",
         authenticator.getMethod().getConfigValue(), authorizer.getMode().getConfigValue(),
         enforce ? "" : " in audit-only mode (pinot.authz.enforce=false: denials are logged, not enforced)",
-        serviceAccounts.size());
-    return new AccessEnforcer(authenticator, authorizer, enforce, serviceAccounts);
+        serviceAccounts.size(), auditAllowed ? "all" : "denied");
+    return new AccessEnforcer(authenticator, authorizer, enforce, serviceAccounts, auditAllowed);
   }
 
   public AuthMethod getMethod() {
@@ -178,6 +195,9 @@ public final class AccessEnforcer implements AutoCloseable {
   /// Decides a request of an authenticated principal.
   public boolean isAllowed(PinotPrincipal principal, AccessRequest request) {
     if (principal.isServiceAccount() || _serviceAccounts.contains(principal.getUser())) {
+      if (_auditAllowed) {
+        _audit.authorization(principal, request, _authorizer.getMode().getConfigValue(), "allowed", "service account");
+      }
       return true;
     }
     AuthorizationDecision decision;
@@ -190,10 +210,13 @@ public final class AccessEnforcer implements AutoCloseable {
     if (decision.isAllowed() && exposesRows(request)) {
       decision = denyIfRowFiltered(principal, request, decision);
     }
+    String mode = _authorizer.getMode().getConfigValue();
     if (decision.isAllowed()) {
+      if (_auditAllowed) {
+        _audit.authorization(principal, request, mode, "allowed", decision.getReason());
+      }
       return true;
     }
-    String mode = _authorizer.getMode().getConfigValue();
     if (!_enforce) {
       _audit.authorization(principal, request, mode, "wouldDeny", decision.getReason());
       return true;

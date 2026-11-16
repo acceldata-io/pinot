@@ -45,7 +45,9 @@ import org.slf4j.LoggerFactory;
 /// `reason`, and for authorization `mode`, `resource`, `action`, `permission`, `accessType`):
 /// - `authentication` / `failure`: every rejected credential, with the reason;
 /// - `authentication` / `success`: the first use of each credential (its sign-in), not every request;
-/// - `authorization` / `denied`, and `wouldDeny` in audit-only mode.
+/// - `authorization` / `denied`, and `wouldDeny` in audit-only mode (WARN);
+/// - `authorization` / `allowed`, with `pinot.authz.audit=all`, with the rule or policy as reason (INFO, so that
+///   the logging configuration can keep it apart: at high query rates this is one line per authorized request).
 ///
 /// Also remembers recently authenticated credentials (by SHA-256) so that the request audit can name the verified
 /// user and method (see [PinotAuthAuditTokenResolver]). Thread-safe.
@@ -55,15 +57,21 @@ public final class AuthAuditLog {
   private static final int MAX_ENTRIES = 10_000;
   private static final long RECENT_MS = 5 * 60 * 1000L;
 
-  /// Where events go: the audit logger, or a test's collector.
+  /// Where events go: the audit logger (WARN; allowed decisions at INFO), or a test's collector.
   private final Consumer<String> _sink;
+  private final Consumer<String> _allowedSink;
 
   AuthAuditLog() {
-    this(AUDIT::warn);
+    this(AUDIT::warn, AUDIT::info);
   }
 
   AuthAuditLog(Consumer<String> sink) {
+    this(sink, sink);
+  }
+
+  AuthAuditLog(Consumer<String> sink, Consumer<String> allowedSink) {
     _sink = sink;
+    _allowedSink = allowedSink;
   }
 
   private final Map<String, Recent> _recent = Collections.synchronizedMap(new LinkedHashMap<String, Recent>(16, 0.75f,
@@ -112,7 +120,7 @@ public final class AuthAuditLog {
     event.put("permission", request.getPermission().name());
     event.put("accessType", request.getAccessType());
     event.put("reason", reason);
-    _sink.accept(event.toString());
+    ("allowed".equals(outcome) ? _allowedSink : _sink).accept(event.toString());
   }
 
   /// The principal of a credential authenticated in the last minutes, for the request audit.

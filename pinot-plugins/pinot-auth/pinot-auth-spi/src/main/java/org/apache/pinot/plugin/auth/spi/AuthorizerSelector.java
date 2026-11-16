@@ -20,6 +20,7 @@ package org.apache.pinot.plugin.auth.spi;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.Locale;
 import java.util.Set;
 import javax.annotation.Nullable;
 import org.apache.pinot.spi.env.PinotConfiguration;
@@ -44,6 +45,9 @@ public final class AuthorizerSelector {
   public static final String MODE_CONFIG = CONFIG_PREFIX + ".mode";
   public static final String ENFORCE_CONFIG = CONFIG_PREFIX + ".enforce";
   public static final String SERVICE_ACCOUNTS_CONFIG = CONFIG_PREFIX + ".service.accounts";
+  /// Which authorization decisions the security audit records: `denied` (default; denials, and the would-be denials of
+  /// audit-only mode) or `all` (allowed decisions too, with the rule or policy that allowed them).
+  public static final String AUDIT_CONFIG = CONFIG_PREFIX + ".audit";
   public static final String AUTHORIZER_CLASS_SUFFIX = "authorizer.class";
 
   public static final String DEFAULT_NATIVE_AUTHORIZER = "org.apache.pinot.core.auth.authz.NativeAuthorizer";
@@ -68,6 +72,21 @@ public final class AuthorizerSelector {
 
   public static boolean isEnforced(PinotConfiguration config) {
     return config.getProperty(ENFORCE_CONFIG, true);
+  }
+
+  /// Whether the security audit records allowed decisions too (`pinot.authz.audit=all`).
+  ///
+  /// @throws IllegalArgumentException for a value other than `denied` or `all`
+  public static boolean auditsAllowedDecisions(PinotConfiguration config) {
+    String value = config.getProperty(AUDIT_CONFIG, "denied").trim().toLowerCase(Locale.ROOT);
+    switch (value) {
+      case "denied":
+        return false;
+      case "all":
+        return true;
+      default:
+        throw new IllegalArgumentException(AUDIT_CONFIG + " must be denied or all, not '" + value + "'");
+    }
   }
 
   public static Set<String> getServiceAccounts(PinotConfiguration config) {

@@ -20,6 +20,7 @@ package org.apache.pinot.core.auth.authz;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import org.apache.pinot.core.auth.Actions;
@@ -27,6 +28,7 @@ import org.apache.pinot.core.auth.TargetType;
 import org.apache.pinot.plugin.auth.spi.AuthenticationException;
 import org.apache.pinot.plugin.auth.spi.PinotPrincipal;
 import org.apache.pinot.spi.audit.AuditUserIdentity;
+import org.apache.pinot.spi.env.PinotConfiguration;
 import org.apache.pinot.spi.utils.JsonUtils;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -49,9 +51,57 @@ public class AuthAuditTest {
     TestAuth.Authorizer.SEEN.clear();
   }
 
+  private final List<String> _allowedEvents = new CopyOnWriteArrayList<>();
+
   private AccessEnforcer enforcer(boolean enforce) {
-    return new AccessEnforcer(new TestAuth.Authenticator(), new TestAuth.Authorizer(), enforce, Set.of(),
+    return new AccessEnforcer(new TestAuth.Authenticator(), new TestAuth.Authorizer(), enforce, Set.of(), false,
         new AuthAuditLog(_events::add));
+  }
+
+  @Test
+  public void testAllowedDecisionsAreAuditedOnRequest()
+      throws Exception {
+    _allowedEvents.clear();
+    TestAuth.Authorizer.ALLOWED.add("alice Query on default.orders");
+    AccessEnforcer all = new AccessEnforcer(new TestAuth.Authenticator(), new TestAuth.Authorizer(), true,
+        Set.of("svc-pinot"), true, new AuthAuditLog(_events::add, _allowedEvents::add));
+    PinotPrincipal alice = all.authenticate("Bearer alice:analysts");
+    PinotPrincipal service = all.authenticate("Bearer svc-pinot");
+    _events.clear();
+    assertTrue(all.isAllowed(alice, TargetType.TABLE, "orders", Actions.Table.QUERY));
+    assertTrue(all.isAllowed(service, TargetType.CLUSTER, null, Actions.Cluster.UPDATE_ZNODE));
+    assertFalse(all.isAllowed(alice, TargetType.TABLE, "orders", Actions.Table.DELETE_TABLE));
+    // Allowed decisions on their own (INFO) sink, denials on the WARN one
+    assertEquals(_allowedEvents.size(), 2);
+    assertEquals(_events.size(), 1);
+    JsonNode allowed = JsonUtils.stringToJsonNode(_allowedEvents.get(0));
+    assertEquals(allowed.get("outcome").asText(), "allowed");
+    assertEquals(allowed.get("user").asText(), "alice");
+    assertEquals(allowed.get("groups").get(0).asText(), "analysts");
+    assertEquals(allowed.get("mode").asText(), "native");
+    assertEquals(allowed.get("method").asText(), "oauth2");
+    assertEquals(allowed.get("resource").asText(), "default.orders");
+    assertEquals(allowed.get("action").asText(), "Query");
+    assertEquals(allowed.get("reason").asText(), "listed", "the rule or policy that allowed it");
+    assertEquals(JsonUtils.stringToJsonNode(_allowedEvents.get(1)).get("reason").asText(), "service account");
+    all.close();
+
+    // Default: denials only
+    _allowedEvents.clear();
+    AccessEnforcer denied = new AccessEnforcer(new TestAuth.Authenticator(), new TestAuth.Authorizer(), true, Set.of(),
+        false, new AuthAuditLog(_events::add, _allowedEvents::add));
+    assertTrue(denied.isAllowed(alice, TargetType.TABLE, "orders", Actions.Table.QUERY));
+    assertTrue(_allowedEvents.isEmpty());
+    denied.close();
+  }
+
+  @Test
+  public void testAuditSettingIsChecked() {
+    Map<String, Object> settings = TestAuth.settings();
+    settings.put("pinot.authz.audit", "everything");
+    expectThrows(IllegalArgumentException.class, () -> AccessEnforcer.create(new PinotConfiguration(settings)));
+    settings.put("pinot.authz.audit", "all");
+    AccessEnforcer.create(new PinotConfiguration(settings)).close();
   }
 
   @Test
