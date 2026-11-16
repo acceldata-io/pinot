@@ -538,22 +538,32 @@ public abstract class BaseSingleStageBrokerRequestHandler extends BaseBrokerRequ
         Map<String, String> queryOptions =
             pinotQuery.getQueryOptions() == null ? new HashMap<>() : pinotQuery.getQueryOptions();
 
-        rlsFilters.getRLSFilters().ifPresent(rowFilters -> {
-          String combinedFilters =
-              rowFilters.stream().map(filter -> "( " + filter + " )").collect(Collectors.joining(" AND "));
+        List<String> rowFilters = rlsFilters.getRLSFilters().orElse(null);
+        if (rowFilters != null && !rowFilters.isEmpty()) {
+          // Fails closed: a row filter that cannot be applied denies the query instead of running it unfiltered
+          String combinedFilters = null;
+          try {
+            combinedFilters = RlsUtils.combineRowFilters(rawTableName, rowFilters);
+          } catch (RlsUtils.InvalidRowFilterException e) {
+            LOGGER.error("Request {}: row filter '{}' of table {} does not parse; denying the query", requestId,
+                e.getRowFilter(), rawTableName, e);
+            throwAccessDeniedError(requestId, query, requestContext, tableName,
+                new TableAuthorizationResult(Set.of(rawTableName)));
+          }
           String rowFiltersKey = RlsUtils.buildRlsFilterKey(rawTableName);
           queryOptions.put(rowFiltersKey, combinedFilters);
           pinotQuery.setQueryOptions(queryOptions);
           try {
             CalciteSqlParser.queryRewrite(pinotQuery, RlsFiltersRewriter.class);
-            rlsFiltersApplied.set(true);
-            _brokerMetrics.addMeteredTableValue(rawTableName, BrokerMeter.RLS_FILTERS_APPLIED, 1);
           } catch (Exception e) {
-            LOGGER.error(
-                "Unable to apply RLS filter: {}. Row-level security filtering will be disabled for this query.",
-                RlsFiltersRewriter.class.getName(), e);
+            LOGGER.error("Request {}: the row filters of table {} could not be applied; denying the query", requestId,
+                rawTableName, e);
+            throwAccessDeniedError(requestId, query, requestContext, tableName,
+                new TableAuthorizationResult(Set.of(rawTableName)));
           }
-        });
+          rlsFiltersApplied.set(true);
+          _brokerMetrics.addMeteredTableValue(rawTableName, BrokerMeter.RLS_FILTERS_APPLIED, 1);
+        }
       }
 
       // Validate QPS quota

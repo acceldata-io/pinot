@@ -24,6 +24,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import javax.annotation.Nullable;
+import org.apache.pinot.core.auth.Actions;
 import org.apache.pinot.core.auth.TargetType;
 import org.apache.pinot.plugin.auth.spi.AccessRequest;
 import org.apache.pinot.plugin.auth.spi.AuthMethod;
@@ -186,6 +187,9 @@ public final class AccessEnforcer implements AutoCloseable {
       LOGGER.error("Authorizer failed for user '{}' on {}; denying", principal.getUser(), request, e);
       decision = AuthorizationDecision.deny("authorizer error");
     }
+    if (decision.isAllowed() && exposesRows(request)) {
+      decision = denyIfRowFiltered(principal, request, decision);
+    }
     if (decision.isAllowed()) {
       return true;
     }
@@ -198,6 +202,29 @@ public final class AccessEnforcer implements AutoCloseable {
     LOGGER.debug("Denied user '{}' (groups {}) {}: {}", principal.getUser(), principal.getGroups(), request,
         decision.getReason());
     return false;
+  }
+
+  /// Whether the request hands out a table's rows without a query, so that row filters cannot be applied: a segment
+  /// download.
+  private static boolean exposesRows(AccessRequest request) {
+    return request.getResourceType() == ResourceType.TABLE
+        && Actions.Table.DOWNLOAD_SEGMENT.equals(request.getAction());
+  }
+
+  /// A principal whose queries of a table are restricted by row filters must not get the table's rows another way,
+  /// whatever the authorizer grants; an error while reading the filters denies as well.
+  private AuthorizationDecision denyIfRowFiltered(PinotPrincipal principal, AccessRequest request,
+      AuthorizationDecision allowed) {
+    try {
+      if (_authorizer.getRowFilters(principal, request.getDatabase(), request.getTable()).isEmpty()) {
+        return allowed;
+      }
+    } catch (RuntimeException e) {
+      LOGGER.error("Reading the row filters of user '{}' on {} failed; denying", principal.getUser(), request, e);
+      return AuthorizationDecision.deny("row filters could not be read");
+    }
+    return AuthorizationDecision.deny("row filters apply to " + request.describeResource()
+        + ", which " + request.getAction() + " would bypass");
   }
 
   /// Decides a fine-grained action on a target.

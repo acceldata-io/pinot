@@ -413,15 +413,25 @@ public class MultiStageBrokerRequestHandler extends BaseBrokerRequestHandler {
       if (_enableRowColumnLevelAuth) {
         AccessControl accessControl = _accessControlFactory.create();
         for (String tableName : tables) {
-          accessControl.getRowColFilters(requesterIdentity, tableName).getRLSFilters()
-              .ifPresent(rowFilters -> {
-                rlsFiltersApplied.set(true);
-                String combinedFilters =
-                    rowFilters.stream().map(filter -> "( " + filter + " )").collect(Collectors.joining(" AND "));
-                String key = RlsUtils.buildRlsFilterKey(tableName);
-                compiledQuery.getOptions().put(key, combinedFilters);
-                _brokerMetrics.addMeteredTableValue(tableName, BrokerMeter.RLS_FILTERS_APPLIED, 1);
-              });
+          List<String> rowFilters =
+              accessControl.getRowColFilters(requesterIdentity, tableName).getRLSFilters().orElse(null);
+          if (rowFilters == null || rowFilters.isEmpty()) {
+            continue;
+          }
+          // Checked here so that a filter that does not parse denies the query (403), as on the single-stage engine,
+          // instead of failing the leaf stages on the servers
+          String combinedFilters;
+          try {
+            combinedFilters = RlsUtils.combineRowFilters(tableName, rowFilters);
+          } catch (RlsUtils.InvalidRowFilterException e) {
+            LOGGER.error("Request {}: row filter '{}' of table {} does not parse; denying the query",
+                requestContext.getRequestId(), e.getRowFilter(), tableName, e);
+            throwTableAccessError(new TableAuthorizationResult(Set.of(tableName)));
+            return;
+          }
+          rlsFiltersApplied.set(true);
+          compiledQuery.getOptions().put(RlsUtils.buildRlsFilterKey(tableName), combinedFilters);
+          _brokerMetrics.addMeteredTableValue(tableName, BrokerMeter.RLS_FILTERS_APPLIED, 1);
         }
       }
     }

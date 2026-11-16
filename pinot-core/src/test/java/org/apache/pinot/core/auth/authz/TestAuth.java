@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.apache.pinot.plugin.auth.spi.AccessRequest;
 import org.apache.pinot.plugin.auth.spi.AuthCredential;
 import org.apache.pinot.plugin.auth.spi.AuthMethod;
@@ -72,6 +73,8 @@ public final class TestAuth {
   public static class Authorizer implements PinotAuthorizer {
     public static final List<String> ALLOWED = Collections.synchronizedList(new ArrayList<>());
     public static final List<String> SEEN = Collections.synchronizedList(new ArrayList<>());
+    /// Row filters by "user database.table"; the user "rowboom" makes reading them fail
+    public static final Map<String, List<String>> ROW_FILTERS = new ConcurrentHashMap<>();
 
     @Override
     public AuthorizationMode getMode() {
@@ -90,6 +93,14 @@ public final class TestAuth {
       String key = principal.getUser() + " " + request;
       SEEN.add(key);
       return ALLOWED.contains(key) ? AuthorizationDecision.allow("listed") : AuthorizationDecision.deny("not listed");
+    }
+
+    @Override
+    public List<String> getRowFilters(PinotPrincipal principal, String database, String table) {
+      if (principal.getUser().equals("rowboom")) {
+        throw new IllegalStateException("row filter failure");
+      }
+      return ROW_FILTERS.getOrDefault(principal.getUser() + " " + database + "." + table, List.of());
     }
   }
 

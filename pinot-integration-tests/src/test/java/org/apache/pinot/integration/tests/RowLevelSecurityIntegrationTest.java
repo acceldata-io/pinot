@@ -43,11 +43,15 @@ import static org.apache.pinot.integration.tests.BasicAuthTestUtils.AUTH_TOKEN;
 import static org.apache.pinot.integration.tests.ClusterIntegrationTestUtils.getBrokerQueryApiUrl;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.expectThrows;
 
 
 public class RowLevelSecurityIntegrationTest extends BaseClusterIntegrationTest {
   private static final String AUTH_TOKEN_USER_2 = "Basic dXNlcjI6bm90U29TZWNyZXQ";
   public static final Map<String, String> AUTH_HEADER_USER_2 = Map.of("Authorization", AUTH_TOKEN_USER_2);
+  // user3's row filter does not parse
+  private static final String AUTH_TOKEN_USER_3 = "Basic dXNlcjM6YWxzb1NlY3JldA";
+  public static final Map<String, String> AUTH_HEADER_USER_3 = Map.of("Authorization", AUTH_TOKEN_USER_3);
   private static final String DEFAULT_TABLE_NAME_2 = "mytable2";
   private static final String DEFAULT_TABLE_NAME_3 = "mytable3";
 
@@ -59,7 +63,7 @@ public class RowLevelSecurityIntegrationTest extends BaseClusterIntegrationTest 
     properties.put("controller.segment.fetcher.auth.token", AUTH_TOKEN);
     properties.put("controller.admin.access.control.factory.class",
         "org.apache.pinot.controller.api.access.BasicAuthAccessControlFactory");
-    properties.put("controller.admin.access.control.principals", "admin, user, user2");
+    properties.put("controller.admin.access.control.principals", "admin, user, user2, user3");
     properties.put("controller.admin.access.control.principals.admin.password", "verysecret");
     properties.put("controller.admin.access.control.principals.user.password", "secret");
     properties.put("controller.admin.access.control.principals.user2.password", "notSoSecret");
@@ -67,6 +71,9 @@ public class RowLevelSecurityIntegrationTest extends BaseClusterIntegrationTest 
     properties.put("controller.admin.access.control.principals.user.permissions", "read");
     properties.put("controller.admin.access.control.principals.user2.tables", "mytable, mytable2, mytable3");
     properties.put("controller.admin.access.control.principals.user2.permissions", "read");
+    properties.put("controller.admin.access.control.principals.user3.password", "alsoSecret");
+    properties.put("controller.admin.access.control.principals.user3.tables", "mytable");
+    properties.put("controller.admin.access.control.principals.user3.permissions", "read");
   }
 
   @Override
@@ -74,7 +81,7 @@ public class RowLevelSecurityIntegrationTest extends BaseClusterIntegrationTest 
     brokerConf.setProperty("pinot.broker.enable.row.column.level.auth", "true");
     brokerConf.setProperty("pinot.broker.access.control.class",
         "org.apache.pinot.broker.broker.BasicAuthAccessControlFactory");
-    brokerConf.setProperty("pinot.broker.access.control.principals", "admin, user, user2");
+    brokerConf.setProperty("pinot.broker.access.control.principals", "admin, user, user2, user3");
     brokerConf.setProperty("pinot.broker.access.control.principals.admin.password", "verysecret");
     brokerConf.setProperty("pinot.broker.access.control.principals.user.password", "secret");
     brokerConf.setProperty("pinot.broker.access.control.principals.user2.password", "notSoSecret");
@@ -91,6 +98,10 @@ public class RowLevelSecurityIntegrationTest extends BaseClusterIntegrationTest 
         "AirlineID='20409', DestStateName='Florida'");
     brokerConf.setProperty("pinot.broker.access.control.principals.user2.mytable3.rls",
         "AirlineID='20409' OR DestStateName='California', DestStateName='Florida'");
+    brokerConf.setProperty("pinot.broker.access.control.principals.user3.password", "alsoSecret");
+    brokerConf.setProperty("pinot.broker.access.control.principals.user3.tables", "mytable");
+    brokerConf.setProperty("pinot.broker.access.control.principals.user3.permissions", "read");
+    brokerConf.setProperty("pinot.broker.access.control.principals.user3.mytable.rls", "AirlineID = = '19805'");
   }
 
   @Override
@@ -179,6 +190,19 @@ public class RowLevelSecurityIntegrationTest extends BaseClusterIntegrationTest 
     // compare admin response with that of user
     assertTrue(compareRows(queryBroker(queryWithFiltersForUser1, AUTH_HEADER), queryBroker(query, AUTH_HEADER_USER)));
     assertTrue(compareRows(queryBroker(queryWithFiltersForUser2, AUTH_HEADER), queryBroker(query, AUTH_HEADER_USER_2)));
+  }
+
+  @Test
+  public void testRowFilterThatDoesNotParseDeniesTheQuery()
+      throws Exception {
+    // Never unfiltered rows: the query is refused (403) on both engines, without showing the filter
+    for (boolean multiStage : new boolean[]{false, true}) {
+      setUseMultiStageQueryEngine(multiStage);
+      Exception e = expectThrows(Exception.class,
+          () -> queryBroker(String.format("select count(*) from %s", DEFAULT_TABLE_NAME), AUTH_HEADER_USER_3));
+      assertTrue(e.getMessage().contains("403"), "multiStage=" + multiStage + ": " + e.getMessage());
+      assertFalse(e.getMessage().contains("= ="), "the filter is not shown: " + e.getMessage());
+    }
   }
 
   @Test

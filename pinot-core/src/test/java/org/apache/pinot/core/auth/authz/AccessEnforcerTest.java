@@ -48,6 +48,7 @@ public class AccessEnforcerTest {
   public void reset() {
     TestAuth.Authorizer.ALLOWED.clear();
     TestAuth.Authorizer.SEEN.clear();
+    TestAuth.Authorizer.ROW_FILTERS.clear();
   }
 
   private static AccessEnforcer enforcer(String... extra) {
@@ -83,6 +84,34 @@ public class AccessEnforcerTest {
         .getResourceType(), ResourceType.CLUSTER);
     assertEquals(AccessEnforcer.request(TargetType.CLUSTER, "ignored", null, Permission.ADMIN, "manage_users")
         .getResourceType(), ResourceType.CLUSTER);
+  }
+
+  @Test
+  public void testSegmentDownloadIsDeniedWhereRowFiltersApply() {
+    AccessEnforcer enforcer = enforcer("pinot.authz.service.accounts", "svc-pinot");
+    for (String user : List.of("alice", "bob", "rowboom", "svc-pinot")) {
+      TestAuth.Authorizer.ALLOWED.add(user + " DownloadSegment on default.orders");
+      TestAuth.Authorizer.ALLOWED.add(user + " DownloadSegment on default.customers");
+    }
+    TestAuth.Authorizer.ROW_FILTERS.put("alice default.orders", List.of("region = 'south'"));
+    TestAuth.Authorizer.ROW_FILTERS.put("svc-pinot default.orders", List.of("region = 'south'"));
+
+    // A download hands out the rows the filter hides: denied although the authorizer allows it
+    assertFalse(enforcer.isAllowed(user("alice"), TargetType.TABLE, "orders_OFFLINE", Actions.Table.DOWNLOAD_SEGMENT));
+    assertTrue(enforcer.isAllowed(user("alice"), TargetType.TABLE, "customers", Actions.Table.DOWNLOAD_SEGMENT),
+        "no filter on that table");
+    assertTrue(enforcer.isAllowed(user("bob"), TargetType.TABLE, "orders", Actions.Table.DOWNLOAD_SEGMENT));
+    assertFalse(enforcer.isAllowed(user("rowboom"), TargetType.TABLE, "orders", Actions.Table.DOWNLOAD_SEGMENT),
+        "an error while reading the filters denies");
+    assertTrue(enforcer.isAllowed(user("svc-pinot"), TargetType.TABLE, "orders", Actions.Table.DOWNLOAD_SEGMENT),
+        "service accounts are not filtered");
+    // Only downloads: a filtered user still queries (the broker applies the filter)
+    TestAuth.Authorizer.ALLOWED.add("alice Query on default.orders");
+    assertTrue(enforcer.isAllowed(user("alice"), TargetType.TABLE, "orders", Actions.Table.QUERY));
+
+    AccessEnforcer auditOnly = enforcer("pinot.authz.enforce", "false");
+    assertTrue(auditOnly.isAllowed(user("alice"), TargetType.TABLE, "orders", Actions.Table.DOWNLOAD_SEGMENT),
+        "audit-only mode logs the denial");
   }
 
   @Test
