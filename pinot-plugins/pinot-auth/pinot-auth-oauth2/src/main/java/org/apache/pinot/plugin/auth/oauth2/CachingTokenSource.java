@@ -21,6 +21,7 @@ package org.apache.pinot.plugin.auth.oauth2;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 import org.apache.pinot.plugin.auth.spi.AccessToken;
@@ -33,14 +34,26 @@ import org.slf4j.LoggerFactory;
 /// Keeps a token of an [OAuthTokenSource] for Pinot's own calls: fetched once, refreshed when 80 % of its lifetime
 /// has passed, with at most one fetch in flight. A failed refresh is retried with back-off, and the last token is kept
 /// while it is still valid, so a short outage of the token endpoint does not stop ingestion or segment management.
+///
+/// With a [RefreshScheduler] ([#start()]), the token is also fetched when the process starts and refreshed ahead of
+/// expiry in the background, so a process that makes no calls for a while (or has made none since it started) still
+/// holds a valid token when the token endpoint goes down. Without one, tokens are fetched on demand only.
 /// Thread-safe.
 final class CachingTokenSource {
+  /// Runs a refresh after a delay; the returned future cancels it.
+  interface RefreshScheduler {
+    Future<?> schedule(Runnable task, long delayMs);
+  }
+
   private static final Logger LOGGER = LoggerFactory.getLogger(CachingTokenSource.class);
   static final double REFRESH_AT = 0.8;
   static final int ATTEMPTS = 3;
   /// A token rejected sooner than this after it was fetched is not dropped: a fresh token being refused points to a
   /// configuration problem that a new token would not fix, and dropping it would flood the token endpoint.
   static final Duration MIN_AGE_TO_DROP = Duration.ofSeconds(10);
+  /// Back-off of background refreshes after a failure: doubles from the first value up to the second.
+  static final Duration BACKGROUND_RETRY_MIN = Duration.ofSeconds(1);
+  static final Duration BACKGROUND_RETRY_MAX = Duration.ofSeconds(30);
 
   private final String _name;
   private final OAuthTokenSource _source;
@@ -52,12 +65,39 @@ final class CachingTokenSource {
   private volatile Instant _refreshAt = Instant.MIN;
   private volatile Instant _fetchedAt = Instant.MIN;
   private final AtomicBoolean _refreshing = new AtomicBoolean();
+  @Nullable
+  private final RefreshScheduler _scheduler;
+  @Nullable
+  private Future<?> _nextRefresh;
+  private Duration _backgroundRetry = BACKGROUND_RETRY_MIN;
+  private boolean _closed;
 
   CachingTokenSource(String name, OAuthTokenSource source, Clock clock, long initialBackoffMs) {
+    this(name, source, clock, initialBackoffMs, null);
+  }
+
+  CachingTokenSource(String name, OAuthTokenSource source, Clock clock, long initialBackoffMs,
+      @Nullable RefreshScheduler scheduler) {
     _name = name;
     _source = source;
     _clock = clock;
     _initialBackoffMs = initialBackoffMs;
+    _scheduler = scheduler;
+  }
+
+  /// Fetches the first token in the background, without delaying or failing the caller (e.g. when the token endpoint
+  /// is down while Pinot starts: the first call then fetches on demand). No-op without a scheduler.
+  void start() {
+    scheduleRefresh(Duration.ZERO);
+  }
+
+  /// Stops background refreshes.
+  synchronized void close() {
+    _closed = true;
+    if (_nextRefresh != null) {
+      _nextRefresh.cancel(false);
+      _nextRefresh = null;
+    }
   }
 
   /// @return a valid token
@@ -113,11 +153,7 @@ final class CachingTokenSource {
     Instant now = _clock.instant();
     try {
       AccessToken fresh = fetchWithRetry();
-      Duration lifetime = Duration.between(now, fresh.getExpiresAt());
-      _refreshAt = now.plusMillis((long) (Math.max(0, lifetime.toMillis()) * REFRESH_AT));
-      _fetchedAt = now;
-      _token = fresh;
-      AuthMetrics.mark("oauth2.outbound." + _name + ".refreshes");
+      store(fresh, now);
       return fresh.getToken();
     } catch (RuntimeException e) {
       AuthMetrics.mark("oauth2.outbound." + _name + ".refreshFailures");
@@ -128,6 +164,79 @@ final class CachingTokenSource {
       }
       throw new IllegalStateException("Token source " + _name + ": no valid token for Pinot's own calls", e);
     }
+  }
+
+  private void store(AccessToken fresh, Instant fetchedAt) {
+    Duration lifetime = Duration.between(fetchedAt, fresh.getExpiresAt());
+    _refreshAt = fetchedAt.plusMillis((long) (Math.max(0, lifetime.toMillis()) * REFRESH_AT));
+    _fetchedAt = fetchedAt;
+    _token = fresh;
+    AuthMetrics.mark("oauth2.outbound." + _name + ".refreshes");
+    synchronized (this) {
+      _backgroundRetry = BACKGROUND_RETRY_MIN;
+    }
+    scheduleRefresh(Duration.between(_clock.instant(), _refreshAt));
+  }
+
+  /// Background refresh: replaces the token when it is due, or retries with back-off after a failure. Never throws;
+  /// the current token stays in use while it is valid. Coordinates with [#get()] the same way callers do, so a
+  /// background fetch and a caller's fetch do not both go to the token endpoint.
+  void refreshInBackground() {
+    AccessToken token = _token;
+    Instant now = _clock.instant();
+    if (token != null && now.isBefore(_refreshAt)) {
+      scheduleRefresh(Duration.between(now, _refreshAt));  // refreshed on demand meanwhile
+      return;
+    }
+    if (token != null && now.isBefore(token.getExpiresAt())) {
+      if (!_refreshing.compareAndSet(false, true)) {
+        return;  // a caller is refreshing; a successful refresh schedules the next one
+      }
+      try {
+        fetchInBackground(now);
+      } finally {
+        _refreshing.set(false);
+      }
+      return;
+    }
+    synchronized (this) {
+      token = _token;
+      now = _clock.instant();
+      if (token != null && now.isBefore(_refreshAt)) {
+        scheduleRefresh(Duration.between(now, _refreshAt));
+        return;
+      }
+      fetchInBackground(now);
+    }
+  }
+
+  private void fetchInBackground(Instant now) {
+    try {
+      store(fetchWithRetry(), now);
+    } catch (RuntimeException e) {
+      AuthMetrics.mark("oauth2.outbound." + _name + ".refreshFailures");
+      Duration retry;
+      synchronized (this) {
+        retry = _backgroundRetry;
+        Duration doubled = retry.multipliedBy(2);
+        _backgroundRetry = doubled.compareTo(BACKGROUND_RETRY_MAX) > 0 ? BACKGROUND_RETRY_MAX : doubled;
+      }
+      AccessToken current = _token;
+      LOGGER.warn("Token source {}: background refresh failed, retrying in {} s ({}): {}", _name, retry.getSeconds(),
+          current != null && _clock.instant().isBefore(current.getExpiresAt())
+              ? "the current token is valid until " + current.getExpiresAt() : "no valid token", e.toString());
+      scheduleRefresh(retry);
+    }
+  }
+
+  private synchronized void scheduleRefresh(Duration delay) {
+    if (_scheduler == null || _closed) {
+      return;
+    }
+    if (_nextRefresh != null) {
+      _nextRefresh.cancel(false);
+    }
+    _nextRefresh = _scheduler.schedule(this::refreshInBackground, Math.max(0, delay.toMillis()));
   }
 
   private AccessToken fetchWithRetry() {

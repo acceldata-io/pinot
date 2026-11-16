@@ -24,6 +24,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import org.apache.pinot.common.auth.AuthConfig;
 import org.apache.pinot.plugin.auth.spi.HandlerContext;
 import org.apache.pinot.plugin.auth.spi.OAuthTokenSource;
@@ -51,10 +55,15 @@ import org.apache.pinot.spi.env.PinotConfiguration;
 ///   value deployments inject with Pinot's dynamic configuration rather than writing it to disk
 ///
 /// Namespaces with the same settings share one token per process, so a process makes one token request per refresh.
+/// The token is fetched when the provider is created and refreshed ahead of expiry by one background thread per
+/// process, so Pinot's own calls keep a valid token through an outage of the token endpoint shorter than the
+/// remaining lifetime, even in a process that has been idle.
 /// Thread-safe.
 public class OAuthAuthProvider implements AuthProvider {
   private static final Map<Map<String, String>, CachingTokenSource> SOURCES = new ConcurrentHashMap<>();
   static final long INITIAL_BACKOFF_MS = 200;
+  @Nullable
+  private static ScheduledThreadPoolExecutor _refresher;
 
   private final CachingTokenSource _source;
 
@@ -160,11 +169,29 @@ public class OAuthAuthProvider implements AuthProvider {
     } finally {
       thread.setContextClassLoader(previous);
     }
-    return new CachingTokenSource(name, source, Clock.systemUTC(), INITIAL_BACKOFF_MS);
+    CachingTokenSource cache =
+        new CachingTokenSource(name, source, Clock.systemUTC(), INITIAL_BACKOFF_MS, OAuthAuthProvider::scheduleRefresh);
+    cache.start();
+    return cache;
   }
 
-  /// For tests: forget shared sources.
+  /// One daemon thread refreshes the tokens of all sources of the process ahead of expiry.
+  private static synchronized Future<?> scheduleRefresh(Runnable task, long delayMs) {
+    if (_refresher == null) {
+      ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1, runnable -> {
+        Thread thread = new Thread(runnable, "pinot-oauth2-token-refresh");
+        thread.setDaemon(true);
+        return thread;
+      });
+      executor.setRemoveOnCancelPolicy(true);
+      _refresher = executor;
+    }
+    return _refresher.schedule(task, delayMs, TimeUnit.MILLISECONDS);
+  }
+
+  /// For tests: forget shared sources and stop their background refreshes.
   static void clearSharedSources() {
+    SOURCES.values().forEach(CachingTokenSource::close);
     SOURCES.clear();
   }
 }

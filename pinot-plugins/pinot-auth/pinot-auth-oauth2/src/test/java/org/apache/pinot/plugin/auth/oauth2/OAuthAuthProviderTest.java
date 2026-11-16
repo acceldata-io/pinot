@@ -40,6 +40,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -249,6 +250,72 @@ public class OAuthAuthProviderTest {
     } finally {
       executor.shutdownNow();
     }
+  }
+
+  @Test
+  public void testBackgroundRefreshKeepsATokenWithoutCalls() {
+    TestClock clock = new TestClock();
+    ScriptedSource source = new ScriptedSource(clock);
+    List<Runnable> tasks = new CopyOnWriteArrayList<>();
+    List<Long> delays = new CopyOnWriteArrayList<>();
+    CachingTokenSource cache = new CachingTokenSource("test", source, clock, 1, (task, delayMs) -> {
+      tasks.add(task);
+      delays.add(delayMs);
+      return CompletableFuture.completedFuture(null);
+    });
+    // Started: the first token is fetched in the background, before Pinot makes any call
+    cache.start();
+    assertEquals(delays.get(delays.size() - 1).longValue(), 0L);
+    tasks.get(tasks.size() - 1).run();
+    assertEquals(source._fetches.get(), 1);
+    assertEquals(delays.get(delays.size() - 1).longValue(), 80_000L);
+    // Idle until the refresh is due: refreshed without a call
+    clock.advance(80);
+    tasks.get(tasks.size() - 1).run();
+    assertEquals(source._fetches.get(), 2);
+    assertEquals(delays.get(delays.size() - 1).longValue(), 80_000L);
+
+    // The token endpoint goes down at the next refresh: retried with growing back-off, the current token is used
+    source._fail = true;
+    clock.advance(80);
+    tasks.get(tasks.size() - 1).run();
+    assertEquals(source._fetches.get(), 2 + CachingTokenSource.ATTEMPTS);
+    assertEquals(delays.get(delays.size() - 1).longValue(), CachingTokenSource.BACKGROUND_RETRY_MIN.toMillis());
+    tasks.get(tasks.size() - 1).run();
+    assertEquals(delays.get(delays.size() - 1).longValue(), 2 * CachingTokenSource.BACKGROUND_RETRY_MIN.toMillis());
+    // Back up: the background refresh gets a new token before the current one expires, and the back-off restarts
+    source._fail = false;
+    clock.advance(10);
+    tasks.get(tasks.size() - 1).run();
+    String fresh = "t" + source._fetches.get();
+    assertEquals(cache.get(), fresh);
+    assertEquals(delays.get(delays.size() - 1).longValue(), 80_000L);
+
+    // Down again while idle for longer than a token lifetime: the token refreshed in the background is still valid
+    int scheduled = tasks.size();
+    clock.advance(79);
+    source._fail = true;
+    assertEquals(cache.get(), fresh);
+    // Closed: no more background refreshes
+    cache.close();
+    clock.advance(1);
+    tasks.get(tasks.size() - 1).run();
+    assertEquals(tasks.size(), scheduled);
+  }
+
+  @Test
+  public void testFirstTokenFetchedAtStart()
+      throws Exception {
+    // The token is fetched when the provider is created, before the first internal call, and then reused
+    Map<String, Object> config = namespace("controller.server.admin.auth");
+    AuthProvider provider = AuthProviderUtils.extractAuthProvider(new PinotConfiguration(config),
+        "controller.server.admin.auth");
+    for (int i = 0; i < 50 && _requests.isEmpty(); i++) {
+      Thread.sleep(20);
+    }
+    assertEquals(_requests.size(), 1);
+    assertEquals(provider.getTaskToken(), "Bearer tok-1");
+    assertEquals(_requests.size(), 1);
   }
 
   private Map<String, Object> namespace(String prefix) {
