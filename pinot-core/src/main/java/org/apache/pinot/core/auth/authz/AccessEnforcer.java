@@ -173,7 +173,7 @@ public final class AccessEnforcer implements AutoCloseable {
       _audit.authenticationFailed(getMethod(), e.getMessage());
       throw e;
     }
-    _audit.authenticationSucceeded(principal, authorizationHeader);
+    _audit.authenticationSucceeded(principal, isServiceAccount(principal), authorizationHeader);
     return principal;
   }
 
@@ -194,9 +194,10 @@ public final class AccessEnforcer implements AutoCloseable {
 
   /// Decides a request of an authenticated principal.
   public boolean isAllowed(PinotPrincipal principal, AccessRequest request) {
-    if (principal.isServiceAccount() || _serviceAccounts.contains(principal.getUser())) {
+    if (isServiceAccount(principal)) {
       if (_auditAllowed) {
-        _audit.authorization(principal, request, _authorizer.getMode().getConfigValue(), "allowed", "service account");
+        _audit.authorization(principal, true, request, _authorizer.getMode().getConfigValue(), "allowed",
+            "service account");
       }
       return true;
     }
@@ -213,15 +214,15 @@ public final class AccessEnforcer implements AutoCloseable {
     String mode = _authorizer.getMode().getConfigValue();
     if (decision.isAllowed()) {
       if (_auditAllowed) {
-        _audit.authorization(principal, request, mode, "allowed", decision.getReason());
+        _audit.authorization(principal, false, request, mode, "allowed", decision.getReason());
       }
       return true;
     }
     if (!_enforce) {
-      _audit.authorization(principal, request, mode, "wouldDeny", decision.getReason());
+      _audit.authorization(principal, false, request, mode, "wouldDeny", decision.getReason());
       return true;
     }
-    _audit.authorization(principal, request, mode, "denied", decision.getReason());
+    _audit.authorization(principal, false, request, mode, "denied", decision.getReason());
     LOGGER.debug("Denied user '{}' (groups {}) {}: {}", principal.getUser(), principal.getGroups(), request,
         decision.getReason());
     return false;
@@ -248,6 +249,11 @@ public final class AccessEnforcer implements AutoCloseable {
     }
     return AuthorizationDecision.deny("row filters apply to " + request.describeResource()
         + ", which " + request.getAction() + " would bypass");
+  }
+
+  /// A service account by its credential (e.g. a Basic principal marked as such) or by `pinot.authz.service.accounts`.
+  private boolean isServiceAccount(PinotPrincipal principal) {
+    return principal.isServiceAccount() || _serviceAccounts.contains(principal.getUser());
   }
 
   /// Decides a fine-grained action on a target.
@@ -300,7 +306,7 @@ public final class AccessEnforcer implements AutoCloseable {
   ///
   /// @param tableName table name with or without database and type suffix
   public List<String> getRowFilters(PinotPrincipal principal, String tableName) {
-    if (principal.isServiceAccount() || _serviceAccounts.contains(principal.getUser())) {
+    if (isServiceAccount(principal)) {
       return List.of();
     }
     AccessRequest table = request(TargetType.TABLE, tableName, null, Permission.READ, "query");

@@ -92,13 +92,15 @@ public final class AuthAuditLog {
     }
   }
 
-  void authenticationSucceeded(PinotPrincipal principal, String authorizationHeader) {
+  /// @param serviceAccount whether the principal is a service account, by its credential or by
+  ///     `pinot.authz.service.accounts`
+  void authenticationSucceeded(PinotPrincipal principal, boolean serviceAccount, String authorizationHeader) {
     String key = key(authorizationHeader);
     long now = System.currentTimeMillis();
     Recent previous = _recent.put(key, new Recent(principal, now + RECENT_MS));
     if (previous == null) {
       ObjectNode event = event("authentication", "success", principal.getMethod());
-      principal(event, principal);
+      principal(event, principal, serviceAccount);
       _sink.accept(event.toString());
     }
   }
@@ -109,9 +111,10 @@ public final class AuthAuditLog {
     _sink.accept(event.toString());
   }
 
-  void authorization(PinotPrincipal principal, AccessRequest request, String mode, String outcome, String reason) {
+  void authorization(PinotPrincipal principal, boolean serviceAccount, AccessRequest request, String mode,
+      String outcome, String reason) {
     ObjectNode event = event("authorization", outcome, principal.getMethod());
-    principal(event, principal);
+    principal(event, principal, serviceAccount);
     event.put("mode", mode);
     event.put("resource", request.describeResource());
     if (request.getAction() != null) {
@@ -139,11 +142,11 @@ public final class AuthAuditLog {
     return node;
   }
 
-  private static void principal(ObjectNode event, PinotPrincipal principal) {
+  private static void principal(ObjectNode event, PinotPrincipal principal, boolean serviceAccount) {
     event.put("user", principal.getUser());
     ArrayNode groups = event.putArray("groups");
     principal.getGroups().forEach(groups::add);
-    event.put("serviceAccount", principal.isServiceAccount());
+    event.put("serviceAccount", serviceAccount);
     Object handler = principal.getClaims().get("handler");
     if (handler != null) {
       event.put("handler", String.valueOf(handler));

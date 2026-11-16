@@ -67,6 +67,8 @@ public class AuthAuditTest {
         Set.of("svc-pinot"), true, new AuthAuditLog(_events::add, _allowedEvents::add));
     PinotPrincipal alice = all.authenticate("Bearer alice:analysts");
     PinotPrincipal service = all.authenticate("Bearer svc-pinot");
+    // The sign-in event already marks it as a service account
+    assertTrue(JsonUtils.stringToJsonNode(_events.get(_events.size() - 1)).get("serviceAccount").asBoolean());
     _events.clear();
     assertTrue(all.isAllowed(alice, TargetType.TABLE, "orders", Actions.Table.QUERY));
     assertTrue(all.isAllowed(service, TargetType.CLUSTER, null, Actions.Cluster.UPDATE_ZNODE));
@@ -83,7 +85,10 @@ public class AuthAuditTest {
     assertEquals(allowed.get("resource").asText(), "default.orders");
     assertEquals(allowed.get("action").asText(), "Query");
     assertEquals(allowed.get("reason").asText(), "listed", "the rule or policy that allowed it");
-    assertEquals(JsonUtils.stringToJsonNode(_allowedEvents.get(1)).get("reason").asText(), "service account");
+    JsonNode serviceAllowed = JsonUtils.stringToJsonNode(_allowedEvents.get(1));
+    assertEquals(serviceAllowed.get("reason").asText(), "service account");
+    assertTrue(serviceAllowed.get("serviceAccount").asBoolean(), "service account by pinot.authz.service.accounts");
+    assertFalse(allowed.get("serviceAccount").asBoolean());
     all.close();
 
     // Default: denials only
