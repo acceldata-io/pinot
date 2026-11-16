@@ -1,0 +1,715 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package org.apache.pinot.segment.local.upsert;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import javax.annotation.Nullable;
+import javax.annotation.concurrent.ThreadSafe;
+import org.apache.helix.HelixManager;
+import org.apache.pinot.common.metadata.segment.SegmentZKMetadata;
+import org.apache.pinot.common.metrics.ServerGauge;
+import org.apache.pinot.common.metrics.ServerMeter;
+import org.apache.pinot.segment.local.data.manager.TableDataManager;
+import org.apache.pinot.segment.local.indexsegment.immutable.ImmutableSegmentImpl;
+import org.apache.pinot.segment.local.rocksdb.MetadataCodec;
+import org.apache.pinot.segment.local.rocksdb.PrimaryKeyLocationStore;
+import org.apache.pinot.segment.local.rocksdb.PrimaryKeyLocationStore.Location;
+import org.apache.pinot.segment.local.rocksdb.RocksDBMetadataMetrics;
+import org.apache.pinot.segment.local.rocksdb.RocksDBMetadataStoreConfig;
+import org.apache.pinot.segment.local.rocksdb.RocksDBRecoveryManifest;
+import org.apache.pinot.segment.local.segment.index.loader.IndexLoadingConfig;
+import org.apache.pinot.segment.local.segment.readers.LazyRow;
+import org.apache.pinot.segment.local.segment.readers.PrimaryKeyReader;
+import org.apache.pinot.segment.local.utils.HashUtils;
+import org.apache.pinot.segment.local.utils.SegmentPreloadUtils;
+import org.apache.pinot.segment.spi.ImmutableSegment;
+import org.apache.pinot.segment.spi.IndexSegment;
+import org.apache.pinot.segment.spi.MutableSegment;
+import org.apache.pinot.segment.spi.V1Constants;
+import org.apache.pinot.segment.spi.index.mutable.ThreadSafeMutableRoaringBitmap;
+import org.apache.pinot.spi.config.table.TableConfig;
+import org.apache.pinot.spi.data.readers.GenericRow;
+import org.apache.pinot.spi.data.readers.PrimaryKey;
+import org.roaringbitmap.buffer.MutableRoaringBitmap;
+
+
+/**
+ * Implementation of {@link PartitionUpsertMetadataManager} that keeps the primary-key map in RocksDB instead of the
+ * Java heap. Each record location costs a few dozen bytes on local disk and in the shared block cache, so a server can
+ * track billions of keys within a bounded heap.
+ *
+ * <p>The logic mirrors {@link ConcurrentMapPartitionUpsertMetadataManager} line for line: every
+ * {@code ConcurrentHashMap.compute} becomes {@link PrimaryKeyLocationStore#compute}, which holds a per-key stripe lock
+ * around the RocksDB read-modify-write. Segments are referenced by small ids from a per-partition registry.
+ *
+ * <p>When a snapshot completes, the key map is checkpointed. A restart reopens that checkpoint instead of reading the
+ * keys back out of the segments, as long as the sealed segments still match it. Otherwise the store is rebuilt from
+ * the segments. The live store is deleted on close. Thread-safe.
+ */
+@SuppressWarnings({"rawtypes", "unchecked"})
+@ThreadSafe
+public class RocksDBPartitionUpsertMetadataManager extends BasePartitionUpsertMetadataManager {
+  public static final String STORE_DIR_PREFIX = "upsert_";
+
+  // Used to initialize a reference to previous row for merging in partial upsert
+  private final LazyRow _reusePreviousRow = new LazyRow();
+  private final Map<String, Object> _reuseMergeResultHolder = new HashMap<>();
+
+  @VisibleForTesting
+  final PrimaryKeyLocationStore _store;
+  private final RocksDBMetadataStoreConfig _storeConfig;
+  private final AtomicBoolean _ttlScanRunning = new AtomicBoolean();
+  private volatile boolean _recoveredFromCheckpoint;
+  private Map<String, RocksDBRecoveryManifest.Segment> _recoveredSegments = Map.of();
+
+  public RocksDBPartitionUpsertMetadataManager(String tableNameWithType, int partitionId, UpsertContext context,
+      RocksDBMetadataStoreConfig storeConfig) {
+    super(tableNameWithType, partitionId, context);
+    _storeConfig = storeConfig;
+    _store = new PrimaryKeyLocationStore(getStoreDir(tableNameWithType, partitionId, context, storeConfig),
+        storeConfig);
+    RocksDBMetadataMetrics.registerPartitionGauges(_serverMetrics, tableNameWithType, partitionId,
+        _store.getPartitionStore(), _store::getNumStaleLocations);
+    if (!storeConfig.isPersistAcrossRestart()) {
+      _store.getPartitionStore().deleteRecovery();
+    }
+    _logger.info("Using RocksDB upsert metadata store in: {}", _store.getPartitionStore().getDir());
+  }
+
+  @Override
+  protected void doPreloadSegments(TableDataManager tableDataManager, IndexLoadingConfig indexLoadingConfig,
+      HelixManager helixManager, ExecutorService segmentPreloadExecutor)
+      throws Exception {
+    TableConfig tableConfig = indexLoadingConfig.getTableConfig();
+    Map<String, Long> onlineSegmentCrcs = SegmentPreloadUtils.getOnlineSegmentCrcs(tableDataManager, _partitionId,
+        helixManager, (segmentName, segmentZKMetadata) -> hasSnapshot(tableDataManager, tableConfig, segmentName,
+            segmentZKMetadata));
+    if (!tryRecover(onlineSegmentCrcs)) {
+      _recoveredFromCheckpoint = false;
+      if (_storeConfig.isPersistAcrossRestart()) {
+        _store.getPartitionStore().deleteRecovery();
+      }
+    }
+    super.doPreloadSegments(tableDataManager, indexLoadingConfig, helixManager, segmentPreloadExecutor);
+  }
+
+  private static boolean hasSnapshot(TableDataManager tableDataManager, TableConfig tableConfig, String segmentName,
+      SegmentZKMetadata segmentZKMetadata) {
+    return SegmentPreloadUtils.hasValidDocIdsSnapshot(tableDataManager, tableConfig, segmentName,
+        segmentZKMetadata.getTier());
+  }
+
+  /**
+   * Reopens the checkpoint when it covers exactly {@code onlineSegmentCrcs}. The segments are still loaded afterwards,
+   * but only so their valid-doc bitmaps are attached; their keys are not read.
+   */
+  @VisibleForTesting
+  boolean tryRecover(Map<String, Long> onlineSegmentCrcs) {
+    if (!_storeConfig.isPersistAcrossRestart()) {
+      return false;
+    }
+    RocksDBRecoveryManifest manifest = _store.getPartitionStore().readRecoveryManifest();
+    if (manifest == null) {
+      return false;
+    }
+    String mismatch = manifest.mismatch(recoveryFingerprint(), onlineSegmentCrcs);
+    if (mismatch != null) {
+      _logger.info("RocksDB checkpoint not used ({}), rebuilding from segments", mismatch);
+      return false;
+    }
+    try {
+      _store.getPartitionStore().adoptRecovery();
+    } catch (RuntimeException e) {
+      _logger.warn("Failed to open the RocksDB checkpoint, rebuilding from segments", e);
+      return false;
+    }
+    _store.restoreNumPrimaryKeys(manifest.getNumPrimaryKeys());
+    setWatermark(manifest.getWatermark());
+    _recoveredSegments = manifest.getSegments();
+    _recoveredFromCheckpoint = true;
+    updatePrimaryKeyGauge();
+    _serverMetrics.setValueOfPartitionGauge(_tableNameWithType, _partitionId, ServerGauge.ROCKSDB_METADATA_RECOVERED,
+        1);
+    _logger.info("Recovered {} primary keys from the RocksDB checkpoint for {} segments", manifest.getNumPrimaryKeys(),
+        manifest.getSegments().size());
+    return true;
+  }
+
+  @Override
+  protected void doPreloadSegment(ImmutableSegmentImpl segment) {
+    if (!_recoveredFromCheckpoint) {
+      super.doPreloadSegment(segment);
+      return;
+    }
+    String segmentName = segment.getSegmentName();
+    _logger.info("Attaching recovered segment: {}, current primary key count: {}", segmentName, getNumPrimaryKeys());
+    MutableRoaringBitmap validDocIds = segment.loadDocIdsFromSnapshot(V1Constants.VALID_DOC_IDS_SNAPSHOT_FILE_NAME);
+    Preconditions.checkState(validDocIds != null, "Snapshot of validDocIds is required to recover segment: %s",
+        segmentName);
+    RocksDBRecoveryManifest.Segment recovered = _recoveredSegments.get(segmentName);
+    if (recovered != null && recovered.getId() >= 0) {
+      _store.getSegmentRegistry().bind(segment, recovered.getId(), recovered.getRefCount());
+    }
+    if (validDocIds.isEmpty()) {
+      segment.enableUpsert(this, new ThreadSafeMutableRoaringBitmap(), null);
+      return;
+    }
+    if (isTTLEnabled() && !_comparisonColumns.isEmpty()) {
+      double maxComparisonValue = getMaxComparisonValue(segment);
+      _largestSeenComparisonValue.getAndUpdate(v -> Math.max(v, maxComparisonValue));
+      if (isOutOfMetadataTTL(maxComparisonValue) && skipPreloadSegmentOutOfTTL(segment, validDocIds)) {
+        return;
+      }
+    }
+    MutableRoaringBitmap queryableDocIds = getQueryableDocIds(segment, validDocIds);
+    segment.enableUpsert(this, new ThreadSafeMutableRoaringBitmap(validDocIds),
+        queryableDocIds != null ? new ThreadSafeMutableRoaringBitmap(queryableDocIds) : null);
+    updatePrimaryKeyGauge();
+  }
+
+  @Override
+  protected void onSnapshotTaken(boolean complete) {
+    if (!complete || !_storeConfig.isPersistAcrossRestart()) {
+      return;
+    }
+    Map<String, RocksDBRecoveryManifest.Segment> segments = new LinkedHashMap<>();
+    for (IndexSegment segment : _trackedSegments) {
+      if (!(segment instanceof ImmutableSegment)) {
+        continue;
+      }
+      long crc;
+      try {
+        crc = Long.parseLong(segment.getSegmentMetadata().getCrc());
+      } catch (NumberFormatException e) {
+        _logger.warn("Skip RocksDB checkpoint; segment {} has no numeric crc", segment.getSegmentName());
+        return;
+      }
+      int id = _store.getSegmentRegistry().getId(segment);
+      long refCount = id >= 0 ? _store.getSegmentRegistry().getRefCount(id) : 0;
+      segments.put(segment.getSegmentName(), new RocksDBRecoveryManifest.Segment(crc, id, refCount));
+    }
+    RocksDBRecoveryManifest manifest =
+        new RocksDBRecoveryManifest(recoveryFingerprint(), getWatermark(), getNumPrimaryKeys(), segments);
+    try {
+      _store.getPartitionStore().checkpoint(manifest);
+    } catch (RuntimeException e) {
+      _logger.warn("Failed to checkpoint the RocksDB metadata store; restart will rebuild from segments", e);
+    }
+  }
+
+  /// Identifies the key schema. A checkpoint written for a different schema is never reopened.
+  @VisibleForTesting
+  String recoveryFingerprint() {
+    return _hashFunction + "|" + _primaryKeyColumns + "|" + _comparisonColumns + "|" + _deleteRecordColumn + "|"
+        + _metadataTTL + "|" + _deletedKeysTTL;
+  }
+
+  @VisibleForTesting
+  static File getStoreDir(String tableNameWithType, int partitionId, UpsertContext context,
+      RocksDBMetadataStoreConfig storeConfig) {
+    File tableIndexDir = context.getTableIndexDir();
+    File defaultParent = tableIndexDir != null && tableIndexDir.getParentFile() != null
+        ? tableIndexDir.getParentFile()
+        : new File(System.getProperty("java.io.tmpdir"));
+    return new File(new File(storeConfig.resolveDataDir(defaultParent), tableNameWithType),
+        STORE_DIR_PREFIX + partitionId);
+  }
+
+  private byte[] toKey(PrimaryKey primaryKey) {
+    return MetadataCodec.encodeKey(HashUtils.hashPrimaryKey(primaryKey, _hashFunction));
+  }
+
+  @Override
+  protected long getNumPrimaryKeys() {
+    return _store.getNumPrimaryKeys();
+  }
+
+  @Override
+  protected void doAddOrReplaceSegment(ImmutableSegmentImpl segment, ThreadSafeMutableRoaringBitmap validDocIds,
+      @Nullable ThreadSafeMutableRoaringBitmap queryableDocIds, Iterator<RecordInfo> recordInfoIterator,
+      @Nullable IndexSegment oldSegment, @Nullable MutableRoaringBitmap validDocIdsForOldSegment) {
+    String segmentName = segment.getSegmentName();
+    segment.enableUpsert(this, validDocIds, queryableDocIds);
+
+    AtomicInteger numKeysInWrongSegment = new AtomicInteger();
+    while (recordInfoIterator.hasNext()) {
+      RecordInfo recordInfo = recordInfoIterator.next();
+      int newDocId = recordInfo.getDocId();
+      Comparable newComparisonValue = recordInfo.getComparisonValue();
+      _store.compute(toKey(recordInfo.getPrimaryKey()), (primaryKey, currentRecordLocation) -> {
+        if (currentRecordLocation != null) {
+          // Existing primary key
+          IndexSegment currentSegment = currentRecordLocation.getSegment();
+          int currentDocId = currentRecordLocation.getDocId();
+          int comparisonResult = newComparisonValue.compareTo(currentRecordLocation.getComparisonValue());
+
+          // The current record is in the same segment
+          // Update the record location when there is a tie to keep the newer record. Note that the record info
+          // iterator will return records with incremental doc ids.
+          if (currentSegment == segment) {
+            if (comparisonResult >= 0) {
+              replaceDocId(segment, validDocIds, queryableDocIds, currentDocId, newDocId, recordInfo);
+              return new Location(segment, newDocId, newComparisonValue);
+            } else {
+              return currentRecordLocation;
+            }
+          }
+
+          // The current record is in an old segment being replaced
+          // This could happen when committing a consuming segment, or reloading a completed segment. In this
+          // case, we want to update the record location when there is a tie because the record locations should
+          // point to the new added segment instead of the old segment being replaced. Also, do not update the valid
+          // doc ids for the old segment because it has not been replaced yet. We pass in an optional valid doc ids
+          // snapshot for the old segment, which can be updated and used to track the docs not replaced yet.
+          if (currentSegment == oldSegment) {
+            if (comparisonResult >= 0) {
+              if (validDocIdsForOldSegment == null && oldSegment != null && oldSegment.getValidDocIds() != null) {
+                // Update the old segment's bitmap in place if a copy of the bitmap was not provided.
+                replaceDocId(segment, validDocIds, queryableDocIds, oldSegment, currentDocId, newDocId, recordInfo);
+              } else {
+                addDocId(segment, validDocIds, queryableDocIds, newDocId, recordInfo);
+                if (validDocIdsForOldSegment != null) {
+                  validDocIdsForOldSegment.remove(currentDocId);
+                }
+              }
+              if (_context.isTableTypeInconsistentDuringConsumption() && currentSegment instanceof MutableSegment) {
+                _store.removePrevious(primaryKey);
+              }
+              return new Location(segment, newDocId, newComparisonValue);
+            } else {
+              trackPreviousLocation(primaryKey, currentSegment, segment, newDocId, newComparisonValue);
+              return currentRecordLocation;
+            }
+          }
+
+          // This should not happen because the previously replaced segment should have all keys removed. We still
+          // handle it here, and also track the number of keys not properly replaced previously.
+          String currentSegmentName = currentSegment.getSegmentName();
+          if (currentSegmentName.equals(segmentName)) {
+            numKeysInWrongSegment.getAndIncrement();
+            if (comparisonResult >= 0) {
+              addDocId(segment, validDocIds, queryableDocIds, newDocId, recordInfo);
+              if (_context.isTableTypeInconsistentDuringConsumption() && currentSegment instanceof MutableSegment) {
+                _store.removePrevious(primaryKey);
+              }
+              return new Location(segment, newDocId, newComparisonValue);
+            } else {
+              trackPreviousLocation(primaryKey, currentSegment, segment, newDocId, newComparisonValue);
+              return currentRecordLocation;
+            }
+          }
+
+          // The current record is in a different segment
+          // Update the record location when getting a newer comparison value, or the value is the same as the
+          // current value, but the segment has a larger sequence number (the segment is newer than the current
+          // segment).
+          if (comparisonResult > 0 || (comparisonResult == 0 && shouldReplaceOnComparisonTie(segmentName,
+              currentSegmentName, getAuthoritativeUpdateOrCreationTime(segment),
+              getAuthoritativeUpdateOrCreationTime(currentSegment)))) {
+            replaceDocId(segment, validDocIds, queryableDocIds, currentSegment, currentDocId, newDocId, recordInfo);
+            if (_context.isTableTypeInconsistentDuringConsumption() && currentSegment instanceof MutableSegment) {
+              _store.removePrevious(primaryKey);
+            }
+            return new Location(segment, newDocId, newComparisonValue);
+          } else {
+            trackPreviousLocation(primaryKey, currentSegment, segment, newDocId, newComparisonValue);
+            return currentRecordLocation;
+          }
+        } else {
+          // New primary key
+          addDocId(segment, validDocIds, queryableDocIds, newDocId, recordInfo);
+          return new Location(segment, newDocId, newComparisonValue);
+        }
+      });
+    }
+    int numKeys = numKeysInWrongSegment.get();
+    if (numKeys > 0) {
+      _logger.warn("Found {} primary keys in the wrong segment when adding segment: {}", numKeys, segmentName);
+      _serverMetrics.addMeteredTableValue(_tableNameWithType, ServerMeter.UPSERT_KEYS_IN_WRONG_SEGMENT, numKeys);
+    }
+  }
+
+  /// While a consuming segment owns a key, remembers the newest location of that key in the segment being added, so
+  /// the key can be reverted to it if the consuming segment is dropped.
+  private void trackPreviousLocation(byte[] primaryKey, IndexSegment currentSegment, IndexSegment segment,
+      int newDocId, Comparable newComparisonValue) {
+    if (!_context.isTableTypeInconsistentDuringConsumption() || !(currentSegment instanceof MutableSegment)) {
+      return;
+    }
+    Location prevRecordLocation = _store.getPrevious(primaryKey);
+    if (prevRecordLocation == null || newComparisonValue.compareTo(prevRecordLocation.getComparisonValue()) >= 0) {
+      _store.putPrevious(primaryKey, new Location(segment, newDocId, newComparisonValue));
+    }
+  }
+
+  @Override
+  /**
+   * Preload path: the validDocIds snapshots make each key valid in exactly one segment, so keys are written without
+   * reading the store, in chunks of {@code preloadBatchKeys} that are ingested as sorted SST files when large enough.
+   */
+  protected void addSegmentWithoutUpsert(ImmutableSegmentImpl segment, ThreadSafeMutableRoaringBitmap validDocIds,
+      @Nullable ThreadSafeMutableRoaringBitmap queryableDocIds, Iterator<RecordInfo> recordInfoIterator) {
+    segment.enableUpsert(this, validDocIds, queryableDocIds);
+    int batchSize = _storeConfig.getPreloadBatchKeys();
+    int sstMinKeys = _storeConfig.getPreloadSstMinKeys();
+    List<byte[]> keys = new ArrayList<>();
+    List<Location> locations = new ArrayList<>();
+    while (recordInfoIterator.hasNext()) {
+      RecordInfo recordInfo = recordInfoIterator.next();
+      int newDocId = recordInfo.getDocId();
+      addDocId(segment, validDocIds, queryableDocIds, newDocId, recordInfo);
+      keys.add(toKey(recordInfo.getPrimaryKey()));
+      locations.add(new Location(segment, newDocId, recordInfo.getComparisonValue()));
+      if (keys.size() >= batchSize) {
+        _store.putAllAbsent(keys, locations, sstMinKeys);
+        keys.clear();
+        locations.clear();
+      }
+    }
+    _store.putAllAbsent(keys, locations, sstMinKeys);
+  }
+
+  @Override
+  protected void removeSegment(IndexSegment segment, Iterator<PrimaryKey> primaryKeyIterator) {
+    while (primaryKeyIterator.hasNext()) {
+      PrimaryKey primaryKey = primaryKeyIterator.next();
+      _store.computeIfPresent(toKey(primaryKey), (pk, recordLocation) -> {
+        if (recordLocation.getSegment() == segment) {
+          if (_context.isTableTypeInconsistentDuringConsumption() && segment instanceof MutableSegment) {
+            _store.removePrevious(pk);
+          }
+          return null;
+        }
+        return recordLocation;
+      });
+    }
+  }
+
+  @Override
+  protected void revertAndRemoveSegment(IndexSegment segment,
+      Iterator<Map.Entry<Integer, PrimaryKey>> primaryKeyIterator) {
+    while (primaryKeyIterator.hasNext()) {
+      Map.Entry<Integer, PrimaryKey> primaryKeyEntry = primaryKeyIterator.next();
+      PrimaryKey primaryKey = primaryKeyEntry.getValue();
+      int docId = primaryKeyEntry.getKey();
+      _store.computeIfPresent(toKey(primaryKey), (pk, recordLocation) -> {
+        Location prevLocation = _store.getPrevious(pk);
+        if (recordLocation.getSegment() == segment) {
+          if (prevLocation == null) {
+            _store.removePrevious(pk);
+            return null;
+          }
+          // Revert to previous segment location
+          IndexSegment prevSegment = prevLocation.getSegment();
+          ThreadSafeMutableRoaringBitmap prevValidDocIds = prevSegment.getValidDocIds();
+          if (prevValidDocIds != null) {
+            try (UpsertUtils.RecordInfoReader recordInfoReader = new UpsertUtils.RecordInfoReader(prevSegment,
+                _primaryKeyColumns, _comparisonColumns, _deleteRecordColumn)) {
+              int prevDocId = prevLocation.getDocId();
+              RecordInfo recordInfo = recordInfoReader.getRecordInfo(prevDocId);
+              replaceDocId(prevSegment, prevValidDocIds, prevSegment.getQueryableDocIds(), segment, docId,
+                  prevDocId, recordInfo);
+              _store.removePrevious(pk);
+              return prevLocation;
+            } catch (IOException e) {
+              _logger.warn("Failed to revert to previous segment: {}, removing key", prevSegment.getSegmentName(), e);
+              _store.removePrevious(pk);
+              return null;
+            }
+          } else {
+            _store.removePrevious(pk);
+            return null;
+          }
+        } else if (recordLocation.getSegment() instanceof ImmutableSegmentImpl) {
+          _store.removePrevious(pk);
+        } else {
+          _logger.warn(
+              "Consuming segment: {} has added the primary key for docId: {} from the segment: {}, suggesting"
+                  + " that consumption is occurring concurrently with segment replacement, which is undesirable "
+                  + "for consistency between replicas for the table: {}.",
+              recordLocation.getSegment().getSegmentName(), primaryKeyEntry.getKey(), segment.getSegmentName(),
+              _tableNameWithType);
+        }
+        return recordLocation;
+      });
+    }
+  }
+
+  @Override
+  protected void removeSegment(IndexSegment segment, MutableRoaringBitmap validDocIds) {
+    try (PrimaryKeyReader primaryKeyReader = new PrimaryKeyReader(segment, _primaryKeyColumns)) {
+      if (shouldRevertMetadataOnInconsistency(segment)) {
+        revertAndRemoveSegment(segment, UpsertUtils.getRecordIterator(primaryKeyReader, validDocIds));
+      } else {
+        removeSegment(segment, UpsertUtils.getPrimaryKeyIterator(primaryKeyReader, validDocIds));
+      }
+    } catch (Exception e) {
+      throw new RuntimeException(
+          String.format("Caught exception while removing segment: %s, table: %s, message: %s", segment.getSegmentName(),
+              _tableNameWithType, e.getMessage()), e);
+    }
+  }
+
+  @Override
+  protected void doReplaceSegment(ImmutableSegment segment, IndexSegment oldSegment) {
+    super.doReplaceSegment(segment, oldSegment);
+    _store.getSegmentRegistry().retire(oldSegment);
+  }
+
+  @Override
+  public void removeSegment(IndexSegment segment) {
+    super.removeSegment(segment);
+    _store.getSegmentRegistry().retire(segment);
+  }
+
+  /**
+   * Starts the TTL scan on the shared maintenance pool and returns, unless {@code asyncTtlScan} is off. At most one
+   * scan runs per partition; a call while one is running is skipped, since the next consuming segment triggers
+   * another. The scan holds a pending operation so that {@link #close()} waits for it.
+   */
+  @Override
+  public void doRemoveExpiredPrimaryKeys() {
+    if (!_storeConfig.isAsyncTtlScan()) {
+      removeExpiredPrimaryKeysNow();
+      return;
+    }
+    if (!_ttlScanRunning.compareAndSet(false, true)) {
+      _logger.info("Skip scheduling TTL scan because the previous scan is still running");
+      return;
+    }
+    if (!startOperation()) {
+      _ttlScanRunning.set(false);
+      return;
+    }
+    try {
+      _store.getPartitionStore().getEnvironment().getMaintenanceExecutor().execute(() -> {
+        try {
+          long startTimeMs = System.currentTimeMillis();
+          removeExpiredPrimaryKeysNow();
+          _logger.info("Finished TTL scan in {}ms", System.currentTimeMillis() - startTimeMs);
+        } catch (Exception e) {
+          _logger.error("Caught exception while removing expired primary keys", e);
+        } finally {
+          _ttlScanRunning.set(false);
+          finishOperation();
+        }
+      });
+    } catch (RejectedExecutionException e) {
+      _ttlScanRunning.set(false);
+      finishOperation();
+      throw e;
+    }
+  }
+
+  @VisibleForTesting
+  void removeExpiredPrimaryKeysNow() {
+    AtomicInteger numMetadataTTLKeysRemoved = new AtomicInteger();
+    AtomicInteger numDeletedTTLKeysRemoved = new AtomicInteger();
+    AtomicInteger numTotalKeysMarkForDeletion = new AtomicInteger();
+    AtomicInteger numDeletedKeysWithinTTLWindow = new AtomicInteger();
+    double largestSeenComparisonValue = _largestSeenComparisonValue.get();
+    double metadataTTLKeysThreshold =
+        _metadataTTL > 0 ? largestSeenComparisonValue - _metadataTTL : Double.NEGATIVE_INFINITY;
+    double deletedKeysThreshold =
+        _deletedKeysTTL > 0 ? largestSeenComparisonValue - _deletedKeysTTL : Double.NEGATIVE_INFINITY;
+    _store.scanPrimary((primaryKey, recordLocation) -> {
+      double comparisonValue = ((Number) recordLocation.getComparisonValue()).doubleValue();
+      if (_metadataTTL > 0 && comparisonValue < metadataTTLKeysThreshold) {
+        numMetadataTTLKeysRemoved.getAndIncrement();
+        return true;
+      } else if (_deletedKeysTTL > 0) {
+        ThreadSafeMutableRoaringBitmap currentQueryableDocIds = recordLocation.getSegment().getQueryableDocIds();
+        // if key not part of queryable doc id, it means it is deleted
+        if (currentQueryableDocIds != null && !currentQueryableDocIds.contains(recordLocation.getDocId())) {
+          numTotalKeysMarkForDeletion.getAndIncrement();
+          if (comparisonValue >= deletedKeysThreshold) {
+            // If key is within the TTL window, do not remove it from the primary map
+            numDeletedKeysWithinTTLWindow.getAndIncrement();
+          } else {
+            // delete key from primary map
+            removeDocId(recordLocation.getSegment(), recordLocation.getDocId());
+            numDeletedTTLKeysRemoved.getAndIncrement();
+            return true;
+          }
+        }
+      }
+      return false;
+    }, _storeConfig.getTtlScanMaxKeysPerSecond());
+
+    // Update metrics
+    updatePrimaryKeyGauge();
+    int numMetadataTTLKeys = numMetadataTTLKeysRemoved.get();
+    if (numMetadataTTLKeys > 0) {
+      _logger.info("Deleted {} primary keys based on metadataTTL", numMetadataTTLKeys);
+      _serverMetrics.addMeteredTableValue(_tableNameWithType, ServerMeter.METADATA_TTL_PRIMARY_KEYS_REMOVED,
+          numMetadataTTLKeys);
+    }
+    int numDeletedTTLKeys = numDeletedTTLKeysRemoved.get();
+    if (numDeletedTTLKeys > 0) {
+      _logger.info("Deleted {} primary keys based on deletedKeysTTL", numDeletedTTLKeys);
+      _serverMetrics.addMeteredTableValue(_tableNameWithType, ServerMeter.DELETED_KEYS_TTL_PRIMARY_KEYS_REMOVED,
+          numDeletedTTLKeys);
+    }
+    int numTotalKeysMarkedForDeletion = numTotalKeysMarkForDeletion.get();
+    if (numTotalKeysMarkedForDeletion > 0) {
+      _serverMetrics.addMeteredTableValue(_tableNameWithType, ServerMeter.TOTAL_KEYS_MARKED_FOR_DELETION,
+          numTotalKeysMarkedForDeletion);
+    }
+    int numDeletedKeysWithinTTLWindowValue = numDeletedKeysWithinTTLWindow.get();
+    if (numDeletedKeysWithinTTLWindowValue > 0) {
+      _serverMetrics.addMeteredTableValue(_tableNameWithType, ServerMeter.DELETED_KEYS_WITHIN_TTL_WINDOW,
+          numDeletedKeysWithinTTLWindowValue);
+    }
+  }
+
+  /**
+   * Waits up to {@code snapshotSegmentLockWaitMs} for the lock. The snapshot runs when the next consuming segment
+   * starts, while the committed segment's lock can still be held to finish replacing it, which takes longer on RocksDB.
+   * The holders do not wait for the consuming thread, so the bounded wait cannot deadlock.
+   */
+  @Override
+  protected boolean tryLockSegmentForSnapshot(Lock segmentLock) {
+    long waitMs = _storeConfig.getSnapshotSegmentLockWaitMs();
+    if (waitMs <= 0) {
+      return segmentLock.tryLock();
+    }
+    try {
+      return segmentLock.tryLock(waitMs, TimeUnit.MILLISECONDS);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      return false;
+    }
+  }
+
+  @Override
+  protected int getPrevKeyToRecordLocationSize() {
+    return _store.getNumPreviousKeys();
+  }
+
+  @Override
+  protected void clearPrevKeyToRecordLocation() {
+    _store.clearPrevious();
+  }
+
+  @Override
+  protected boolean doAddRecord(MutableSegment segment, RecordInfo recordInfo) {
+    AtomicBoolean isOutOfOrderRecord = new AtomicBoolean(false);
+    ThreadSafeMutableRoaringBitmap validDocIds = Objects.requireNonNull(segment.getValidDocIds());
+    ThreadSafeMutableRoaringBitmap queryableDocIds = segment.getQueryableDocIds();
+    int newDocId = recordInfo.getDocId();
+    Comparable newComparisonValue = recordInfo.getComparisonValue();
+
+    // When TTL is enabled, update largestSeenComparisonValue when adding new record
+    if (isTTLEnabled()) {
+      double comparisonValue = ((Number) newComparisonValue).doubleValue();
+      _largestSeenComparisonValue.getAndUpdate(v -> Math.max(v, comparisonValue));
+    }
+    _store.compute(toKey(recordInfo.getPrimaryKey()), (primaryKey, currentRecordLocation) -> {
+      if (currentRecordLocation != null) {
+        // Existing primary key
+        IndexSegment currentSegment = currentRecordLocation.getSegment();
+        // Update the record location when the new comparison value is greater than or equal to the current value.
+        // Update the record location when there is a tie to keep the newer record.
+        if (newComparisonValue.compareTo(currentRecordLocation.getComparisonValue()) >= 0) {
+          int currentDocId = currentRecordLocation.getDocId();
+          Location newRecordLocation = new Location(segment, newDocId, newComparisonValue);
+          if (segment == currentSegment) {
+            replaceDocId(segment, validDocIds, queryableDocIds, currentDocId, newDocId, recordInfo);
+          } else {
+            // For consistent ParallelSegmentConsumptionPolicy like DISALLOW_ALWAYS and ALLOW_DURING_BUILD_ONLY,
+            // we shouldn't be seeing two mutable segments, so ideally current segment shouldn't point to
+            // Mutable segment, unless other modes are enabled which could lead to inconsistent behaviour
+            if (_context.isTableTypeInconsistentDuringConsumption() && !(currentSegment instanceof MutableSegment)) {
+              _store.putPrevious(primaryKey, currentRecordLocation);
+            }
+            replaceDocId(segment, validDocIds, queryableDocIds, currentSegment, currentDocId, newDocId, recordInfo);
+          }
+          return newRecordLocation;
+        } else {
+          // Out-of-order record
+          handleOutOfOrderEvent(currentRecordLocation.getComparisonValue(), recordInfo.getComparisonValue());
+          isOutOfOrderRecord.set(true);
+          return currentRecordLocation;
+        }
+      } else {
+        // New primary key
+        addDocId(segment, validDocIds, queryableDocIds, newDocId, recordInfo);
+        return new Location(segment, newDocId, newComparisonValue);
+      }
+    });
+
+    updatePrimaryKeyGauge();
+    return !isOutOfOrderRecord.get();
+  }
+
+  /**
+   * Merges the new record with the latest stored version of its key. Only the record location comes from RocksDB; the
+   * previous row itself is read from its segment, as in the in-memory manager.
+   */
+  @Override
+  protected GenericRow doUpdateRecord(GenericRow record, RecordInfo recordInfo) {
+    assert _partialUpsertHandler != null;
+    _store.computeIfPresent(toKey(recordInfo.getPrimaryKey()), (pk, recordLocation) -> {
+      // Read the previous record if the following conditions are met:
+      // - New record is not a DELETE record
+      // - New record is not out-of-order
+      // - Previous record is not deleted
+      if (!recordInfo.isDeleteRecord()
+          && recordInfo.getComparisonValue().compareTo(recordLocation.getComparisonValue()) >= 0) {
+        IndexSegment currentSegment = recordLocation.getSegment();
+        ThreadSafeMutableRoaringBitmap currentQueryableDocIds = currentSegment.getQueryableDocIds();
+        int currentDocId = recordLocation.getDocId();
+        if (currentQueryableDocIds == null || currentQueryableDocIds.contains(currentDocId)) {
+          _reusePreviousRow.init(currentSegment, currentDocId);
+          _partialUpsertHandler.merge(_reusePreviousRow, record, _reuseMergeResultHolder);
+          _reuseMergeResultHolder.clear();
+        }
+      }
+      return recordLocation;
+    });
+    return record;
+  }
+
+  @Override
+  protected void doClose() {
+    RocksDBMetadataMetrics.removePartitionGauges(_serverMetrics, _tableNameWithType, _partitionId);
+    _store.close();
+  }
+
+  @VisibleForTesting
+  RocksDBMetadataStoreConfig getStoreConfig() {
+    return _storeConfig;
+  }
+}

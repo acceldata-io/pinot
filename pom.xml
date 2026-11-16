@@ -175,6 +175,7 @@
     <lucene.version>9.12.0</lucene.version>
     <reflections.version>0.10.2</reflections.version>
     <dynatrace.hash4j.version>0.30.0</dynatrace.hash4j.version>
+    <rocksdbjni.version>9.10.0</rocksdbjni.version>
     <yammer-metrics.version>2.2.0</yammer-metrics.version>
     <!-- helix-core, spark-core use libraries from io.dropwizard.metrics -->
     <dropwizard-metrics.version>4.2.38</dropwizard-metrics.version>
@@ -1611,6 +1612,11 @@
         <groupId>com.dynatrace.hash4j</groupId>
         <artifactId>hash4j</artifactId>
         <version>${dynatrace.hash4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.rocksdb</groupId>
+        <artifactId>rocksdbjni</artifactId>
+        <version>${rocksdbjni.version}</version>
       </dependency>
       <dependency>
         <groupId>com.tdunning</groupId>

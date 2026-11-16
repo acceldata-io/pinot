@@ -47,9 +47,12 @@ import org.apache.pinot.common.tier.TierFactory;
 import org.apache.pinot.common.utils.config.TagNameUtils;
 import org.apache.pinot.segment.local.aggregator.ValueAggregator;
 import org.apache.pinot.segment.local.aggregator.ValueAggregatorFactory;
+import org.apache.pinot.segment.local.dedup.RocksDBTableDedupMetadataManager;
 import org.apache.pinot.segment.local.function.FunctionEvaluator;
 import org.apache.pinot.segment.local.function.FunctionEvaluatorFactory;
 import org.apache.pinot.segment.local.recordtransformer.SchemaConformingTransformer;
+import org.apache.pinot.segment.local.rocksdb.RocksDBMetadataStoreConfig;
+import org.apache.pinot.segment.local.upsert.RocksDBTableUpsertMetadataManager;
 import org.apache.pinot.segment.spi.AggregationFunctionType;
 import org.apache.pinot.segment.spi.index.DictionaryIndexConfig;
 import org.apache.pinot.segment.spi.index.FieldIndexConfigs;
@@ -437,11 +440,12 @@ public final class TableConfigUtils {
         IndexingConfig indexingConfig = tableConfig.getIndexingConfig();
         Preconditions.checkState(indexingConfig == null || MapUtils.isEmpty(indexingConfig.getStreamConfigs()),
             "Should not use indexingConfig#getStreamConfigs if ingestionConfig#StreamIngestionConfig is provided");
-        List<Map<String, String>> streamConfigMaps = ingestionConfig.getStreamIngestionConfig().getStreamConfigMaps();
+        StreamIngestionConfig streamIngestionConfig = ingestionConfig.getStreamIngestionConfig();
+        List<Map<String, String>> streamConfigMaps = streamIngestionConfig.getStreamConfigMaps();
         Preconditions.checkState(!streamConfigMaps.isEmpty(), "Must have at least 1 stream in REALTIME table");
         // TODO: for multiple stream configs, validate them
 
-        boolean isPauselessEnabled = ingestionConfig.getStreamIngestionConfig().isPauselessConsumptionEnabled();
+        boolean isPauselessEnabled = streamIngestionConfig.isPauselessConsumptionEnabled();
         if (isPauselessEnabled) {
           int replication = tableConfig.getReplication();
           // We are checking for this only when replication is greater than 1 because in test environments
@@ -772,6 +776,31 @@ public final class TableConfigUtils {
    *  - consumer type must be low-level
    *  - comparison column exists
    */
+  /// Validates tables whose upsert or dedup config selects a RocksDB metadata manager.
+  private static void validateRocksDBMetadataConfig(TableConfig tableConfig, boolean isUpsertEnabled,
+      @Nullable DedupConfig dedupConfig) {
+    if (isUpsertEnabled) {
+      UpsertConfig upsertConfig = tableConfig.getUpsertConfig();
+      if (RocksDBTableUpsertMetadataManager.class.getName().equals(upsertConfig.getMetadataManagerClass())) {
+        Preconditions.checkState(!upsertConfig.isEnableDeletedKeysCompactionConsistency(),
+            "enableDeletedKeysCompactionConsistency is not supported with metadataManagerClass: %s",
+            upsertConfig.getMetadataManagerClass());
+        validateRocksDBMetadataManagerConfigs(upsertConfig.getMetadataManagerConfigs());
+      }
+    } else if (dedupConfig != null
+        && RocksDBTableDedupMetadataManager.class.getName().equals(dedupConfig.getMetadataManagerClass())) {
+      validateRocksDBMetadataManagerConfigs(dedupConfig.getMetadataManagerConfigs());
+    }
+  }
+
+  private static void validateRocksDBMetadataManagerConfigs(@Nullable Map<String, String> metadataManagerConfigs) {
+    try {
+      RocksDBMetadataStoreConfig.validateTableConfigs(metadataManagerConfigs);
+    } catch (IllegalArgumentException e) {
+      throw new IllegalStateException("Invalid metadataManagerConfigs: " + e.getMessage(), e);
+    }
+  }
+
   @VisibleForTesting
   static void validateUpsertAndDedupConfig(TableConfig tableConfig, Schema schema) {
     if (tableConfig.getUpsertMode() == UpsertConfig.Mode.NONE && (tableConfig.getDedupConfig() == null
@@ -786,6 +815,7 @@ public final class TableConfigUtils {
     // check both upsert and dedup are not enabled simultaneously
     Preconditions.checkState(!(isUpsertEnabled && isDedupEnabled),
         "A table can have either Upsert or Dedup enabled, but not both");
+    validateRocksDBMetadataConfig(tableConfig, isUpsertEnabled, dedupConfig);
     if (tableConfig.getTableType() == TableType.OFFLINE) {
       Preconditions.checkState(isUpsertEnabled && !isDedupEnabled,
           "Dedup is not supported for OFFLINE table. Only upsert is supported for OFFLINE table");
