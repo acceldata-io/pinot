@@ -72,6 +72,9 @@ public class AuthorizerSelectorTest {
         AuthorizerSelector.DEFAULT_NATIVE_AUTHORIZER);
     assertEquals(AuthorizerSelector.getAuthorizerClass(config(), AuthorizationMode.RANGER),
         AuthorizerSelector.DEFAULT_RANGER_AUTHORIZER);
+    assertEquals(AuthorizerSelector.getConfiguredMode(config("pinot.authz.mode", "none")), AuthorizationMode.NONE);
+    assertEquals(AuthorizerSelector.getAuthorizerClass(config(), AuthorizationMode.NONE),
+        AuthorizerSelector.DEFAULT_NONE_AUTHORIZER);
   }
 
   @Test

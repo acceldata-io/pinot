@@ -25,7 +25,7 @@ import java.util.Locale;
 /// native rules are not loaded at all, and a Ranger outage is covered by the plug-in's cached policies, never by
 /// falling back to native rules.
 public enum AuthorizationMode {
-  NATIVE("native"), RANGER("ranger");
+  NONE("none"), NATIVE("native"), RANGER("ranger");
 
   private final String _configValue;
 
@@ -45,6 +45,7 @@ public enum AuthorizationMode {
         return mode;
       }
     }
-    throw new IllegalArgumentException("Unknown authorization mode '" + value.trim() + "'; expected native or ranger");
+    throw new IllegalArgumentException(
+        "Unknown authorization mode '" + value.trim() + "'; expected none, native or ranger");
   }
 }

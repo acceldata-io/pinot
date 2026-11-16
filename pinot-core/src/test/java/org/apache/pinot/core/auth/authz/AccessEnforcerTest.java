@@ -135,4 +135,21 @@ public class AccessEnforcerTest {
     // Without a method the enforcer cannot be created
     expectThrows(IllegalStateException.class, () -> AccessEnforcer.create(new PinotConfiguration()));
   }
+
+  @Test
+  public void testNoneModeAllowsEveryAuthenticatedPrincipal() {
+    Map<String, Object> settings = TestAuth.settings();
+    settings.put("pinot.authz.mode", "none");
+    AccessEnforcer enforcer = AccessEnforcer.create(new PinotConfiguration(settings));
+    assertTrue(enforcer.isAllowed(user("alice"), TargetType.TABLE, "orders_OFFLINE", Actions.Table.DELETE_TABLE));
+    assertTrue(enforcer.isAllowed(user("bob"), TargetType.CLUSTER, null, Actions.Cluster.UPDATE_ZNODE));
+    assertEquals(enforcer.getRowFilters(user("alice"), "orders"), List.of());
+    // No rule is consulted: the native authorizer is not even created
+    assertTrue(TestAuth.Authorizer.SEEN.isEmpty());
+    // Unknown actions stay denied, as in every mode
+    assertFalse(enforcer.isAllowed(user("alice"), TargetType.TABLE, "orders", "MadeUpAction"));
+    // Authentication still applies: a rejected credential never gets a principal
+    expectThrows(RuntimeException.class, () -> enforcer.authenticate("Bearer bad"));
+    assertEquals(enforcer.authenticate("Bearer carol").getUser(), "carol");
+  }
 }

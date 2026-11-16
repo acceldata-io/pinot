@@ -31,7 +31,8 @@ import org.apache.pinot.spi.plugin.PluginManager;
 /// silently falling back.
 ///
 /// Settings (the same on every controller, broker, server and Minion):
-/// - `pinot.authz.mode` = `native` (default) | `ranger`
+/// - `pinot.authz.mode` = `native` (default) | `ranger` | `none` (every authenticated principal may do everything:
+///   authentication without authorization)
 /// - `pinot.authz.<mode>.authorizer.class` (optional) overrides the implementation class of the mode
 /// - `pinot.authz.<mode>.*` are passed to the authorizer, without the prefix
 /// - `pinot.authz.enforce` (default `true`): `false` evaluates and logs every decision but allows all requests, to
@@ -48,6 +49,7 @@ public final class AuthorizerSelector {
   public static final String DEFAULT_NATIVE_AUTHORIZER = "org.apache.pinot.core.auth.authz.NativeAuthorizer";
   public static final String DEFAULT_RANGER_AUTHORIZER =
       "org.apache.pinot.core.auth.authz.RangerAuthorizer";
+  public static final String DEFAULT_NONE_AUTHORIZER = "org.apache.pinot.core.auth.authz.AllowAllAuthorizer";
 
   private AuthorizerSelector() {
   }
@@ -87,7 +89,14 @@ public final class AuthorizerSelector {
     if (override != null && !override.trim().isEmpty()) {
       return override.trim();
     }
-    return mode == AuthorizationMode.RANGER ? DEFAULT_RANGER_AUTHORIZER : DEFAULT_NATIVE_AUTHORIZER;
+    switch (mode) {
+      case RANGER:
+        return DEFAULT_RANGER_AUTHORIZER;
+      case NONE:
+        return DEFAULT_NONE_AUTHORIZER;
+      default:
+        return DEFAULT_NATIVE_AUTHORIZER;
+    }
   }
 
   /// Creates and initializes the authorizer of the configured mode.
