@@ -21,30 +21,17 @@ package org.apache.pinot.tools.admin.command;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.TreeMap;
-import java.util.regex.Pattern;
 import javax.annotation.Nullable;
-import org.apache.pinot.core.auth.TargetType;
-import org.apache.pinot.core.auth.authz.AccessEnforcer;
-import org.apache.pinot.plugin.auth.spi.AccessRequest;
 import org.apache.pinot.plugin.auth.spi.AuthCredential;
 import org.apache.pinot.plugin.auth.spi.AuthMethod;
 import org.apache.pinot.plugin.auth.spi.AuthMethodSelector;
 import org.apache.pinot.plugin.auth.spi.AuthenticationException;
-import org.apache.pinot.plugin.auth.spi.AuthorizationDecision;
-import org.apache.pinot.plugin.auth.spi.AuthorizerSelector;
 import org.apache.pinot.plugin.auth.spi.ConfigSecretResolver;
-import org.apache.pinot.plugin.auth.spi.Permission;
 import org.apache.pinot.plugin.auth.spi.PinotAuthenticator;
-import org.apache.pinot.plugin.auth.spi.PinotAuthorizer;
 import org.apache.pinot.plugin.auth.spi.PinotPrincipal;
 import org.apache.pinot.spi.env.PinotConfiguration;
 import org.apache.pinot.tools.AbstractBaseCommand;
@@ -59,10 +46,7 @@ import picocli.CommandLine;
 /// previous method. The token and secrets are never printed.
 @CommandLine.Command(name = "OAuthCheck", mixinStandardHelpOptions = true)
 public class OAuthCheckCommand extends AbstractBaseCommand implements Command {
-  /// Setting names whose values are never printed.
-  private static final Pattern SECRET_KEY =
-      Pattern.compile(".*(secret|password|passwd|credential|token\\b|key\\b|apikey).*", Pattern.CASE_INSENSITIVE);
-  private static final String MASK = "****";
+  private static final String MASK = AuthCheckSupport.MASK;
 
   @CommandLine.Option(names = {"-configFile"}, required = true,
       description = "Properties file with the pinot.auth.* (and optionally pinot.authz.*) settings to check")
@@ -123,7 +107,7 @@ public class OAuthCheckCommand extends AbstractBaseCommand implements Command {
   @Override
   public boolean execute()
       throws Exception {
-    PinotConfiguration config = new PinotConfiguration(readProperties(new File(_configFile)));
+    PinotConfiguration config = AuthCheckSupport.readConfiguration(_configFile);
     if (_handler != null) {
       config.setProperty(AuthMethodSelector.CONFIG_PREFIX + ".oauth2.handlers", _handler);
     }
@@ -148,20 +132,9 @@ public class OAuthCheckCommand extends AbstractBaseCommand implements Command {
     }
     printIdentity(principal, token);
     if (_tables != null && !_tables.trim().isEmpty()) {
-      printAuthorization(config, principal);
+      AuthCheckSupport.printAuthorization(config, principal, _tables, _out);
     }
     return true;
-  }
-
-  private static Map<String, Object> readProperties(File file)
-      throws IOException {
-    Properties properties = new Properties();
-    try (Reader reader = Files.newBufferedReader(file.toPath(), StandardCharsets.UTF_8)) {
-      properties.load(reader);
-    }
-    Map<String, Object> map = new HashMap<>();
-    properties.forEach((key, value) -> map.put(key.toString(), value));
-    return map;
   }
 
   private String readToken()
@@ -182,14 +155,7 @@ public class OAuthCheckCommand extends AbstractBaseCommand implements Command {
   private void printSettings(PinotConfiguration config) {
     PinotConfiguration oauth = AuthMethodSelector.getMethodConfig(config, AuthMethod.OAUTH2);
     _out.println("Method: oauth2, handlers: " + oauth.getProperty("handlers"));
-    _out.println("Settings (secrets masked):");
-    Map<String, Object> sorted = new TreeMap<>();
-    for (String key : oauth.getKeys()) {
-      sorted.put(key, oauth.getRawProperty(key, null));
-    }
-    for (Map.Entry<String, Object> entry : sorted.entrySet()) {
-      _out.println("  " + entry.getKey() + " = " + maskSetting(entry.getKey(), String.valueOf(entry.getValue())));
-    }
+    AuthCheckSupport.printSettings(config, AuthMethod.OAUTH2, _out);
   }
 
   private void printIdentity(PinotPrincipal principal, String token) {
@@ -209,35 +175,8 @@ public class OAuthCheckCommand extends AbstractBaseCommand implements Command {
     }
   }
 
-  private void printAuthorization(PinotConfiguration config, PinotPrincipal principal) {
-    _out.println();
-    try (PinotAuthorizer authorizer = AuthorizerSelector.create(config)) {
-      _out.println("Authorization (" + authorizer.getMode().getConfigValue() + " mode, as the cluster would decide):");
-      if (principal.isServiceAccount()
-          || AuthorizerSelector.getServiceAccounts(config).contains(principal.getUser())) {
-        _out.println("  service account: every request is allowed");
-        return;
-      }
-      List<AccessRequest> requests = new ArrayList<>();
-      for (String table : _tables.split(",")) {
-        if (!table.trim().isEmpty()) {
-          requests.add(AccessEnforcer.request(TargetType.TABLE, table.trim(), "Query", Permission.READ, "query"));
-        }
-      }
-      requests.add(AccessEnforcer.request(TargetType.CLUSTER, null, null, Permission.READ, "read_metadata"));
-      for (AccessRequest request : requests) {
-        AuthorizationDecision decision = authorizer.authorize(principal, request);
-        _out.println("  " + request + ": " + decision);
-      }
-    }
-  }
-
   static String maskSetting(String key, String value) {
-    if (key.startsWith("secrets.") || key.contains(".secrets.")
-        || (SECRET_KEY.matcher(key).matches() && !key.endsWith(".alias") && !key.endsWith("alias"))) {
-      return MASK;
-    }
-    return value;
+    return AuthCheckSupport.maskSetting(key, value);
   }
 
   /// Removes the token from a text, in case a handler echoed it.

@@ -46,6 +46,7 @@ import org.apache.pinot.tools.admin.command.JsonToPinotSchema;
 import org.apache.pinot.tools.admin.command.LaunchBackfillIngestionJobCommand;
 import org.apache.pinot.tools.admin.command.LaunchDataIngestionJobCommand;
 import org.apache.pinot.tools.admin.command.LaunchSparkDataIngestionJobCommand;
+import org.apache.pinot.tools.admin.command.LdapCheckCommand;
 import org.apache.pinot.tools.admin.command.MoveReplicaGroup;
 import org.apache.pinot.tools.admin.command.OAuthCheckCommand;
 import org.apache.pinot.tools.admin.command.OfflineSegmentIntervalCheckerCommand;
@@ -100,6 +101,7 @@ public class PinotAdministrator {
     JvmDefaultSslContext.initDefaultSslContext();
     SUBCOMMAND_MAP.put("QuickStart", new QuickStartCommand());
     SUBCOMMAND_MAP.put("OAuthCheck", new OAuthCheckCommand());
+    SUBCOMMAND_MAP.put("LdapCheck", new LdapCheckCommand());
     SUBCOMMAND_MAP.put("OperateClusterConfig", new OperateClusterConfigCommand());
     SUBCOMMAND_MAP.put("GenerateData", new GenerateDataCommand());
     SUBCOMMAND_MAP.put("LaunchDataIngestionJob", new LaunchDataIngestionJobCommand());

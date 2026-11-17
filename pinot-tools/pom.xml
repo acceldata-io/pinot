@@ -59,6 +59,11 @@
       <artifactId>pinot-auth-ldap</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.unboundid</groupId>
+      <artifactId>unboundid-ldapsdk</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.apache.pinot</groupId>
       <artifactId>pinot-minion-builtin-tasks</artifactId>
     </dependency>
