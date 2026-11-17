@@ -31,6 +31,7 @@ import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.ReadOnlySearchRequest;
 import com.unboundid.ldap.sdk.ResultCode;
 import com.unboundid.ldap.sdk.SearchRequest;
+import com.unboundid.ldap.sdk.SearchResultReference;
 import com.unboundid.ldap.sdk.SimpleBindRequest;
 import com.unboundid.util.ssl.KeyStoreKeyManager;
 import com.unboundid.util.ssl.SSLUtil;
@@ -95,6 +96,8 @@ final class EmbeddedLdap implements AutoCloseable {
   final Map<String, AtomicInteger> _wrongPasswords = new ConcurrentHashMap<>();
   final Map<String, AtomicInteger> _bindsByName = new ConcurrentHashMap<>();
   final List<String> _searchFilters = new CopyOnWriteArrayList<>();
+  /// Active Directory style search references sent with every subtree search from the base (off by default).
+  volatile boolean _sendReferences;
 
   EmbeddedLdap(String... ldif)
       throws Exception {
@@ -145,6 +148,11 @@ final class EmbeddedLdap implements AutoCloseable {
       public void processSearchRequest(InMemoryInterceptedSearchRequest request)
           throws LDAPException {
         ReadOnlySearchRequest search = request.getRequest();
+        if (_sendReferences && BASE.equalsIgnoreCase(search.getBaseDN())) {
+          // As Active Directory does for its other partitions on a search from the domain root
+          request.sendSearchReference(new SearchResultReference(
+              new String[]{"ldap://ForestDnsZones.example.com/DC=ForestDnsZones," + BASE}, null));
+        }
         String filter = search.getFilter().toString();
         _searchFilters.add(filter);
         Filter inChain = findInChain(search.getFilter());

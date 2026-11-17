@@ -121,6 +121,24 @@ public class LdapGroupsTest {
   }
 
   @Test
+  public void testSearchReferencesFromTheDomainRoot() {
+    // Active Directory answers a search from the domain root with the entries and references to its other
+    // partitions; the references are not followed and must not fail the sign-in or the group lookup
+    _ldap._sendReferences = true;
+    try {
+      PinotPrincipal frank = authenticator(config("user.search.base", BASE, "user.search.filter",
+          "(sAMAccountName={0})", "user.name.attribute", "sAMAccountName", "group.mode", "search",
+          "group.search.base", BASE, "group.search.filter", "(member:" + EmbeddedLdap.IN_CHAIN + ":={1})"))
+          .authenticate(basic("fsmith", "frank-pw"));
+      assertEquals(frank.getUser(), "fsmith");
+      assertEquals(frank.getGroups(), Set.of("finance", "all-staff"));
+    } finally {
+      _ldap._sendReferences = false;
+    }
+    expectThrows(IllegalArgumentException.class, () -> authenticator(config("referral", "sometimes")));
+  }
+
+  @Test
   public void testCaseOfNames() {
     PinotPrincipal dave = authenticator(config()).authenticate(basic("dave", "dave-pw"));
     assertEquals(dave.getUser(), "dave");

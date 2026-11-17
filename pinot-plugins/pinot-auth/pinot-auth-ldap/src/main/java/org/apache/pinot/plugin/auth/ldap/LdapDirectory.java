@@ -39,6 +39,7 @@ import javax.naming.Context;
 import javax.naming.InvalidNameException;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
+import javax.naming.PartialResultException;
 import javax.naming.ServiceUnavailableException;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
@@ -90,6 +91,10 @@ import org.apache.pinot.spi.env.PinotConfiguration;
 ///   (the server resolves the chain); elsewhere `group.nested=true` searches again with each group's DN as `{1}`, up
 ///   to `group.nested.depth` (default 5) levels. Group names are lower-cased unless `group.name.lowercase=false`.
 /// - A failed group lookup refuses the sign-in: a principal without its groups could escape a deny rule of a group.
+///
+/// Referrals: `referral` = `ignore` (default) keeps the entries of the server asked and drops search references (Active
+/// Directory returns them for its other partitions on a search from the domain root); `follow` chases them (the
+/// referred servers must be reachable with the same credentials and transport settings).
 ///
 /// DN settings (`bind.dn`, `user.search.base`, `group.search.base`, `user.dn.pattern`) are checked when the role
 /// starts. Pinot's configuration treats `,` as a list separator and drops the backslash of `\,`, so a comma inside a
@@ -165,6 +170,7 @@ final class LdapDirectory {
   @Nullable
   private final String _userDnPattern;
   private final String[] _returnedAttributes;
+  private final boolean _followReferrals;
   private final String _userNameAttribute;
   private final boolean _userNameLowercase;
   private final GroupMode _groupMode;
@@ -179,6 +185,11 @@ final class LdapDirectory {
 
   LdapDirectory(PinotConfiguration config, SecretResolver secrets) {
     _secrets = secrets;
+    String referral = config.getProperty("referral", "ignore").trim().toLowerCase(Locale.ROOT);
+    if (!referral.equals("ignore") && !referral.equals("follow")) {
+      throw new IllegalArgumentException("LDAP: referral must be ignore or follow, not '" + referral + "'");
+    }
+    _followReferrals = referral.equals("follow");
     _userNameAttribute = config.getProperty("user.name.attribute", "uid").trim();
     _userNameLowercase = config.getProperty("user.name.lowercase", true);
     String groupMode = config.getProperty("group.mode", "none").trim().toUpperCase(Locale.ROOT);
@@ -407,6 +418,12 @@ final class LdapDirectory {
       while (answer.hasMore()) {
         results.add(answer.next());
       }
+    } catch (PartialResultException e) {
+      // Search references the client does not follow (Active Directory returns them for its other partitions on a
+      // search from the domain root): the entries returned so far are the complete answer of this server
+      if (_followReferrals) {
+        throw e;
+      }
     } finally {
       answer.close();
     }
@@ -440,7 +457,7 @@ final class LdapDirectory {
     env.put(Context.INITIAL_CONTEXT_FACTORY, CONTEXT_FACTORY);
     env.put(Context.PROVIDER_URL, String.join(" ", _urls));
     env.put("java.naming.ldap.version", "3");
-    env.put(Context.REFERRAL, "ignore");
+    env.put(Context.REFERRAL, _followReferrals ? "follow" : "ignore");
     env.put("com.sun.jndi.ldap.connect.timeout", Integer.toString(_connectTimeoutMs));
     env.put("com.sun.jndi.ldap.read.timeout", Integer.toString(_readTimeoutMs));
     // The truststore's factory for LDAPS connections; StartTLS gets it when the TLS layer is negotiated
