@@ -23,7 +23,9 @@ import com.unboundid.ldap.listener.InMemoryDirectoryServerConfig;
 import com.unboundid.ldap.listener.InMemoryListenerConfig;
 import com.unboundid.ldap.listener.interceptor.InMemoryInterceptedSearchRequest;
 import com.unboundid.ldap.listener.interceptor.InMemoryInterceptedSimpleBindRequest;
+import com.unboundid.ldap.listener.interceptor.InMemoryInterceptedSimpleBindResult;
 import com.unboundid.ldap.listener.interceptor.InMemoryOperationInterceptor;
+import com.unboundid.ldap.sdk.BindResult;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.ReadOnlySearchRequest;
@@ -47,7 +49,9 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
@@ -85,6 +89,11 @@ final class EmbeddedLdap implements AutoCloseable {
   final int _ldapsPort;
   final int _otherHostPort;
   final AtomicInteger _binds = new AtomicInteger();
+  /// Active Directory style account lockout: after this many wrong passwords an account refuses every bind, also with
+  /// the right password (0 = off).
+  volatile int _lockoutThreshold;
+  final Map<String, AtomicInteger> _wrongPasswords = new ConcurrentHashMap<>();
+  final Map<String, AtomicInteger> _bindsByName = new ConcurrentHashMap<>();
   final List<String> _searchFilters = new CopyOnWriteArrayList<>();
 
   EmbeddedLdap(String... ldif)
@@ -109,9 +118,26 @@ final class EmbeddedLdap implements AutoCloseable {
         _binds.incrementAndGet();
         SimpleBindRequest bind = request.getRequest();
         String name = bind.getBindDN();
+        _bindsByName.computeIfAbsent(name.toLowerCase(Locale.ROOT), k -> new AtomicInteger()).incrementAndGet();
         if (name.endsWith("@example.com")) {
           request.setRequest(new SimpleBindRequest("uid=" + name.substring(0, name.indexOf('@')) + ",ou=people," + BASE,
               bind.getPassword().getValue()));
+        }
+      }
+
+      @Override
+      public void processSimpleBindResult(InMemoryInterceptedSimpleBindResult result) {
+        String dn = result.getRequest().getBindDN().toLowerCase(Locale.ROOT);
+        if (dn.isEmpty() || _lockoutThreshold <= 0) {
+          return;
+        }
+        AtomicInteger wrong = _wrongPasswords.computeIfAbsent(dn, k -> new AtomicInteger());
+        if (result.getResult().getResultCode() != ResultCode.SUCCESS) {
+          wrong.incrementAndGet();
+        }
+        if (wrong.get() >= _lockoutThreshold) {
+          result.setResult(new BindResult(result.getResult().getMessageID(), ResultCode.INVALID_CREDENTIALS,
+              "80090308: LdapErr: DSID-0C09030B, data 775 (account locked)", null, null, null));
         }
       }
 
@@ -250,6 +276,18 @@ final class EmbeddedLdap implements AutoCloseable {
       source.load(in, KEYSTORE_PASSWORD);
     }
     return source.getCertificate(source.aliases().nextElement());
+  }
+
+  /// Binds the directory received with this bind name (DN or principal name).
+  int binds(String name) {
+    AtomicInteger count = _bindsByName.get(name.toLowerCase(Locale.ROOT));
+    return count == null ? 0 : count.get();
+  }
+
+  /// Whether the directory locked the account.
+  boolean locked(String dn) {
+    AtomicInteger wrong = _wrongPasswords.get(dn.toLowerCase(Locale.ROOT));
+    return _lockoutThreshold > 0 && wrong != null && wrong.get() >= _lockoutThreshold;
   }
 
   @Override

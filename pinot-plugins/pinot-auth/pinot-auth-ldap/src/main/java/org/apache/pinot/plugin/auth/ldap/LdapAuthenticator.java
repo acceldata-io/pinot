@@ -23,6 +23,7 @@ import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.LinkedHashSet;
@@ -49,6 +50,8 @@ import org.slf4j.LoggerFactory;
 /// - `service.users`: comma-separated user names of Pinot's own directory service accounts (internal calls); their
 ///   principal is marked as a service account.
 /// - `required.group`: when set, only members of this group may sign in (compared case-insensitively).
+/// - Sign-in caching, the failure cache and the per-user throttle that protects directory accounts from lockout by
+///   client retry loops: see [LdapSignInCache].
 ///
 /// A rejected sign-in answers 401 with `WWW-Authenticate: Basic realm="pinot"`; the reason is logged, never the
 /// password. When no directory server answers, the request is refused (never let through). Thread-safe after
@@ -62,6 +65,7 @@ public class LdapAuthenticator implements PinotAuthenticator {
   private Set<String> _serviceUsers = Set.of();
   @Nullable
   private String _requiredGroup;
+  private LdapSignInCache _cache;
 
   @Override
   public AuthMethod getMethod() {
@@ -70,6 +74,11 @@ public class LdapAuthenticator implements PinotAuthenticator {
 
   @Override
   public void init(PinotConfiguration config, SecretResolver secretResolver) {
+    init(config, secretResolver, Clock.systemUTC());
+  }
+
+  void init(PinotConfiguration config, SecretResolver secretResolver, Clock clock) {
+    _cache = new LdapSignInCache(config, clock);
     _directory = new LdapDirectory(config, secretResolver);
     _requiredGroup = LdapDirectory.trimToNull(config.getProperty("required.group"));
     Set<String> serviceUsers = new LinkedHashSet<>();
@@ -95,13 +104,39 @@ public class LdapAuthenticator implements PinotAuthenticator {
       String user = new String(decoded, 0, colon).trim();
       char[] password = Arrays.copyOfRange(decoded, colon + 1, decoded.length);
       try {
-        LdapDirectory.User found = _directory.authenticate(user, password);
+        if (password.length == 0) {
+          // Refused before the caches too: an empty password never reaches the directory
+          throw new LdapDirectory.InvalidCredentialsException("empty password");
+        }
+        LdapSignInCache.Lookup cached = _cache.lookup(user, password);
+        switch (cached._verdict) {
+          case CACHED:
+            AuthMetrics.mark(METRICS + "cacheHits");
+            return principal(cached._user);
+          case REPEATED_FAILURE:
+            AuthMetrics.mark(METRICS + "rejected");
+            throw new AuthenticationException("Invalid user name or password", CHALLENGE);
+          case THROTTLED:
+            AuthMetrics.mark(METRICS + "throttled");
+            LOGGER.warn("LDAP sign-in of '{}' refused without asking the directory: too many wrong passwords recently",
+                user);
+            throw new AuthenticationException("Invalid user name or password", CHALLENGE);
+          default:
+            break;
+        }
+        LdapDirectory.User found;
+        try {
+          found = _directory.authenticate(user, password);
+        } catch (LdapDirectory.InvalidCredentialsException e) {
+          _cache.refused(user, password);
+          throw e;
+        }
         if (_requiredGroup != null && found._groups.stream().noneMatch(_requiredGroup::equalsIgnoreCase)) {
           throw new LdapDirectory.InvalidCredentialsException("not a member of the required group " + _requiredGroup);
         }
+        _cache.accepted(user, password, found, _serviceUsers.contains(found._name));
         AuthMetrics.mark(METRICS + "accepted");
-        return new PinotPrincipal(found._name, found._groups, AuthMethod.LDAP, _serviceUsers.contains(found._name),
-            Map.of("dn", found._dn));
+        return principal(found);
       } catch (LdapDirectory.InvalidCredentialsException e) {
         AuthMetrics.mark(METRICS + "rejected");
         LOGGER.info("LDAP sign-in of '{}' refused: {}", user, e.getMessage());
@@ -116,6 +151,11 @@ public class LdapAuthenticator implements PinotAuthenticator {
     } finally {
       Arrays.fill(decoded, '\0');
     }
+  }
+
+  private PinotPrincipal principal(LdapDirectory.User user) {
+    return new PinotPrincipal(user._name, user._groups, AuthMethod.LDAP, _serviceUsers.contains(user._name),
+        Map.of("dn", user._dn));
   }
 
   private static AuthenticationException reject(String reason) {
