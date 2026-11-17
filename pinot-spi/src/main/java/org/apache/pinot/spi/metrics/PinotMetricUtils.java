@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import javax.annotation.Nullable;
 import org.apache.pinot.spi.annotations.metrics.MetricsFactory;
 import org.apache.pinot.spi.annotations.metrics.PinotMetricsFactory;
 import org.apache.pinot.spi.env.PinotConfiguration;
@@ -52,7 +53,7 @@ public class PinotMetricUtils {
       new ConcurrentHashMap<>();
 
   private static final PinotMetricsFactory NOOP_FACTORY = new PinotMetricsFactory.Noop();
-  private static PinotMetricsFactory _pinotMetricsFactory = NOOP_FACTORY;
+  private static volatile PinotMetricsFactory _pinotMetricsFactory = NOOP_FACTORY;
 
   /**
    * Initialize the metricsFactory ad registers the metricsRegistry
@@ -201,6 +202,17 @@ public class PinotMetricUtils {
       _pinotMetricsFactory.getPinotMetricsRegistry().shutdown();
       _pinotMetricsFactory = NOOP_FACTORY;
     }
+  }
+
+  /**
+   * Returns the metrics registry of the initialised metrics factory without locking or initialising anything, for
+   * callers on hot paths that cache their metrics; {@code null} while no metrics factory is initialised. The registry
+   * changes when {@link #init} runs again, so callers that cache metrics must compare it with the one they cached.
+   */
+  @Nullable
+  public static PinotMetricsRegistry getPinotMetricsRegistryIfInitialized() {
+    PinotMetricsFactory factory = _pinotMetricsFactory;
+    return factory == null || factory == NOOP_FACTORY ? null : factory.getPinotMetricsRegistry();
   }
 
   /**
