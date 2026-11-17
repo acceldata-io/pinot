@@ -91,6 +91,10 @@ import org.apache.pinot.spi.env.PinotConfiguration;
 ///   to `group.nested.depth` (default 5) levels. Group names are lower-cased unless `group.name.lowercase=false`.
 /// - A failed group lookup refuses the sign-in: a principal without its groups could escape a deny rule of a group.
 ///
+/// DN settings (`bind.dn`, `user.search.base`, `group.search.base`, `user.dn.pattern`) are checked when the role
+/// starts. Pinot's configuration treats `,` as a list separator and drops the backslash of `\,`, so a comma inside a
+/// value (`CN=Doe\, John`) must be written as the equivalent hex escape `\2C` (`CN=Doe\2C John`).
+///
 /// Thread-safe after construction.
 final class LdapDirectory {
   static final String CONTEXT_FACTORY = "com.sun.jndi.ldap.LdapCtxFactory";
@@ -264,6 +268,12 @@ final class LdapDirectory {
       throw new IllegalArgumentException("LDAP: user.dn.pattern '" + _userDnPattern
           + "' is a principal name, not a DN: set user.search.base (and user.search.filter, e.g. "
           + "(sAMAccountName={0})) to read the user's entry");
+    }
+    checkDn("bind.dn", _bindDn);
+    checkDn("user.search.base", _userSearchBase);
+    checkDn("group.search.base", _groupSearchBase);
+    if (_userDnPattern != null && _userDnPattern.contains("=")) {
+      checkDn("user.dn.pattern", _userDnPattern.replace("{0}", "x"));
     }
     if (!_userSearchFilter.contains("{0}")) {
       throw new IllegalArgumentException("LDAP: user.search.filter must contain {0}");
@@ -521,6 +531,25 @@ final class LdapDirectory {
       return context.getSocketFactory();
     } catch (IOException | GeneralSecurityException e) {
       throw new IllegalArgumentException("LDAP: cannot load truststore.path '" + path + "': " + e.getMessage(), e);
+    }
+  }
+
+  /// Fails the start for a DN setting that is not a valid DN, e.g. one changed by the configuration's list handling.
+  private static void checkDn(String key, @Nullable String value) {
+    if (value == null) {
+      return;
+    }
+    try {
+      LdapName name = new LdapName(value);
+      for (javax.naming.ldap.Rdn rdn : name.getRdns()) {
+        if (rdn.getType().trim().isEmpty()) {
+          throw new InvalidNameException("empty attribute type");
+        }
+      }
+    } catch (InvalidNameException | IllegalArgumentException e) {
+      throw new IllegalArgumentException("LDAP: " + key + " '" + value + "' is not a valid DN (" + e.getMessage()
+          + "). Pinot's configuration reads ',' as a list separator and drops the backslash of '\\,': write a comma "
+          + "inside a value as \\2C, e.g. CN=Doe\\2C John");
     }
   }
 

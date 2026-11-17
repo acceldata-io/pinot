@@ -63,6 +63,9 @@ public class LdapAuthenticatorTest {
         "userPassword: " + ALICE_PASSWORD, "",
         "dn: uid=o\\,brien,ou=people," + BASE, "objectClass: inetOrgPerson", "uid: o,brien", "cn: OBrien", "sn: O",
         "userPassword: obrien-test-password", "",
+        "dn: ou=Sales\\, East," + BASE, "objectClass: organizationalUnit", "ou: Sales, East", "",
+        "dn: cn=bind\\, sales,ou=Sales\\, East," + BASE, "objectClass: person", "cn: bind, sales", "sn: s",
+        "userPassword: sales-bind-test-password", "",
         "dn: uid=alice2,ou=people," + BASE, "objectClass: inetOrgPerson", "uid: alice2", "cn: Alice", "sn: A",
         "userPassword: other-test-password");
     _ldapPort = _ldap._ldapPort;
@@ -222,6 +225,22 @@ public class LdapAuthenticatorTest {
     String unpadded = Base64.getEncoder().withoutPadding().encodeToString(
         ("alice:" + ALICE_PASSWORD).getBytes(StandardCharsets.UTF_8));
     assertEquals(authenticator.authenticate(AuthCredential.parse("Basic " + unpadded)).getUser(), "alice");
+  }
+
+  @Test
+  public void testDnWithCommaInAValue() {
+    // Pinot's configuration drops the backslash of "\," (list separator): such a DN is refused at start with a hint,
+    // and the equivalent hex escape \2C works
+    Map<String, Object> config = ldaps();
+    config.put("bind.dn", "cn=bind\\, sales,ou=Sales\\, East," + BASE);
+    IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () -> authenticator(config));
+    assertTrue(e.getMessage().contains("\\2C"), e.getMessage());
+    config.put("bind.dn", "cn=bind\\2C sales,ou=Sales\\2C East," + BASE);
+    Map<String, Object> secrets = new HashMap<>(config);
+    LdapAuthenticator authenticator = new LdapAuthenticator();
+    authenticator.init(new PinotConfiguration(secrets), alias -> alias.equals("ldap.bind.password")
+        ? "sales-bind-test-password".toCharArray() : SECRETS.resolve(alias));
+    assertEquals(authenticator.authenticate(basic("alice", ALICE_PASSWORD)).getUser(), "alice");
   }
 
   @Test
