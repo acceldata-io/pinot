@@ -26,21 +26,27 @@ import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Hashtable;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import javax.annotation.Nullable;
 import javax.naming.AuthenticationException;
 import javax.naming.CommunicationException;
 import javax.naming.Context;
+import javax.naming.InvalidNameException;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.ServiceUnavailableException;
+import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 import javax.naming.ldap.InitialLdapContext;
 import javax.naming.ldap.LdapContext;
+import javax.naming.ldap.LdapName;
 import javax.naming.ldap.StartTlsRequest;
 import javax.naming.ldap.StartTlsResponse;
 import javax.net.ssl.SSLContext;
@@ -73,12 +79,28 @@ import org.apache.pinot.spi.env.PinotConfiguration;
 ///   + `user.search.filter`) when `user.search.base` is set (required for a principal-name pattern, which is not a DN),
 ///   else by the bound DN.
 ///
+/// User name and groups (looked up with the bind account's connection in search mode, the user's own in direct mode):
+/// - `user.name.attribute` (default `uid`; `sAMAccountName` for Active Directory): the Pinot user name, lower-cased
+///   unless `user.name.lowercase=false`, so it equals the name Ranger UserSync creates; the login name when the entry
+///   has no such attribute.
+/// - `group.mode` = `none` (default), `memberof` (the DNs in `group.memberof.attribute`, default `memberOf`, named by
+///   their first RDN value, e.g. `cn`) or `search`: `group.search.base` (required) searched with `group.search.filter`
+///   (default `(member={1})`; `{0}` = user name, `{1}` = user DN, both escaped), names from `group.name.attribute`
+///   (default `cn`). Nested groups: on Active Directory set the filter to `(member:1.2.840.113556.1.4.1941:={1})`
+///   (the server resolves the chain); elsewhere `group.nested=true` searches again with each group's DN as `{1}`, up
+///   to `group.nested.depth` (default 5) levels. Group names are lower-cased unless `group.name.lowercase=false`.
+/// - A failed group lookup refuses the sign-in: a principal without its groups could escape a deny rule of a group.
+///
 /// Thread-safe after construction.
 final class LdapDirectory {
   static final String CONTEXT_FACTORY = "com.sun.jndi.ldap.LdapCtxFactory";
 
   enum BindMode {
     SEARCH, DIRECT
+  }
+
+  enum GroupMode {
+    NONE, MEMBEROF, SEARCH
   }
 
   /// The password was wrong, the user is unknown or ambiguous, or the account cannot sign in.
@@ -95,7 +117,7 @@ final class LdapDirectory {
     }
   }
 
-  /// A user found and authenticated in the directory.
+  /// A user found in the directory: DN and the attributes read with it.
   static final class Entry {
     final String _dn;
     final Attributes _attributes;
@@ -103,6 +125,19 @@ final class LdapDirectory {
     Entry(String dn, Attributes attributes) {
       _dn = dn;
       _attributes = attributes;
+    }
+  }
+
+  /// An authenticated user: DN, Pinot user name and groups.
+  static final class User {
+    final String _dn;
+    final String _name;
+    final Set<String> _groups;
+
+    User(String dn, String name, Set<String> groups) {
+      _dn = dn;
+      _name = name;
+      _groups = groups;
     }
   }
 
@@ -126,10 +161,40 @@ final class LdapDirectory {
   @Nullable
   private final String _userDnPattern;
   private final String[] _returnedAttributes;
+  private final String _userNameAttribute;
+  private final boolean _userNameLowercase;
+  private final GroupMode _groupMode;
+  private final String _memberOfAttribute;
+  @Nullable
+  private final String _groupSearchBase;
+  private final String _groupSearchFilter;
+  private final String _groupNameAttribute;
+  private final boolean _groupNested;
+  private final int _groupNestedDepth;
+  private final boolean _groupNameLowercase;
 
-  LdapDirectory(PinotConfiguration config, SecretResolver secrets, String[] returnedAttributes) {
+  LdapDirectory(PinotConfiguration config, SecretResolver secrets) {
     _secrets = secrets;
-    _returnedAttributes = returnedAttributes;
+    _userNameAttribute = config.getProperty("user.name.attribute", "uid").trim();
+    _userNameLowercase = config.getProperty("user.name.lowercase", true);
+    String groupMode = config.getProperty("group.mode", "none").trim().toUpperCase(Locale.ROOT);
+    try {
+      _groupMode = GroupMode.valueOf(groupMode);
+    } catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException("LDAP: group.mode must be none, memberof or search, not '" + groupMode + "'");
+    }
+    _memberOfAttribute = config.getProperty("group.memberof.attribute", "memberOf").trim();
+    _groupSearchBase = trimToNull(config.getProperty("group.search.base"));
+    _groupSearchFilter = config.getProperty("group.search.filter", "(member={1})").trim();
+    _groupNameAttribute = config.getProperty("group.name.attribute", "cn").trim();
+    _groupNested = config.getProperty("group.nested", false);
+    _groupNestedDepth = config.getProperty("group.nested.depth", 5);
+    _groupNameLowercase = config.getProperty("group.name.lowercase", true);
+    if (_groupMode == GroupMode.SEARCH && _groupSearchBase == null) {
+      throw new IllegalArgumentException("LDAP: group.mode=search needs group.search.base");
+    }
+    _returnedAttributes = _groupMode == GroupMode.MEMBEROF ? new String[]{_userNameAttribute, _memberOfAttribute}
+        : new String[]{_userNameAttribute};
     _urls = new ArrayList<>();
     for (String url : config.getProperty("urls", "").split(",")) {
       if (!url.trim().isEmpty()) {
@@ -209,38 +274,112 @@ final class LdapDirectory {
     return _bindMode;
   }
 
-  /// Checks the password and returns the user's entry.
-  Entry authenticate(String login, char[] password)
+  /// Checks the password and returns the user with name and groups.
+  User authenticate(String login, char[] password)
       throws InvalidCredentialsException, DirectoryUnavailableException {
     if (password.length == 0) {
       // An empty password makes a "simple" bind unauthenticated, which servers accept: never send one
       throw new InvalidCredentialsException("empty password");
     }
     if (_bindMode == BindMode.SEARCH) {
-      Entry entry;
       LdapContext service = open(_bindDn, secret(_bindPasswordAlias), true);
       try {
-        entry = findUser(service, login);
+        Entry entry = findUser(service, login);
+        close(open(entry._dn, password, false));
+        return user(service, entry, login);
       } finally {
         close(service);
       }
-      close(open(entry._dn, password, false));
-      return entry;
     }
     // In a DN the name is a value and is escaped as such; a principal name (user@domain) is passed as typed
     String bindName = LdapEscaping.format(_userDnPattern,
         _userDnPattern.contains("=") ? LdapEscaping.dnValue(login) : login, null);
-    LdapContext user = open(bindName, password, false);
+    LdapContext context = open(bindName, password, false);
     try {
+      Entry entry;
       if (_userSearchBase != null) {
-        return findUser(user, login);
+        entry = findUser(context, login);
+      } else {
+        try {
+          entry = new Entry(bindName, context.getAttributes(bindName, _returnedAttributes));
+        } catch (NamingException e) {
+          throw unavailable("reading the user's entry", e);
+        }
       }
-      return new Entry(bindName, user.getAttributes(bindName, _returnedAttributes));
-    } catch (NamingException e) {
-      throw unavailable("reading the user's entry", e);
+      return user(context, entry, login);
     } finally {
-      close(user);
+      close(context);
     }
+  }
+
+  /// The Pinot user name and the groups of an entry, read with the given connection.
+  private User user(LdapContext context, Entry entry, String login)
+      throws DirectoryUnavailableException {
+    String name = login;
+    try {
+      Attribute attribute = entry._attributes.get(_userNameAttribute);
+      if (attribute != null && attribute.get() != null) {
+        name = attribute.get().toString().trim();
+      }
+    } catch (NamingException e) {
+      throw unavailable("reading the user name", e);
+    }
+    if (_userNameLowercase) {
+      name = name.toLowerCase(Locale.ROOT);
+    }
+    Set<String> groups = new LinkedHashSet<>();
+    try {
+      if (_groupMode == GroupMode.MEMBEROF) {
+        Attribute memberOf = entry._attributes.get(_memberOfAttribute);
+        if (memberOf != null) {
+          NamingEnumeration<?> values = memberOf.getAll();
+          while (values.hasMore()) {
+            groups.add(groupName(rdnValue(values.next().toString())));
+          }
+        }
+      } else if (_groupMode == GroupMode.SEARCH) {
+        searchGroups(context, name, entry._dn, groups);
+      }
+    } catch (NamingException e) {
+      throw unavailable("looking up the user's groups", e);
+    }
+    return new User(entry._dn, name, Collections.unmodifiableSet(groups));
+  }
+
+  /// Groups whose filter matches the user (and, with `group.nested`, the groups of those groups).
+  private void searchGroups(LdapContext context, String name, String dn, Set<String> groups)
+      throws NamingException {
+    String escapedName = LdapEscaping.filterValue(name);
+    Set<String> seen = new LinkedHashSet<>();
+    List<String> level = List.of(dn);
+    for (int depth = 0; !level.isEmpty() && depth <= (_groupNested ? _groupNestedDepth : 0); depth++) {
+      List<String> next = new ArrayList<>();
+      for (String member : level) {
+        String filter = LdapEscaping.format(_groupSearchFilter, escapedName, LdapEscaping.filterValue(member));
+        for (SearchResult group : search(context, _groupSearchBase, filter, SearchControls.SUBTREE_SCOPE,
+            new String[]{_groupNameAttribute}, 0)) {
+          String groupDn = group.getNameInNamespace();
+          if (seen.add(groupDn)) {
+            Attribute groupName = group.getAttributes().get(_groupNameAttribute);
+            groups.add(groupName(groupName != null && groupName.get() != null ? groupName.get().toString()
+                : rdnValue(groupDn)));
+            next.add(groupDn);
+          }
+        }
+      }
+      level = next;
+    }
+  }
+
+  private String groupName(String name) {
+    return _groupNameLowercase ? name.trim().toLowerCase(Locale.ROOT) : name.trim();
+  }
+
+  /// The value of the first RDN of a DN, e.g. `analysts` for `cn=analysts,ou=groups,dc=example,dc=com`.
+  static String rdnValue(String dn)
+      throws InvalidNameException {
+    LdapName name = new LdapName(dn);
+    return name.size() == 0 ? dn : name.getRdn(name.size() - 1).getValue().toString();
   }
 
   /// Searches with an open context. Used for the user and, by the group lookup, for the user's groups.

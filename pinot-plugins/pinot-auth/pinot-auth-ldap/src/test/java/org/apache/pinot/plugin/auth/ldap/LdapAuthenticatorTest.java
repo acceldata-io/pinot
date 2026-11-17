@@ -18,33 +18,12 @@
  */
 package org.apache.pinot.plugin.auth.ldap;
 
-import com.unboundid.ldap.listener.InMemoryDirectoryServer;
-import com.unboundid.ldap.listener.InMemoryDirectoryServerConfig;
-import com.unboundid.ldap.listener.InMemoryListenerConfig;
-import com.unboundid.ldap.listener.interceptor.InMemoryInterceptedSimpleBindRequest;
-import com.unboundid.ldap.listener.interceptor.InMemoryOperationInterceptor;
-import com.unboundid.ldap.sdk.ResultCode;
-import com.unboundid.ldap.sdk.SimpleBindRequest;
-import com.unboundid.util.ssl.KeyStoreKeyManager;
-import com.unboundid.util.ssl.SSLUtil;
-import com.unboundid.util.ssl.TrustAllTrustManager;
-import com.unboundid.util.ssl.cert.ManageCertificates;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
-import java.security.KeyStore;
-import java.security.cert.Certificate;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.pinot.plugin.auth.spi.AuthCredential;
 import org.apache.pinot.plugin.auth.spi.AuthMethodSelector;
 import org.apache.pinot.plugin.auth.spi.AuthenticationException;
@@ -66,150 +45,52 @@ import static org.testng.Assert.expectThrows;
 /// [LdapAuthenticator] against an embedded directory with plain LDAP, LDAPS and StartTLS listeners: both bind modes
 /// (including an Active Directory principal name), transport rules, trust, failover and rejected credentials.
 public class LdapAuthenticatorTest {
-  static final String BASE = "dc=example,dc=com";
-  private static final String TRUSTSTORE_PASSWORD = "truststore-test-password";
-  private static final char[] KEYSTORE_PASSWORD = "server-keystore-test-password".toCharArray();
-  private static final String BIND_PASSWORD = "bind-test-password";
+  private static final String BASE = EmbeddedLdap.BASE;
   private static final String ALICE_PASSWORD = "alice-test-password";
+  private static final SecretResolver SECRETS = EmbeddedLdap.SECRETS;
 
-  private InMemoryDirectoryServer _server;
-  private File _truststore;
+  private EmbeddedLdap _ldap;
   private int _ldapPort;
   private int _ldapsPort;
   private int _otherHostPort;
-  private final AtomicInteger _binds = new AtomicInteger();
-
-  static final SecretResolver SECRETS = alias -> {
-    switch (alias) {
-      case "ldap.bind.password":
-        return BIND_PASSWORD.toCharArray();
-      case "ldap.truststore.password":
-        return TRUSTSTORE_PASSWORD.toCharArray();
-      default:
-        throw new IllegalArgumentException("unknown alias " + alias);
-    }
-  };
+  private File _truststore;
 
   @BeforeClass
   public void startServer()
       throws Exception {
-    // Server certificate for localhost, as a directory's certificate names its host, and one issued for another host
-    File serverKeyStore = selfSignedCertificate("localhost", "127.0.0.1");
-    File otherHostKeyStore = selfSignedCertificate("other.invalid", null);
-    SSLUtil serverSsl = new SSLUtil(new KeyStoreKeyManager(serverKeyStore, KEYSTORE_PASSWORD, "PKCS12", null),
-        new TrustAllTrustManager());
-    SSLUtil otherHostSsl = new SSLUtil(new KeyStoreKeyManager(otherHostKeyStore, KEYSTORE_PASSWORD, "PKCS12", null),
-        new TrustAllTrustManager());
-    InMemoryDirectoryServerConfig config = new InMemoryDirectoryServerConfig(BASE);
-    InetAddress loopback = InetAddress.getByName("localhost");
-    config.setListenerConfigs(
-        InMemoryListenerConfig.createLDAPConfig("ldap", loopback, 0, serverSsl.createSSLSocketFactory()),
-        InMemoryListenerConfig.createLDAPSConfig("ldaps", loopback, 0, serverSsl.createSSLServerSocketFactory(), null),
-        InMemoryListenerConfig.createLDAPSConfig("ldaps-other-host", loopback, 0,
-            otherHostSsl.createSSLServerSocketFactory(), null));
-    // Active Directory accepts a user principal name (alice@example.com) as bind name: map it to the entry's DN
-    config.addInMemoryOperationInterceptor(new InMemoryOperationInterceptor() {
-      @Override
-      public void processSimpleBindRequest(InMemoryInterceptedSimpleBindRequest request) {
-        _binds.incrementAndGet();
-        SimpleBindRequest bind = request.getRequest();
-        String name = bind.getBindDN();
-        if (name.endsWith("@example.com")) {
-          request.setRequest(new SimpleBindRequest("uid=" + name.substring(0, name.indexOf('@')) + ",ou=people," + BASE,
-              bind.getPassword().getValue()));
-        }
-      }
-    });
-    _server = new InMemoryDirectoryServer(config);
-    _server.add("dn: " + BASE, "objectClass: domain", "dc: example");
-    _server.add("dn: ou=people," + BASE, "objectClass: organizationalUnit", "ou: people");
-    _server.add("dn: ou=services," + BASE, "objectClass: organizationalUnit", "ou: services");
-    _server.add("dn: cn=pinot-bind,ou=services," + BASE, "objectClass: person", "cn: pinot-bind", "sn: bind",
-        "userPassword: " + BIND_PASSWORD);
-    _server.add("dn: uid=alice,ou=people," + BASE, "objectClass: inetOrgPerson", "uid: alice", "cn: Alice",
-        "sn: A", "userPassword: " + ALICE_PASSWORD);
-    _server.add("dn: uid=o\\,brien,ou=people," + BASE, "objectClass: inetOrgPerson", "uid: o,brien", "cn: OBrien",
-        "sn: O", "userPassword: obrien-test-password");
-    _server.add("dn: uid=alice2,ou=people," + BASE, "objectClass: inetOrgPerson", "uid: alice2", "cn: Alice",
-        "sn: A", "userPassword: other-test-password");
-    _server.startListening();
-    _ldapPort = _server.getListenPort("ldap");
-    _ldapsPort = _server.getListenPort("ldaps");
-    _otherHostPort = _server.getListenPort("ldaps-other-host");
-
-    // Trust store with the servers' certificates, as an operator would build it
-    KeyStore trust = KeyStore.getInstance("PKCS12");
-    trust.load(null, null);
-    trust.setCertificateEntry("ldap", certificate(serverKeyStore));
-    trust.setCertificateEntry("other-host", certificate(otherHostKeyStore));
-    _truststore = File.createTempFile("ldap-trust", ".p12");
-    _truststore.deleteOnExit();
-    try (OutputStream out = new FileOutputStream(_truststore)) {
-      trust.store(out, TRUSTSTORE_PASSWORD.toCharArray());
-    }
-  }
-
-  /// A PKCS12 key store with a self-signed EC certificate for the host name (and IP address, if given).
-  private static File selfSignedCertificate(String host, String ip)
-      throws Exception {
-    File keyStore = File.createTempFile("ldap-server", ".p12");
-    keyStore.delete();
-    keyStore.deleteOnExit();
-    List<String> args = new ArrayList<>(List.of("generate-self-signed-certificate", "--keystore",
-        keyStore.getAbsolutePath(), "--keystore-password", new String(KEYSTORE_PASSWORD), "--keystore-type", "PKCS12",
-        "--alias", "server", "--subject-dn", "CN=" + host, "--key-algorithm", "EC", "--key-size-bits", "256",
-        "--signature-algorithm", "SHA256withECDSA", "--subject-alternative-name-dns", host));
-    if (ip != null) {
-      args.addAll(List.of("--subject-alternative-name-ip-address", ip));
-    }
-    OutputStream quiet = OutputStream.nullOutputStream();
-    assertEquals(ManageCertificates.main(null, quiet, quiet, args.toArray(new String[0])), ResultCode.SUCCESS);
-    return keyStore;
-  }
-
-  private static Certificate certificate(File keyStore)
-      throws Exception {
-    KeyStore source = KeyStore.getInstance("PKCS12");
-    try (InputStream in = new FileInputStream(keyStore)) {
-      source.load(in, KEYSTORE_PASSWORD);
-    }
-    return source.getCertificate(source.aliases().nextElement());
+    _ldap = new EmbeddedLdap(
+        "dn: uid=alice,ou=people," + BASE, "objectClass: inetOrgPerson", "uid: alice", "cn: Alice", "sn: A",
+        "userPassword: " + ALICE_PASSWORD, "",
+        "dn: uid=o\\,brien,ou=people," + BASE, "objectClass: inetOrgPerson", "uid: o,brien", "cn: OBrien", "sn: O",
+        "userPassword: obrien-test-password", "",
+        "dn: uid=alice2,ou=people," + BASE, "objectClass: inetOrgPerson", "uid: alice2", "cn: Alice", "sn: A",
+        "userPassword: other-test-password");
+    _ldapPort = _ldap._ldapPort;
+    _ldapsPort = _ldap._ldapsPort;
+    _otherHostPort = _ldap._otherHostPort;
+    _truststore = _ldap._truststore;
   }
 
   @AfterClass
   public void stopServer() {
-    _server.shutDown(true);
+    _ldap.close();
   }
 
   @BeforeMethod
   public void resetCounters() {
-    _binds.set(0);
-  }
-
-  int ldapPort() {
-    return _ldapPort;
+    _ldap._binds.set(0);
   }
 
   Map<String, Object> ldaps() {
-    Map<String, Object> config = new HashMap<>();
-    config.put("urls", "ldaps://localhost:" + _ldapsPort);
-    config.put("truststore.path", _truststore.getAbsolutePath());
-    config.put("truststore.password.alias", "ldap.truststore.password");
-    config.put("bind.dn", "cn=pinot-bind,ou=services," + BASE);
-    config.put("bind.password.alias", "ldap.bind.password");
-    config.put("user.search.base", "ou=people," + BASE);
-    return config;
+    return _ldap.ldaps();
   }
 
   static LdapAuthenticator authenticator(Map<String, Object> config) {
-    LdapAuthenticator authenticator = new LdapAuthenticator();
-    authenticator.init(new PinotConfiguration(config), SECRETS);
-    return authenticator;
+    return EmbeddedLdap.authenticator(config);
   }
 
   static AuthCredential basic(String user, String password) {
-    return AuthCredential.parse("Basic " + Base64.getEncoder().encodeToString(
-        (user + ":" + password).getBytes(StandardCharsets.UTF_8)));
+    return EmbeddedLdap.basic(user, password);
   }
 
   static void assertRefused(PinotAuthenticator authenticator, AuthCredential credential, String message) {
@@ -235,10 +116,10 @@ public class LdapAuthenticatorTest {
   @Test
   public void testEmptyPasswordIsRefusedWithoutABind() {
     LdapAuthenticator authenticator = authenticator(ldaps());
-    _binds.set(0);
+    _ldap._binds.set(0);
     assertRefused(authenticator, basic("alice", ""), "Invalid user name or password");
     // An empty password would be an unauthenticated bind, which directories accept: none is sent
-    assertEquals(_binds.get(), 0);
+    assertEquals(_ldap._binds.get(), 0);
   }
 
   @Test

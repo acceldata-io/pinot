@@ -28,6 +28,7 @@ import java.util.Base64;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 import org.apache.pinot.plugin.auth.spi.AuthCredential;
 import org.apache.pinot.plugin.auth.spi.AuthMethod;
 import org.apache.pinot.plugin.auth.spi.AuthMetrics;
@@ -47,6 +48,7 @@ import org.slf4j.LoggerFactory;
 ///
 /// - `service.users`: comma-separated user names of Pinot's own directory service accounts (internal calls); their
 ///   principal is marked as a service account.
+/// - `required.group`: when set, only members of this group may sign in (compared case-insensitively).
 ///
 /// A rejected sign-in answers 401 with `WWW-Authenticate: Basic realm="pinot"`; the reason is logged, never the
 /// password. When no directory server answers, the request is refused (never let through). Thread-safe after
@@ -58,6 +60,8 @@ public class LdapAuthenticator implements PinotAuthenticator {
 
   private LdapDirectory _directory;
   private Set<String> _serviceUsers = Set.of();
+  @Nullable
+  private String _requiredGroup;
 
   @Override
   public AuthMethod getMethod() {
@@ -66,7 +70,8 @@ public class LdapAuthenticator implements PinotAuthenticator {
 
   @Override
   public void init(PinotConfiguration config, SecretResolver secretResolver) {
-    _directory = new LdapDirectory(config, secretResolver, new String[]{"1.1"});
+    _directory = new LdapDirectory(config, secretResolver);
+    _requiredGroup = LdapDirectory.trimToNull(config.getProperty("required.group"));
     Set<String> serviceUsers = new LinkedHashSet<>();
     for (String user : config.getProperty("service.users", "").split(",")) {
       if (!user.trim().isEmpty()) {
@@ -74,8 +79,9 @@ public class LdapAuthenticator implements PinotAuthenticator {
       }
     }
     _serviceUsers = Set.copyOf(serviceUsers);
-    LOGGER.info("LDAP authentication ready: urls={}, bind mode={}, service users={}", config.getProperty("urls"),
-        _directory.getBindMode(), _serviceUsers);
+    LOGGER.info("LDAP authentication ready: urls={}, bind mode={}, group mode={}, required group={}, service users={}",
+        config.getProperty("urls"), _directory.getBindMode(), config.getProperty("group.mode", "none"), _requiredGroup,
+        _serviceUsers);
   }
 
   @Override
@@ -89,10 +95,13 @@ public class LdapAuthenticator implements PinotAuthenticator {
       String user = new String(decoded, 0, colon).trim();
       char[] password = Arrays.copyOfRange(decoded, colon + 1, decoded.length);
       try {
-        LdapDirectory.Entry entry = _directory.authenticate(user, password);
+        LdapDirectory.User found = _directory.authenticate(user, password);
+        if (_requiredGroup != null && found._groups.stream().noneMatch(_requiredGroup::equalsIgnoreCase)) {
+          throw new LdapDirectory.InvalidCredentialsException("not a member of the required group " + _requiredGroup);
+        }
         AuthMetrics.mark(METRICS + "accepted");
-        return new PinotPrincipal(user, Set.of(), AuthMethod.LDAP, _serviceUsers.contains(user),
-            Map.of("dn", entry._dn));
+        return new PinotPrincipal(found._name, found._groups, AuthMethod.LDAP, _serviceUsers.contains(found._name),
+            Map.of("dn", found._dn));
       } catch (LdapDirectory.InvalidCredentialsException e) {
         AuthMetrics.mark(METRICS + "rejected");
         LOGGER.info("LDAP sign-in of '{}' refused: {}", user, e.getMessage());
