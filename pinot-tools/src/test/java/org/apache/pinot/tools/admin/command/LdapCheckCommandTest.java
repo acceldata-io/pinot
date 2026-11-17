@@ -31,6 +31,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
@@ -116,6 +117,18 @@ public class LdapCheckCommandTest {
       throws Exception {
     String output = run("wrong-password", false, null);
     assertTrue(output.contains("Result: REJECTED (HTTP 401)"), output);
+  }
+
+  @Test
+  public void testFileReadAsTheRolesReadIt()
+      throws Exception {
+    // A comma inside a DN value is written as \2C (ODP-8749); java.util.Properties would drop the backslash
+    File file = File.createTempFile("ldap-check-escape", ".properties");
+    file.deleteOnExit();
+    Files.writeString(file.toPath(), "pinot.auth.ldap.bind.dn=CN=pinot-bind,OU=Service Accounts\\2C Pinot,DC=corp\n",
+        StandardCharsets.UTF_8);
+    assertEquals(AuthCheckSupport.readConfiguration(file.getAbsolutePath()).getProperty("pinot.auth.ldap.bind.dn"),
+        "CN=pinot-bind,OU=Service Accounts\\2C Pinot,DC=corp");
   }
 
   @Test

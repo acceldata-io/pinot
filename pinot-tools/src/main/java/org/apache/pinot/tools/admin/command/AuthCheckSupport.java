@@ -21,16 +21,12 @@ package org.apache.pinot.tools.admin.command;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
+import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.pinot.core.auth.TargetType;
 import org.apache.pinot.core.auth.authz.AccessEnforcer;
 import org.apache.pinot.plugin.auth.spi.AccessRequest;
@@ -42,6 +38,7 @@ import org.apache.pinot.plugin.auth.spi.Permission;
 import org.apache.pinot.plugin.auth.spi.PinotAuthorizer;
 import org.apache.pinot.plugin.auth.spi.PinotPrincipal;
 import org.apache.pinot.spi.env.PinotConfiguration;
+import org.apache.pinot.tools.utils.PinotConfigUtils;
 
 
 /// Shared parts of the authentication dry-run commands ([OAuthCheckCommand], [LdapCheckCommand]): reading the
@@ -55,17 +52,21 @@ final class AuthCheckSupport {
   private AuthCheckSupport() {
   }
 
-  /// The properties of a configuration file; Pinot's dynamic configuration (e.g. `dynamic.env.config`) applies, so a
-  /// role's file read in the role's environment resolves its secrets as the role does.
+  /// The properties of a configuration file, read as the Pinot roles read theirs
+  /// ([PinotConfigUtils#readConfigFromFile]), so the check sees the same values as the cluster (e.g. `\2C` in a DN
+  /// stays as written, which `java.util.Properties` would turn into `2C`). Pinot's dynamic configuration (e.g.
+  /// `dynamic.env.config`) applies, so a role's file read in the role's environment resolves its secrets as the role
+  /// does.
   static PinotConfiguration readConfiguration(String file)
       throws IOException {
-    Properties properties = new Properties();
-    try (Reader reader = Files.newBufferedReader(new File(file).toPath(), StandardCharsets.UTF_8)) {
-      properties.load(reader);
+    if (!new File(file).isFile()) {
+      throw new IOException("Configuration file not found: " + file);
     }
-    Map<String, Object> map = new HashMap<>();
-    properties.forEach((key, value) -> map.put(key.toString(), value));
-    return new PinotConfiguration(map);
+    try {
+      return new PinotConfiguration(PinotConfigUtils.readConfigFromFile(file));
+    } catch (ConfigurationException e) {
+      throw new IOException("Cannot read configuration file " + file + ": " + e.getMessage(), e);
+    }
   }
 
   /// The method's settings (`pinot.auth.<method>.*`), secrets masked.
