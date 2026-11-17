@@ -271,6 +271,7 @@
     <wildfly.version>2.0.1</wildfly.version>
     <jettison.version>1.5.4</jettison.version>
     <nimbus-jose-jwt.version>10.8</nimbus-jose-jwt.version>
+    <unboundid-ldapsdk.version>7.0.4</unboundid-ldapsdk.version>
     <dnsjava.version>3.6.4</dnsjava.version>
     <eclipse.jetty.version>9.4.58.v20250814</eclipse.jetty.version>
     <woodstox.version>7.1.1</woodstox.version>
@@ -845,6 +846,18 @@
         <groupId>org.apache.pinot</groupId>
         <artifactId>pinot-auth-oauth2</artifactId>
         <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.pinot</groupId>
+        <artifactId>pinot-auth-ldap</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <!-- Embedded directory server of the LDAP method's tests -->
+      <dependency>
+        <groupId>com.unboundid</groupId>
+        <artifactId>unboundid-ldapsdk</artifactId>
+        <version>${unboundid-ldapsdk.version}</version>
+        <scope>test</scope>
       </dependency>
 
       <!-- Pinot Connector Modules -->

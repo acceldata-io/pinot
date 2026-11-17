@@ -38,6 +38,7 @@
   <modules>
     <module>pinot-auth-spi</module>
     <module>pinot-auth-oauth2</module>
+    <module>pinot-auth-ldap</module>
     <module>pinot-auth-samples</module>
   </modules>
 </project>

@@ -56,6 +56,10 @@
     </dependency>
     <dependency>
       <groupId>org.apache.pinot</groupId>
+      <artifactId>pinot-auth-ldap</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.pinot</groupId>
       <artifactId>pinot-minion-builtin-tasks</artifactId>
     </dependency>
     <dependency>
