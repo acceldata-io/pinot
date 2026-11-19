@@ -96,6 +96,20 @@ public class ObfuscatorTest {
   }
 
   @Test
+  public void testObfuscateKey() {
+    // Per-key masking (configurations logged one key at a time) follows the same patterns as the JSON masking
+    Assert.assertEquals(Obfuscator.DEFAULT.obfuscate("auth.client.secret", SECRET), "*****");
+    Assert.assertEquals(Obfuscator.DEFAULT.obfuscate("auth.token", SECRET), "*****");
+    Assert.assertEquals(Obfuscator.DEFAULT.obfuscate("tls.keystore.PASSWORD", SECRET), "*****");
+    Assert.assertEquals(Obfuscator.DEFAULT.obfuscate("aws.secret_key", SECRET), "*****");
+    Assert.assertEquals(Obfuscator.DEFAULT.obfuscate("auth.jar.dir", VALUE), VALUE);
+    Assert.assertEquals(Obfuscator.DEFAULT.obfuscate("auth.client.secret.alias", VALUE), VALUE);
+    Assert.assertNull(Obfuscator.DEFAULT.obfuscate("dataDir", null));
+    Assert.assertEquals(Obfuscator.DEFAULT.obfuscate(null, VALUE), VALUE);
+    Assert.assertEquals(new Obfuscator("nope", Collections.emptyList()).obfuscate("password", SECRET), SECRET);
+  }
+
+  @Test
   public void testNull() {
     Assert.assertEquals(String.valueOf(_obfuscator.toJson(null)), "null");
   }

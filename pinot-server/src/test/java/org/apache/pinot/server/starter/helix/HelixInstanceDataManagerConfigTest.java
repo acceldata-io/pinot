@@ -19,16 +19,71 @@
 package org.apache.pinot.server.starter.helix;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.appender.AbstractAppender;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.LoggerConfig;
+import org.apache.logging.log4j.core.config.Property;
 import org.apache.pinot.spi.env.PinotConfiguration;
 import org.testng.annotations.Test;
 
 import static org.apache.pinot.spi.utils.CommonConstants.Server.INSTANCE_ID;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
 
 
 public class HelixInstanceDataManagerConfigTest {
+
+  @Test
+  public void testSecretsAreMaskedInTheStartLog()
+      throws ConfigurationException {
+    String secret = "s3cr3t-value-never-logged";
+    Map<String, Object> props = new HashMap<>();
+    props.put(INSTANCE_ID, "testInstance");
+    props.put("auth.client.secret", secret);
+    props.put("auth.token", "Basic " + secret);
+    props.put("auth.jar.dir", "/opt/pinot/auth-handlers/samples");
+
+    List<String> lines = new CopyOnWriteArrayList<>();
+    AbstractAppender appender = new AbstractAppender("capture", null, null, true, Property.EMPTY_ARRAY) {
+      @Override
+      public void append(LogEvent event) {
+        lines.add(event.getMessage().getFormattedMessage());
+      }
+    };
+    appender.start();
+    LoggerContext context = (LoggerContext) LogManager.getContext(false);
+    Configuration configuration = context.getConfiguration();
+    String loggerName = HelixInstanceDataManagerConfig.class.getName();
+    LoggerConfig loggerConfig = new LoggerConfig(loggerName, Level.INFO, false);
+    loggerConfig.addAppender(appender, Level.INFO, null);
+    configuration.addLogger(loggerName, loggerConfig);
+    context.updateLoggers();
+    try {
+      new HelixInstanceDataManagerConfig(new PinotConfiguration(props));
+    } finally {
+      configuration.removeLogger(loggerName);
+      context.updateLoggers();
+      appender.stop();
+    }
+
+    assertFalse(lines.isEmpty(), "the configuration is logged at start");
+    for (String line : lines) {
+      assertFalse(line.contains(secret), "secret in the log: " + line);
+    }
+    assertTrue(lines.contains("InstanceDataManagerConfig, key: auth.client.secret , value: *****"), lines.toString());
+    assertTrue(lines.contains("InstanceDataManagerConfig, key: auth.token , value: *****"), lines.toString());
+    assertTrue(lines.contains("InstanceDataManagerConfig, key: auth.jar.dir , value: /opt/pinot/auth-handlers/samples"),
+        lines.toString());
+  }
 
   @Test
   public void testTierConfigsWithMultipleTiers() throws ConfigurationException {

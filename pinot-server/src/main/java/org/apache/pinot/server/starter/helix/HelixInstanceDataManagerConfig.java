@@ -29,6 +29,7 @@ import org.apache.pinot.common.utils.TarCompressionUtils;
 import org.apache.pinot.segment.spi.loader.SegmentDirectoryLoaderRegistry;
 import org.apache.pinot.spi.config.instance.InstanceDataManagerConfig;
 import org.apache.pinot.spi.env.PinotConfiguration;
+import org.apache.pinot.spi.utils.Obfuscator;
 import org.apache.pinot.spi.utils.ReadMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -143,7 +144,9 @@ public class HelixInstanceDataManagerConfig implements InstanceDataManagerConfig
     _serverConfig = serverConfig;
 
     for (String key : serverConfig.getKeys()) {
-      LOGGER.info("InstanceDataManagerConfig, key: {} , value: {}", key, serverConfig.getProperty(key));
+      // Masked like the JSON dump of this configuration: no secret (auth.client.secret, auth.token, ...) is logged
+      LOGGER.info("InstanceDataManagerConfig, key: {} , value: {}", key,
+          Obfuscator.DEFAULT.obfuscate(key, serverConfig.getProperty(key)));
     }
 
     checkRequiredKeys();

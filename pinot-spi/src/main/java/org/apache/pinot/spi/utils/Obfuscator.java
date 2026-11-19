@@ -87,6 +87,21 @@ public final class Obfuscator {
   }
 
   /**
+   * The value to log for one key: the masked value when the key matches the obfuscation patterns (as in
+   * {@link #toJson(Object)}), else the value itself. For configurations logged one key at a time.
+   *
+   * @param key property name
+   * @param value property value
+   * @return the value, or the masked value for a sensitive key
+   */
+  public Object obfuscate(String key, Object value) {
+    if (key != null && _patterns.stream().anyMatch(pattern -> pattern.matcher(key).matches())) {
+      return _maskedValue;
+    }
+    return value;
+  }
+
+  /**
    * Serialize an object tree to JSON and obfuscate matching keys. This method handles special cases for JsonNode and
    * String objects separately to minimize surprises.
    *
