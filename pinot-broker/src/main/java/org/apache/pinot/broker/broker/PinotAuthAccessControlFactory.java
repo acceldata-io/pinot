@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.core.HttpHeaders;
@@ -31,6 +32,7 @@ import org.apache.pinot.core.auth.Actions;
 import org.apache.pinot.core.auth.TargetType;
 import org.apache.pinot.core.auth.authz.AccessEnforcer;
 import org.apache.pinot.plugin.auth.spi.AuthenticationException;
+import org.apache.pinot.plugin.auth.spi.AuthorizationMode;
 import org.apache.pinot.plugin.auth.spi.Permission;
 import org.apache.pinot.plugin.auth.spi.PinotPrincipal;
 import org.apache.pinot.spi.auth.AuthorizationResult;
@@ -40,6 +42,9 @@ import org.apache.pinot.spi.auth.TableRowColAccessResult;
 import org.apache.pinot.spi.auth.TableRowColAccessResultImpl;
 import org.apache.pinot.spi.auth.broker.RequesterIdentity;
 import org.apache.pinot.spi.env.PinotConfiguration;
+import org.apache.pinot.spi.utils.CommonConstants.Broker;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /// Broker access control of the pluggable authentication and authorization framework: the cluster's one
@@ -49,7 +54,13 @@ import org.apache.pinot.spi.env.PinotConfiguration;
 ///
 /// A missing or rejected credential raises [NotAuthorizedException] (HTTP 401) with the method's challenge; a table
 /// the caller may not query is reported as failed (HTTP 403).
+///
+/// Row filters are applied by the broker's request handlers only with `pinot.broker.enable.row.column.level.auth`.
+/// Without it a table on which the authorizer has row filters for the caller is refused (fail closed): returning its
+/// unfiltered rows would ignore the filter.
 public class PinotAuthAccessControlFactory extends AccessControlFactory {
+  private static final Logger LOGGER = LoggerFactory.getLogger(PinotAuthAccessControlFactory.class);
+
   /// Where the broker's BasicAuth principals are configured, relative to `pinot.broker.access.control`.
   static final String BASIC_AUTH_PRINCIPALS = "principals";
 
@@ -59,7 +70,15 @@ public class PinotAuthAccessControlFactory extends AccessControlFactory {
   public void init(PinotConfiguration configuration) {
     // Existing BasicAuth principals (pinot.broker.access.control.principals) keep their access under the native
     // authorizer
-    _accessControl = new PinotAuthAccessControl(AccessEnforcer.create(configuration, BASIC_AUTH_PRINCIPALS));
+    AccessEnforcer enforcer = AccessEnforcer.create(configuration, BASIC_AUTH_PRINCIPALS);
+    boolean rowFiltersApplied = configuration.getProperty(Broker.CONFIG_OF_BROKER_ENABLE_ROW_COLUMN_LEVEL_AUTH,
+        Broker.DEFAULT_BROKER_ENABLE_ROW_COLUMN_LEVEL_AUTH);
+    if (!rowFiltersApplied && enforcer.getAuthorizer().getMode() != AuthorizationMode.NONE) {
+      LOGGER.warn("{} is off: row filters of the {} authorizer cannot be applied, so queries on tables with row "
+          + "filters for the caller are refused. Turn it on to let them run filtered.",
+          Broker.CONFIG_OF_BROKER_ENABLE_ROW_COLUMN_LEVEL_AUTH, enforcer.getAuthorizer().getMode().getConfigValue());
+    }
+    _accessControl = new PinotAuthAccessControl(enforcer, rowFiltersApplied);
   }
 
   @Override
@@ -72,9 +91,13 @@ public class PinotAuthAccessControlFactory extends AccessControlFactory {
     private static final String QUERY_ACCESS_TYPE = "query";
 
     private final AccessEnforcer _enforcer;
+    private final boolean _rowFiltersApplied;
+    // Tables already reported as refused for unapplied row filters (one warning per table, not per query)
+    private final Set<String> _reportedUnfilteredTables = ConcurrentHashMap.newKeySet();
 
-    PinotAuthAccessControl(AccessEnforcer enforcer) {
+    PinotAuthAccessControl(AccessEnforcer enforcer, boolean rowFiltersApplied) {
       _enforcer = enforcer;
+      _rowFiltersApplied = rowFiltersApplied;
     }
 
     /// Entry check of a query: the caller must be authenticated; tables are checked once known.
@@ -120,7 +143,12 @@ public class PinotAuthAccessControlFactory extends AccessControlFactory {
         // as this action (READ, access type query), so there is nothing left to decide.
         return true;
       }
-      return _enforcer.isAllowed(authenticate(authorization(httpHeaders)), targetType, targetId, action);
+      PinotPrincipal principal = authenticate(authorization(httpHeaders));
+      if (targetType == TargetType.TABLE && Actions.Table.QUERY.equals(action) && !rowFiltersAllowQuery(principal,
+          targetId)) {
+        return false;
+      }
+      return _enforcer.isAllowed(principal, targetType, targetId, action);
     }
 
     @Override
@@ -140,7 +168,21 @@ public class PinotAuthAccessControlFactory extends AccessControlFactory {
 
     private boolean canQuery(PinotPrincipal principal, String table) {
       return _enforcer.isAllowed(principal,
-          AccessEnforcer.request(TargetType.TABLE, table, null, Permission.READ, QUERY_ACCESS_TYPE));
+          AccessEnforcer.request(TargetType.TABLE, table, null, Permission.READ, QUERY_ACCESS_TYPE))
+          && rowFiltersAllowQuery(principal, table);
+    }
+
+    /// False when the authorizer has row filters for the caller on the table but the broker does not apply them.
+    private boolean rowFiltersAllowQuery(PinotPrincipal principal, String table) {
+      if (_rowFiltersApplied || _enforcer.getRowFilters(principal, table).isEmpty()) {
+        return true;
+      }
+      if (_reportedUnfilteredTables.add(table)) {
+        LOGGER.warn("Refused a query on {} for {}: the authorizer has row filters for it, but {} is off, so the broker "
+            + "would return unfiltered rows", table, principal.getUser(),
+            Broker.CONFIG_OF_BROKER_ENABLE_ROW_COLUMN_LEVEL_AUTH);
+      }
+      return false;
     }
 
     private PinotPrincipal authenticate(RequesterIdentity requesterIdentity) {

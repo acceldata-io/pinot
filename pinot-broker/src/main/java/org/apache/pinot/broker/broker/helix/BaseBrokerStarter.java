@@ -362,6 +362,11 @@ public abstract class BaseBrokerStarter implements ServiceStartable {
         _brokerConf.subset(Broker.ACCESS_CONTROL_CONFIG_PREFIX), _brokerConf);
     // Adding cluster name to the config so that it can be used by the AccessControlFactory
     factoryConf.setProperty(Helix.CONFIG_OF_CLUSTER_NAME, _brokerConf.getProperty(Helix.CONFIG_OF_CLUSTER_NAME));
+    // Whether the request handlers apply row filters: an access control with row filters must refuse what they would
+    // not filter
+    factoryConf.setProperty(Broker.CONFIG_OF_BROKER_ENABLE_ROW_COLUMN_LEVEL_AUTH,
+        _brokerConf.getProperty(Broker.CONFIG_OF_BROKER_ENABLE_ROW_COLUMN_LEVEL_AUTH,
+            Broker.DEFAULT_BROKER_ENABLE_ROW_COLUMN_LEVEL_AUTH));
     _accessControlFactory = AccessControlFactory.loadFactory(factoryConf, _propertyStore);
     _queryQuotaManager = new HelixExternalViewBasedQueryQuotaManager(_brokerMetrics, _instanceId);
     _queryQuotaManager.init(_spectatorHelixManager);

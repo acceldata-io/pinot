@@ -35,6 +35,7 @@ import org.apache.pinot.core.auth.authz.TestAuth;
 import org.apache.pinot.spi.auth.TableAuthorizationResult;
 import org.apache.pinot.spi.auth.broker.RequesterIdentity;
 import org.apache.pinot.spi.env.PinotConfiguration;
+import org.apache.pinot.spi.utils.CommonConstants;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -102,6 +103,8 @@ public class PinotAuthAccessControlFactoryTest {
     settings.put("pinot.authz.native.rule.all.users", "auditor");
     settings.put("pinot.authz.native.rule.all.permissions", "READ");
     settings.put("pinot.authz.native.rule.all.tables", "*");
+    // The broker applies row filters
+    settings.put(CommonConstants.Broker.CONFIG_OF_BROKER_ENABLE_ROW_COLUMN_LEVEL_AUTH, "true");
     PinotAuthAccessControlFactory factory = new PinotAuthAccessControlFactory();
     factory.init(new PinotConfiguration(settings));
     AccessControl accessControl = factory.create();
@@ -110,6 +113,43 @@ public class PinotAuthAccessControlFactoryTest {
     assertFalse(accessControl.getRowColFilters(http("Bearer auditor"), "orders").getRLSFilters().isPresent());
     assertTrue(accessControl.authorize(http("Bearer alice:south"), Set.of("orders")).hasAccess());
     assertFalse(accessControl.authorize(http("Bearer alice:south"), Set.of("payments")).hasAccess());
+  }
+
+  @Test
+  public void testRowFiltersNotAppliedByTheBrokerFailClosed() {
+    // Row filters exist, but the broker's request handlers do not apply them
+    // (pinot.broker.enable.row.column.level.auth off, the broker's default): refuse instead of returning all rows
+    Map<String, Object> settings = TestAuth.settings();
+    settings.remove("pinot.authz.native.authorizer.class");
+    settings.put("pinot.authz.native.rules", "south,all");
+    settings.put("pinot.authz.native.rule.south.groups", "south");
+    settings.put("pinot.authz.native.rule.south.permissions", "READ");
+    settings.put("pinot.authz.native.rule.south.tables", "orders,customers");
+    settings.put("pinot.authz.native.rule.south.rowFilter.orders", "region = 'south'");
+    settings.put("pinot.authz.native.rule.all.users", "auditor");
+    settings.put("pinot.authz.native.rule.all.permissions", "READ");
+    settings.put("pinot.authz.native.rule.all.tables", "*");
+    for (Object flag : new Object[]{null, "false"}) {
+      if (flag != null) {
+        settings.put(CommonConstants.Broker.CONFIG_OF_BROKER_ENABLE_ROW_COLUMN_LEVEL_AUTH, flag);
+      }
+      PinotAuthAccessControlFactory factory = new PinotAuthAccessControlFactory();
+      factory.init(new PinotConfiguration(settings));
+      AccessControl accessControl = factory.create();
+      // The filtered table is refused, by every query path
+      TableAuthorizationResult result = accessControl.authorize(http("Bearer alice:south"), Set.of("orders"));
+      assertFalse(result.hasAccess());
+      assertEquals(result.getFailedTables(), Set.of("orders"));
+      assertFalse(accessControl.authorize(grpc("Bearer alice:south"), Set.of("orders", "customers")).hasAccess());
+      BrokerRequest brokerRequest = new BrokerRequest();
+      QuerySource querySource = new QuerySource();
+      querySource.setTableName("orders");
+      brokerRequest.setQuerySource(querySource);
+      assertFalse(accessControl.authorize(http("Bearer alice:south"), brokerRequest).hasAccess());
+      // A table without a filter for the caller, and a caller without filters, are unaffected
+      assertTrue(accessControl.authorize(http("Bearer alice:south"), Set.of("customers")).hasAccess());
+      assertTrue(accessControl.authorize(http("Bearer auditor"), Set.of("orders")).hasAccess());
+    }
   }
 
   @Test
