@@ -43,6 +43,14 @@
       <groupId>org.apache.pinot</groupId>
       <artifactId>pinot-jdbc-client</artifactId>
     </dependency>
+    <!-- Only orders the build (also with -T): the assembly ships this jar in auth-handlers/samples. Provided keeps it out
+         of the shaded pinot-all jar, where the handler would lose the isolation of its own class loader. -->
+    <dependency>
+      <groupId>org.apache.pinot</groupId>
+      <artifactId>pinot-auth-samples</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
   <build>
     <plugins>

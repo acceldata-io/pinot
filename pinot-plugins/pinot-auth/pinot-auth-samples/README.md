@@ -96,7 +96,8 @@ In the Pinot source tree:
 ```
 
 On its own (JDK 17, Maven, a repository with the Pinot artifacts of your version), from the source archive
-`pinot-auth-samples-<version>-src.zip` that the build produces next to the jar:
+`pinot-auth-samples-<version>-src.zip` that the build produces next to the jar (the Pinot binary distribution ships
+it as `examples/auth-handlers/pinot-auth-samples-<version>-src.zip`):
 
 ```
 unzip pinot-auth-samples-<version>-src.zip && cd pinot-auth-samples
@@ -107,6 +108,11 @@ The tests run without network access (the identity provider is mocked). Build ag
 cluster: the SPI is stable within a Pinot line, not across lines.
 
 ## 4. Deploy
+
+The Pinot binary distribution ships the samples built as they are in
+`<Pinot home>/auth-handlers/samples/pinot-auth-samples-<version>.jar`: a handler that uses a sample unchanged (for
+example `GoogleTokenHandler`) only needs `jar.dir=<Pinot home>/auth-handlers/samples`, nothing is copied. A handler
+you adapted is your own jar, deployed as below.
 
 On **every** Pinot host (controller, broker, server, minion):
 

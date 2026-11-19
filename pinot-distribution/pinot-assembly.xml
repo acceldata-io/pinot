@@ -250,6 +250,22 @@
     </file>
     <!-- End Include Pinot Time Series Plugins -->
     <!-- End Include Pinot Plugins-->
+    <!-- Sample OAuth 2.0 token handlers (pinot-auth-samples), loaded as java handlers from their own class loader. They
+         live next to plugins/, never inside it: the launcher puts every jar under plugins/ on Pinot's classpath. Point a
+         handler's jar.dir at auth-handlers/samples to use them as they are; the source archive is the starting point for
+         a handler adapted to another identity provider. -->
+    <file>
+      <source>
+        ${pinot.root}/pinot-plugins/pinot-auth/pinot-auth-samples/target/pinot-auth-samples-${project.version}.jar
+      </source>
+      <destName>auth-handlers/samples/pinot-auth-samples-${project.version}.jar</destName>
+    </file>
+    <file>
+      <source>
+        ${pinot.root}/pinot-plugins/pinot-auth/pinot-auth-samples/target/pinot-auth-samples-${project.version}-src.zip
+      </source>
+      <destName>examples/auth-handlers/pinot-auth-samples-${project.version}-src.zip</destName>
+    </file>
   </files>
   <fileSets>
     <!-- Rename licenses-binary directory to licenses and include it to a distribution tarbell -->
