@@ -25,8 +25,9 @@ import org.apache.pinot.spi.env.PinotConfiguration;
 /// `pinot.auth.method` (see [AuthMethodSelector]). Implementations need a public no-argument constructor and must be
 /// thread-safe after [#init].
 ///
-/// [SingleMethodAuthentication] calls [#authenticate] only with a credential whose scheme matches [#getMethod()]; other
-/// credential types are rejected before reaching the implementation.
+/// [SingleMethodAuthentication] calls [#authenticate] only with a credential whose scheme the authenticator accepts
+/// ([#acceptsScheme], by default the scheme of [#getMethod()]); other credential types are rejected before reaching the
+/// implementation.
 public interface PinotAuthenticator extends AutoCloseable {
 
   /// The method this authenticator implements; must equal the configured method.
@@ -44,6 +45,13 @@ public interface PinotAuthenticator extends AutoCloseable {
   /// @throws AuthenticationException if the credential is invalid or cannot be checked (for example the identity
   ///     provider is unreachable); never returns `null`
   PinotPrincipal authenticate(AuthCredential credential);
+
+  /// Whether a credential of this `Authorization` scheme is for this authenticator (case-insensitive, as HTTP schemes
+  /// are). By default only the method's own scheme, e.g. `Bearer` for OAuth 2.0; an authenticator may accept more, for
+  /// example the custom scheme of an in-house identity provider.
+  default boolean acceptsScheme(String scheme) {
+    return getMethod().getScheme().equalsIgnoreCase(scheme);
+  }
 
   @Override
   default void close() {

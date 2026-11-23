@@ -90,16 +90,20 @@ import org.slf4j.LoggerFactory;
 /// | `accept.opaque` | `false` | also accept non-JWT tokens, validated by `validation.url` only |
 /// | `opaque.ttl.seconds` | `300` | lifetime for an opaque token when the response has no expiry |
 /// | `validation.url` | | provider API that confirms the token |
-/// | `validation.style` | `bearer` | `bearer`: GET with `Authorization: Bearer <token>`; `form`: POST `token=<token>` |
+/// | `validation.style` | `bearer` | `bearer`: GET with `Authorization: <scheme> <token>`; `form`: POST `token=` |
+/// | `provider.auth.scheme` | `Bearer` | token scheme in the provider calls (validation, user info, groups) |
 /// | `validation.active.field` | | response field that must be `true` |
 /// | `client.id`, `client.secret.alias` | | Pinot's client credentials for the provider API (Basic, `form` style) |
-/// | `userinfo.url` | | GET with the bearer token; response used for user / groups / scopes |
-/// | `groups.url` | | GET with the bearer token; response used for groups |
+/// | `userinfo.url` | | GET with the token (`provider.auth.scheme`); response used for user / groups / scopes |
+/// | `groups.url` | | GET with the token (`provider.auth.scheme`); response used for groups |
 /// | `user.field` / `user.claim` | / `sub` | dotted path in the responses / claim in the token |
 /// | `groups.field` / `groups.claim` | / `groups` | same for groups (array or comma / space separated string) |
 /// | `scopes.field` / `scopes.claim` | / `scope` | same for scopes |
 /// | `expires.field` | | response field with the expiry in epoch seconds (opaque tokens) |
 /// | `http.timeout.ms` | `3000` | connect and request timeout per provider call |
+///
+/// `provider.auth.scheme` is for providers whose APIs expect their own scheme, e.g. `O-Bearer`; Pinot accepts such a
+/// scheme from clients with `pinot.auth.oauth2.token.schemes`.
 ///
 /// Thread-safe after [#init]: all state is final configuration plus a thread-safe HTTP client.
 public class CustomIdpTokenHandler implements OAuthTokenHandler {
@@ -128,6 +132,8 @@ public class CustomIdpTokenHandler implements OAuthTokenHandler {
   private String _activeField;
   @Nullable
   private String _clientAuthorization;
+  /// `Authorization` scheme of the token in the calls to the provider.
+  private String _providerScheme;
   @Nullable
   private String _userInfoUrl;
   @Nullable
@@ -182,6 +188,12 @@ public class CustomIdpTokenHandler implements OAuthTokenHandler {
     }
     _formStyle = style.equals("form");
     _activeField = optional(config, "validation.active.field");
+    // EDIT HERE if your provider's APIs expect the token in another way than "Authorization: <scheme> <token>"
+    _providerScheme = config.getProperty("provider.auth.scheme", "Bearer").trim();
+    if (!_providerScheme.matches("[A-Za-z0-9!#$%&'*+.^_`|~-]+")) {
+      throw new IllegalArgumentException("Handler " + _name + ": provider.auth.scheme '" + _providerScheme
+          + "' is not an HTTP authentication scheme");
+    }
     String clientId = optional(config, "client.id");
     if (clientId != null) {
       String clientSecretAlias = required(config, "client.secret.alias");
@@ -247,9 +259,9 @@ public class CustomIdpTokenHandler implements OAuthTokenHandler {
 
     // Step 4: who is it? Change these calls if your provider looks users up by a claim (e.g. sid) instead of the token
     if (_userInfoUrl != null) {
-      responses.add(callWithBearer(_userInfoUrl, token, "user-info"));
+      responses.add(callProvider(_userInfoUrl, token, "user-info"));
     }
-    Map<String, Object> groupsResponse = _groupsUrl != null ? callWithBearer(_groupsUrl, token, "groups") : null;
+    Map<String, Object> groupsResponse = _groupsUrl != null ? callProvider(_groupsUrl, token, "groups") : null;
 
     // Step 5: map
     String user = firstString(responses, _userField);
@@ -327,7 +339,7 @@ public class CustomIdpTokenHandler implements OAuthTokenHandler {
         }
         response = _http.postForm(_validationUrl, Collections.singletonMap("token", token), headers);
       } else {
-        headers.put("Authorization", "Bearer " + token);
+        headers.put("Authorization", _providerScheme + " " + token);
         response = _http.get(_validationUrl, headers);
       }
     } catch (IOException | RuntimeException e) {
@@ -336,10 +348,10 @@ public class CustomIdpTokenHandler implements OAuthTokenHandler {
     return readAnswer(response, "validation");
   }
 
-  private Map<String, Object> callWithBearer(String url, String token, String call) {
+  private Map<String, Object> callProvider(String url, String token, String call) {
     HttpCalls.Response response;
     try {
-      response = _http.get(url, Collections.singletonMap("Authorization", "Bearer " + token));
+      response = _http.get(url, Collections.singletonMap("Authorization", _providerScheme + " " + token));
     } catch (IOException | RuntimeException e) {
       throw unavailable(call, e);
     }

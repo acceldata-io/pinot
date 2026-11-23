@@ -23,10 +23,14 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -61,6 +65,9 @@ import org.apache.pinot.spi.plugin.PluginManager;
 /// otherwise).
 ///
 /// Settings (`pinot.auth.oauth2.*`):
+/// - `token.schemes`: comma-separated `Authorization` schemes accepted in addition to `Bearer`, for clients of an
+///   in-house identity provider that send its own scheme (e.g. `O-Bearer <token>`); the token after any accepted
+///   scheme is routed like a bearer token. `Bearer` is always accepted: Pinot's own calls between its roles use it
 /// - `handlers`: comma-separated handler names, in order; `max.token.bytes`; `handlers.dir`: directory of custom
 ///   handler jars (default `auth-handlers` next to the first plugins directory, e.g. `<Pinot home>/auth-handlers`;
 ///   never inside a plugins directory, whose jars Pinot puts on its own classpath)
@@ -87,6 +94,10 @@ public class OAuth2Authenticator implements PinotAuthenticator {
   private final Map<GuardedHandler, IdentityMapper> _mappers = new IdentityHashMap<>();
   private ExecutorService _executor;
   private int _maxTokenBytes;
+  /// Accepted `Authorization` schemes, lower-cased: `bearer` plus `token.schemes`.
+  private Set<String> _schemes = Set.of(AuthMethod.OAUTH2.getScheme().toLowerCase(Locale.ROOT));
+  /// An HTTP authentication scheme is an RFC 9110 token.
+  private static final Pattern SCHEME = Pattern.compile("[A-Za-z0-9!#$%&'*+.^_`|~-]+");
   private String _challenge;
 
   private static final class RoutedHandler {
@@ -106,8 +117,26 @@ public class OAuth2Authenticator implements PinotAuthenticator {
   }
 
   @Override
+  public boolean acceptsScheme(String scheme) {
+    return scheme != null && _schemes.contains(scheme.toLowerCase(Locale.ROOT));
+  }
+
+  @Override
   public void init(PinotConfiguration config, SecretResolver secretResolver) {
     _maxTokenBytes = config.getProperty("max.token.bytes", DEFAULT_MAX_TOKEN_BYTES);
+    Set<String> schemes = new LinkedHashSet<>(_schemes);
+    for (String scheme : JwtTokenHandler.csv(config.getProperty("token.schemes", ""))) {
+      if (!SCHEME.matcher(scheme).matches()) {
+        throw new IllegalArgumentException("pinot.auth.oauth2.token.schemes: '" + scheme + "' is not an HTTP "
+            + "authentication scheme (letters, digits and !#$%&'*+.^_`|~- only)");
+      }
+      if (scheme.equalsIgnoreCase(AuthMethod.BASIC.getScheme())) {
+        throw new IllegalArgumentException("pinot.auth.oauth2.token.schemes: '" + scheme + "' is the Basic method's "
+            + "scheme, not a token scheme");
+      }
+      schemes.add(scheme.toLowerCase(Locale.ROOT));
+    }
+    _schemes = Collections.unmodifiableSet(schemes);
     _challenge = AuthenticationException.challengeFor(AuthMethod.OAUTH2) + ", error=\"invalid_token\"";
     AtomicInteger threadIds = new AtomicInteger();
     _executor = Executors.newCachedThreadPool(runnable -> {

@@ -71,6 +71,8 @@ The places you are most likely to change are marked in `CustomIdpTokenHandler`:
   provider unavailable. If your provider returns 200 with an error field, check it here.
 - **User lookup** (step 4): by default the user-info call sends the token as a bearer token. If your provider looks
   users up by a claim (for example the session id), build that request here.
+- **Token scheme**: if your provider's APIs expect the token under their own scheme (`Authorization: O-Bearer
+  <token>`), set `provider.auth.scheme=O-Bearer` on the handler: no code change.
 - **Mapping** (step 5): `user.field`, `groups.field`, `scopes.field` take dotted paths, so most layouts need only
   configuration.
 
@@ -137,7 +139,10 @@ the role's log, not in the response.
 
 ## 5. Clients
 
-Every client sends `Authorization: Bearer <token>` and must replace the token before it expires.
+Every client sends `Authorization: Bearer <token>` and must replace the token before it expires. Clients that send
+the token under your provider's own scheme (`Authorization: O-Bearer <token>`) are accepted once that scheme is listed
+in `pinot.auth.oauth2.token.schemes` (Ambari: Authentication > OAuth 2.0 > *Additional token schemes*); `Bearer` stays
+accepted, as Pinot's own calls between its roles use it.
 
 - **Java client and JDBC driver**: connection headers were fixed when the connection was made, so a long-lived
   connection (or a connection pool) failed once its token expired. Give the connection a headers supplier, called for

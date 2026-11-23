@@ -140,6 +140,32 @@ public class CustomIdpTokenHandlerTest {
   }
 
   @Test
+  public void testProviderCallsUseTheConfiguredScheme() {
+    // A provider whose APIs expect its own scheme (Authorization: O-Bearer <token>); the identity is held on the
+    // provider's side behind the session id, so the user comes from the user-info call
+    _idp.answer("/v1/validate", 200, "{\"valid\":true}");
+    _idp.answer("/v1/userinfo", 200, "{\"data\":{\"userId\":\"alice\",\"roles\":[\"analysts\"]}}");
+    Map<String, Object> settings = localSettings();
+    settings.put("validation.url", _idp.url("/v1/validate"));
+    settings.put("validation.active.field", "valid");
+    settings.put("userinfo.url", _idp.url("/v1/userinfo"));
+    settings.put("user.field", "data.userId");
+    settings.put("groups.field", "data.roles");
+    settings.put("provider.auth.scheme", "O-Bearer");
+    String token = validToken();
+    TokenIdentity identity = handler(settings).validate(token);
+    assertEquals(identity.getUser(), "alice");
+    assertEquals(identity.getGroups(), Set.of("analysts"));
+    assertEquals(_idp._requests.size(), 2);
+    for (MockIdpServer.Request request : _idp._requests) {
+      assertEquals(request._authorization, "O-Bearer " + token, request._path);
+    }
+    // A value that is not an HTTP authentication scheme is refused at start
+    settings.put("provider.auth.scheme", "O Bearer");
+    expectThrows(IllegalArgumentException.class, () -> handler(settings));
+  }
+
+  @Test
   public void testFormStyleValidationSendsClientCredentials() {
     _idp.answer("/introspect", 200, "{\"active\":true,\"username\":\"bob\"}");
     Map<String, Object> settings = localSettings();

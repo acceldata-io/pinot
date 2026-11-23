@@ -55,9 +55,9 @@ final class TokenResultCache {
     _ttlMs = config.getProperty("cache.ttl.seconds", 60L) * 1000;
     _negativeTtlMs = config.getProperty("negative.cache.seconds", 10L) * 1000;
     int maxEntries = config.getProperty("cache.max.entries", 10_000);
-    _entries = Collections.synchronizedMap(new LinkedHashMap<String, Entry>(16, 0.75f, true) {
+    _entries = Collections.synchronizedMap(new LinkedHashMap<String, TokenResultCache.Entry>(16, 0.75f, true) {
       @Override
-      protected boolean removeEldestEntry(Map.Entry<String, Entry> eldest) {
+      protected boolean removeEldestEntry(Map.Entry<String, TokenResultCache.Entry> eldest) {
         return size() > maxEntries;
       }
     });

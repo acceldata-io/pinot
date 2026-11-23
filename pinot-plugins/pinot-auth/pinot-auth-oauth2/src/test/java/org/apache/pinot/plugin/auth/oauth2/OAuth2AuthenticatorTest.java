@@ -267,4 +267,40 @@ public class OAuth2AuthenticatorTest {
         () -> auth.authenticate("Basic YWRtaW46c2VjcmV0"));
     assertEquals(basic.getChallenge(), "Bearer realm=\"pinot\"");
   }
+
+  @Test
+  public void testAdditionalTokenSchemes()
+      throws Exception {
+    // Clients of an in-house provider send its own scheme (Authorization: O-Bearer <token>)
+    Map<String, Object> props = new HashMap<>();
+    props.put("pinot.auth.method", "oauth2");
+    props.put("pinot.auth.oauth2.handlers", "main");
+    props.put("pinot.auth.oauth2.token.schemes", "O-Bearer");
+    handler("main", _idp, false).forEach((k, v) -> props.put("pinot.auth.oauth2." + k, v));
+    SingleMethodAuthentication auth =
+        new SingleMethodAuthentication(AuthMethodSelector.create(new PinotConfiguration(props), SECRETS));
+    String token = _idp.sign(_idp.claims(AUD).build());
+    assertEquals(auth.authenticate("O-Bearer " + token).getUser(), "alice");
+    assertEquals(auth.authenticate("o-bearer " + token).getUser(), "alice");
+    // Bearer stays accepted (Pinot's own calls between roles use it); other schemes do not
+    assertEquals(auth.authenticate("Bearer " + token).getUser(), "alice");
+    expectThrows(AuthenticationException.class, () -> auth.authenticate("X-Bearer " + token));
+    expectThrows(AuthenticationException.class, () -> auth.authenticate("Basic YWRtaW46c2VjcmV0"));
+
+    // Without the setting only Bearer is accepted
+    props.remove("pinot.auth.oauth2.token.schemes");
+    SingleMethodAuthentication bearerOnly =
+        new SingleMethodAuthentication(AuthMethodSelector.create(new PinotConfiguration(props), SECRETS));
+    AuthenticationException e = expectThrows(AuthenticationException.class,
+        () -> bearerOnly.authenticate("O-Bearer " + token));
+    assertTrue(e.getMessage().contains("'O-Bearer' is not accepted"), e.getMessage());
+
+    // Invalid values are refused at start: not an HTTP scheme, or the Basic method's scheme
+    for (String invalid : new String[]{"O Bearer", "Basic"}) {
+      Map<String, Object> bad = handler("main", _idp, false);
+      bad.put("handlers", "main");
+      bad.put("token.schemes", invalid);
+      expectThrows(IllegalArgumentException.class, () -> authenticator(bad));
+    }
+  }
 }

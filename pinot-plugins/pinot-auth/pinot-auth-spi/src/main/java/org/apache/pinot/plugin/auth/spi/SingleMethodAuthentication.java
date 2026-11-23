@@ -55,7 +55,7 @@ public final class SingleMethodAuthentication {
       throw new AuthenticationException("Missing credential; this cluster accepts " + _method.getScheme()
           + " credentials", _challenge);
     }
-    if (!credential.hasScheme(_method.getScheme())) {
+    if (!_authenticator.acceptsScheme(credential.getScheme())) {
       AuthMetrics.mark(_method.getConfigValue() + ".requestsRejected.wrongScheme");
       throw new AuthenticationException("Credential type '" + credential.getScheme() + "' is not accepted; this "
           + "cluster uses " + AuthMethodSelector.describe(_method) + " authentication (" + _method.getScheme() + ")",
