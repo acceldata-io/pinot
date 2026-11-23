@@ -173,4 +173,49 @@ public class AuthAuditTest {
     enforcer.close();
     assertNull(resolver.resolve("Bearer carol"));
   }
+
+  @Test
+  public void testRowFiltersAreAudited()
+      throws Exception {
+    _allowedEvents.clear();
+    TestAuth.Authorizer.ROW_FILTERS.clear();
+    TestAuth.Authorizer.ROW_FILTERS.put("alice default.orders", List.of("region = 'south'"));
+    TestAuth.Authorizer.ROW_FILTERS.put("mallory default.customers", List.of("region = = 'x'"));
+    try {
+      AccessEnforcer all = new AccessEnforcer(new TestAuth.Authenticator(), new TestAuth.Authorizer(), true, Set.of(),
+          true, new AuthAuditLog(_events::add, _allowedEvents::add));
+      PinotPrincipal alice = all.authenticate("Bearer alice:analysts");
+      PinotPrincipal mallory = all.authenticate("Bearer mallory");
+      _events.clear();
+      // A filter that applies: allowed, with the filter the rows are restricted to
+      assertEquals(all.getRowFilters(alice, "orders_OFFLINE"), List.of("region = 'south'"));
+      assertEquals(_allowedEvents.size(), 1);
+      JsonNode applied = JsonUtils.stringToJsonNode(_allowedEvents.get(0));
+      assertEquals(applied.get("outcome").asText(), "allowed");
+      assertEquals(applied.get("user").asText(), "alice");
+      assertEquals(applied.get("resource").asText(), "default.orders");
+      assertEquals(applied.get("action").asText(), AccessEnforcer.ROW_FILTER_ACTION);
+      assertEquals(applied.get("reason").asText(), "rows restricted to ( region = 'south' )");
+      // A filter that does not parse: the broker refuses the query, the audit says so (a denial, always recorded)
+      assertEquals(all.getRowFilters(mallory, "customers"), List.of("region = = 'x'"));
+      assertEquals(_events.size(), 1);
+      JsonNode refused = JsonUtils.stringToJsonNode(_events.get(0));
+      assertEquals(refused.get("outcome").asText(), "denied");
+      assertEquals(refused.get("user").asText(), "mallory");
+      assertEquals(refused.get("action").asText(), AccessEnforcer.ROW_FILTER_ACTION);
+      assertTrue(refused.get("reason").asText().startsWith("row filter does not parse"));
+      // No filter: no event; with only denials audited, an applied filter is not recorded
+      assertEquals(all.getRowFilters(alice, "customers"), List.of());
+      assertEquals(_allowedEvents.size(), 1);
+      AccessEnforcer deniedOnly = enforcer(true);
+      PinotPrincipal alice2 = deniedOnly.authenticate("Bearer alice:analysts");
+      _events.clear();
+      deniedOnly.getRowFilters(alice2, "orders");
+      assertEquals(_events.size(), 0);
+      deniedOnly.getRowFilters(deniedOnly.authenticate("Bearer mallory"), "customers");
+      assertEquals(JsonUtils.stringToJsonNode(_events.get(_events.size() - 1)).get("outcome").asText(), "denied");
+    } finally {
+      TestAuth.Authorizer.ROW_FILTERS.clear();
+    }
+  }
 }

@@ -43,6 +43,7 @@ import org.apache.pinot.plugin.auth.spi.SingleMethodAuthentication;
 import org.apache.pinot.spi.env.PinotConfiguration;
 import org.apache.pinot.spi.utils.CommonConstants;
 import org.apache.pinot.spi.utils.builder.TableNameBuilder;
+import org.apache.pinot.sql.parsers.rewriter.RlsUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,6 +61,8 @@ import org.slf4j.LoggerFactory;
 ///
 /// Thread-safe.
 public final class AccessEnforcer implements AutoCloseable {
+  /// Action of the security audit event recording the row filters a query of a table is restricted to.
+  public static final String ROW_FILTER_ACTION = "RowFilter";
   private static final Logger LOGGER = LoggerFactory.getLogger(AccessEnforcer.class);
 
   private final PinotAuthenticator _authenticator;
@@ -304,13 +307,35 @@ public final class AccessEnforcer implements AutoCloseable {
   /// Row filters for a principal querying a table: none for service accounts, otherwise the authorizer's. The broker
   /// requires every returned filter.
   ///
+  /// The security audit records them as a [#ROW_FILTER_ACTION] decision on the table: `allowed` with the filters the
+  /// query is restricted to (with allowed decisions audited), or `denied` when a filter does not parse, for which the
+  /// broker refuses the query.
+  ///
   /// @param tableName table name with or without database and type suffix
   public List<String> getRowFilters(PinotPrincipal principal, String tableName) {
     if (isServiceAccount(principal)) {
       return List.of();
     }
     AccessRequest table = request(TargetType.TABLE, tableName, null, Permission.READ, "query");
-    return _authorizer.getRowFilters(principal, table.getDatabase(), table.getTable());
+    List<String> filters = _authorizer.getRowFilters(principal, table.getDatabase(), table.getTable());
+    if (filters.isEmpty()) {
+      return filters;
+    }
+    AccessRequest rowFilter = new AccessRequest(ResourceType.TABLE, table.getDatabase(), table.getTable(),
+        ROW_FILTER_ACTION, Permission.READ, "query");
+    String mode = _authorizer.getMode().getConfigValue();
+    String combined;
+    try {
+      combined = RlsUtils.combineRowFilters(table.getTable(), filters);
+    } catch (RlsUtils.InvalidRowFilterException e) {
+      _audit.authorization(principal, false, rowFilter, mode, "denied",
+          "row filter does not parse, the query is refused: " + e.getRowFilter());
+      return filters;
+    }
+    if (_auditAllowed) {
+      _audit.authorization(principal, false, rowFilter, mode, "allowed", "rows restricted to " + combined);
+    }
+    return filters;
   }
 
   public PinotAuthorizer getAuthorizer() {
