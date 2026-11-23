@@ -37,6 +37,7 @@ import javax.naming.AuthenticationException;
 import javax.naming.CommunicationException;
 import javax.naming.Context;
 import javax.naming.InvalidNameException;
+import javax.naming.NameNotFoundException;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.PartialResultException;
@@ -76,9 +77,9 @@ import org.apache.pinot.spi.env.PinotConfiguration;
 ///   connections are not pooled.
 /// - `bind.mode=direct`: the user binds as `user.dn.pattern` with `{0}` = the login name, e.g.
 ///   `uid={0},ou=people,dc=example,dc=com` (the name is escaped as a DN value) or an Active Directory user principal
-///   name `{0}@corp.example.com`; the entry is then read with the user's own connection, by search (`user.search.base`
-///   + `user.search.filter`) when `user.search.base` is set (required for a principal-name pattern, which is not a DN),
-///   else by the bound DN.
+///   name `{0}@corp.example.com`; the entry is then read with the user's own connection: with a DN pattern by the bound
+///   DN (an entry can read itself, also where users may read nothing else; `user.search.base` is not used), with a
+///   principal-name pattern, which is not a DN, by search (`user.search.base`, required, + `user.search.filter`).
 ///
 /// User name and groups (looked up with the bind account's connection in search mode, the user's own in direct mode):
 /// - `user.name.attribute` (default `uid`; `sAMAccountName` for Active Directory): the Pinot user name, lower-cased
@@ -318,9 +319,12 @@ final class LdapDirectory {
     LdapContext context = open(bindName, password, false);
     try {
       Entry entry;
-      if (_userSearchBase != null) {
+      if (!_userDnPattern.contains("=")) {
+        // A principal name is not a DN: the entry is found by search
         entry = findUser(context, login);
       } else {
+        // The bind proved the entry's DN: read it directly. A search of user.search.base would need the user to read
+        // the base, which many directories do not allow (users may only read their own entry)
         try {
           entry = new Entry(bindName, context.getAttributes(bindName, _returnedAttributes));
         } catch (NamingException e) {
@@ -516,7 +520,9 @@ final class LdapDirectory {
 
   private static DirectoryUnavailableException unavailable(String what, NamingException e) {
     String reason = e instanceof CommunicationException || e instanceof ServiceUnavailableException
-        ? "server unreachable" : e.getClass().getSimpleName();
+        ? "server unreachable"
+        : e instanceof NameNotFoundException ? "the base DN does not exist or this connection may not read it"
+            : e.getClass().getSimpleName();
     return new DirectoryUnavailableException("LDAP directory unavailable (" + what + ": " + reason + ")", e);
   }
 

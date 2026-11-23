@@ -153,6 +153,27 @@ public class LdapAuthenticatorTest {
   }
 
   @Test
+  public void testDirectBindWhereUsersMayOnlyReadTheirOwnEntry() {
+    // Directory access rule: a user may read only their own entry. With a DN pattern the entry is read by its DN, so
+    // a configured user search base (e.g. kept from search-then-bind) does not lock every user out
+    Map<String, Object> config = ldaps();
+    config.remove("bind.dn");
+    config.remove("bind.password.alias");
+    config.put("bind.mode", "direct");
+    config.put("user.dn.pattern", "uid={0},ou=people," + BASE);
+    _ldap._usersReadOnlySelf = true;
+    try {
+      LdapAuthenticator authenticator = authenticator(config);
+      PinotPrincipal principal = authenticator.authenticate(basic("alice", ALICE_PASSWORD));
+      assertEquals(principal.getUser(), "alice");
+      assertEquals(principal.getClaims().get("dn"), "uid=alice,ou=people," + BASE);
+      assertRefused(authenticator, basic("alice", "wrong"), "Invalid user name or password");
+    } finally {
+      _ldap._usersReadOnlySelf = false;
+    }
+  }
+
+  @Test
   public void testDirectBindWithActiveDirectoryPrincipalName() {
     Map<String, Object> config = ldaps();
     config.remove("bind.dn");

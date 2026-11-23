@@ -32,6 +32,7 @@ import com.unboundid.ldap.sdk.ReadOnlySearchRequest;
 import com.unboundid.ldap.sdk.ResultCode;
 import com.unboundid.ldap.sdk.SearchRequest;
 import com.unboundid.ldap.sdk.SearchResultReference;
+import com.unboundid.ldap.sdk.SearchScope;
 import com.unboundid.ldap.sdk.SimpleBindRequest;
 import com.unboundid.util.ssl.KeyStoreKeyManager;
 import com.unboundid.util.ssl.SSLUtil;
@@ -98,6 +99,10 @@ final class EmbeddedLdap implements AutoCloseable {
   final List<String> _searchFilters = new CopyOnWriteArrayList<>();
   /// Active Directory style search references sent with every subtree search from the base (off by default).
   volatile boolean _sendReferences;
+  /// Access rule of many directories: a user bound as an entry under ou=people may read only that entry (searches of
+  /// any other base answer "no such object", as OpenLDAP does for a base the connection may not read). Off by default.
+  volatile boolean _usersReadOnlySelf;
+  final Map<Long, String> _boundDnByConnection = new ConcurrentHashMap<>();
 
   EmbeddedLdap(String... ldif)
       throws Exception {
@@ -131,6 +136,9 @@ final class EmbeddedLdap implements AutoCloseable {
       @Override
       public void processSimpleBindResult(InMemoryInterceptedSimpleBindResult result) {
         String dn = result.getRequest().getBindDN().toLowerCase(Locale.ROOT);
+        if (result.getResult().getResultCode() == ResultCode.SUCCESS) {
+          _boundDnByConnection.put(result.getConnectionID(), dn);
+        }
         if (dn.isEmpty() || _lockoutThreshold <= 0) {
           return;
         }
@@ -148,6 +156,11 @@ final class EmbeddedLdap implements AutoCloseable {
       public void processSearchRequest(InMemoryInterceptedSearchRequest request)
           throws LDAPException {
         ReadOnlySearchRequest search = request.getRequest();
+        String bound = _boundDnByConnection.get(request.getConnectionID());
+        if (_usersReadOnlySelf && bound != null && bound.endsWith(",ou=people," + BASE.toLowerCase(Locale.ROOT))
+            && !(search.getScope() == SearchScope.BASE && bound.equalsIgnoreCase(search.getBaseDN()))) {
+          throw new LDAPException(ResultCode.NO_SUCH_OBJECT, "no such object");
+        }
         if (_sendReferences && BASE.equalsIgnoreCase(search.getBaseDN())) {
           // As Active Directory does for its other partitions on a search from the domain root
           request.sendSearchReference(new SearchResultReference(
