@@ -68,6 +68,10 @@
       <artifactId>hash4j</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.rocksdb</groupId>
+      <artifactId>rocksdbjni</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.tdunning</groupId>
       <artifactId>t-digest</artifactId>
     </dependency>

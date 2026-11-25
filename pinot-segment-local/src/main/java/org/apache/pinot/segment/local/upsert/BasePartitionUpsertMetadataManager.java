@@ -891,10 +891,11 @@ public abstract class BasePartitionUpsertMetadataManager implements PartitionUps
     }
     try {
       long startTime = System.currentTimeMillis();
-      doTakeSnapshot();
+      boolean complete = doTakeSnapshot();
       long duration = System.currentTimeMillis() - startTime;
       _serverMetrics.addTimedTableValue(_tableNameWithType, ServerTimer.UPSERT_SNAPSHOT_TIME_MS, duration,
           TimeUnit.MILLISECONDS);
+      onSnapshotTaken(complete);
     } catch (Exception e) {
       _logger.warn("Caught exception while taking snapshot", e);
     } finally {
@@ -902,7 +903,12 @@ public abstract class BasePartitionUpsertMetadataManager implements PartitionUps
     }
   }
 
-  protected void doTakeSnapshot() {
+  /// Called after a snapshot attempt. {@code complete} is false when any segment was skipped.
+  protected void onSnapshotTaken(boolean complete) {
+  }
+
+  /// @return false when any segment was skipped, so the snapshots on disk are not a consistent set
+  protected boolean doTakeSnapshot() {
     int numTrackedSegments = _trackedSegments.size();
     long numPrimaryKeysInSnapshot = 0L;
     long numQueryableDocIdsInSnapshot = 0L;
@@ -940,7 +946,7 @@ public abstract class BasePartitionUpsertMetadataManager implements PartitionUps
       // major cleanup steps in the cleanDirectory() method.
       String segmentName = segment.getSegmentName();
       Lock segmentLock = tableDataManager.getSegmentLock(segmentName);
-      boolean locked = segmentLock.tryLock();
+      boolean locked = tryLockSegmentForSnapshot(segmentLock);
       if (!locked) {
         // Try to get the segmentLock in a non-blocking manner to avoid deadlock. The Helix task thread takes
         // segmentLock first and then the snapshot RLock when replacing a segment. However, the consuming thread has
@@ -996,7 +1002,7 @@ public abstract class BasePartitionUpsertMetadataManager implements PartitionUps
       for (ImmutableSegmentImpl segment : segmentsWithoutSnapshot) {
         String segmentName = segment.getSegmentName();
         Lock segmentLock = tableDataManager.getSegmentLock(segmentName);
-        boolean locked = segmentLock.tryLock();
+        boolean locked = tryLockSegmentForSnapshot(segmentLock);
         if (!locked) {
           _logger.warn("Could not get segmentLock to take snapshot for segment: {} w/o snapshot, skipping",
               segmentName);
@@ -1038,6 +1044,15 @@ public abstract class BasePartitionUpsertMetadataManager implements PartitionUps
     _logger.info("Finished taking snapshot for {} immutable segments with {} primary keys (out of {} total segments, "
             + "{} are consuming segments) in {} ms", numImmutableSegments, numPrimaryKeysInSnapshot, numTrackedSegments,
         numConsumingSegments, System.currentTimeMillis() - startTimeMs);
+    return !isSegmentSkipped;
+  }
+
+  /**
+   * Acquires the segmentLock of a segment to take its snapshot. Must not block indefinitely, see
+   * {@link #doTakeSnapshot()}.
+   */
+  protected boolean tryLockSegmentForSnapshot(Lock segmentLock) {
+    return segmentLock.tryLock();
   }
 
   private void updateSnapshotMetrics(int numImmutableSegments, long numPrimaryKeysInSnapshot,

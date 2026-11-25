@@ -64,6 +64,7 @@ import org.apache.pinot.segment.local.io.writer.impl.DirectMemoryManager;
 import org.apache.pinot.segment.local.io.writer.impl.MmapMemoryManager;
 import org.apache.pinot.segment.local.realtime.converter.RealtimeSegmentConverter;
 import org.apache.pinot.segment.local.realtime.impl.RealtimeSegmentConfig;
+import org.apache.pinot.segment.local.rocksdb.RocksDBMetadataStoreException;
 import org.apache.pinot.segment.local.segment.creator.TransformPipeline;
 import org.apache.pinot.segment.local.segment.index.loader.IndexLoadingConfig;
 import org.apache.pinot.segment.local.upsert.PartitionUpsertMetadataManager;
@@ -266,6 +267,7 @@ public class RealtimeSegmentDataManager extends SegmentDataManager {
   private final PartitionUpsertMetadataManager _partitionUpsertMetadataManager;
   private final PartitionDedupMetadataManager _partitionDedupMetadataManager;
   private final BooleanSupplier _isReadyToConsumeData;
+  private ServerIngestionOomProtectionManager _serverIngestionOomProtectionManager;
   private final MutableSegmentImpl _realtimeSegment;
   private volatile StreamPartitionMsgOffset _currentOffset; // Next offset to be consumed
   private volatile State _state;
@@ -432,6 +434,14 @@ public class RealtimeSegmentDataManager extends SegmentDataManager {
     }
   }
 
+  private boolean shouldStopWaitingForOomProtection() {
+    if (_shouldStop || _state != State.INITIAL_CONSUMING) {
+      return true;
+    }
+    return now() >= _consumeEndTime || _numRowsIndexed >= _segmentMaxRowCount || _endOfPartitionGroup
+        || _forceCommitMessageReceived || !canAddMore();
+  }
+
   private void handleTransientStreamErrors(Exception e)
       throws Exception {
     _consecutiveErrorCount++;
@@ -471,6 +481,16 @@ public class RealtimeSegmentDataManager extends SegmentDataManager {
 
     _segmentLogger.info("Starting consumption loop start offset {}, finalOffset {}", _currentOffset, _finalOffset);
     while (!_shouldStop && !endCriteriaReached()) {
+      if (_state == State.INITIAL_CONSUMING && _serverIngestionOomProtectionManager != null) {
+        boolean waitedForOomProtection =
+            _serverIngestionOomProtectionManager.waitIfProtectionNeeded(this::shouldStopWaitingForOomProtection);
+        if (_shouldStop || endCriteriaReached()) {
+          break;
+        }
+        if (waitedForOomProtection) {
+          _idleTimer.markStreamCreated();
+        }
+      }
       _serverMetrics.setValueOfTableGauge(_clientId, ServerGauge.LLC_PARTITION_CONSUMING, 1);
       // Consume for the next readTime ms, or we get to final offset, whichever happens earlier,
       // Update _currentOffset upon return from this method
@@ -687,6 +707,10 @@ public class RealtimeSegmentDataManager extends SegmentDataManager {
                         recordSerializedValueLength, realtimeBytesIngestedMeter);
                 _serverMetrics.addMeteredGlobalValue(ServerMeter.REALTIME_BYTES_CONSUMED, recordSerializedValueLength);
               }
+            } catch (RocksDBMetadataStoreException e) {
+              // The row may be half-applied to the segment and the metadata store, so skipping it would corrupt
+              // upsert state. Fail this consuming segment instead; it is rebuilt from the last committed offset.
+              throw e;
             } catch (Exception e) {
               _numRowsErrored++;
               _numBytesDropped += rowSizeInBytes;
@@ -727,6 +751,12 @@ public class RealtimeSegmentDataManager extends SegmentDataManager {
   @VisibleForTesting
   boolean canAddMore() {
     return _realtimeSegment.canAddMore();
+  }
+
+  @VisibleForTesting
+  void setServerIngestionOomProtectionManager(
+      ServerIngestionOomProtectionManager serverIngestionOomProtectionManager) {
+    _serverIngestionOomProtectionManager = serverIngestionOomProtectionManager;
   }
 
   public class PartitionConsumer implements Runnable {
@@ -1691,6 +1721,7 @@ public class RealtimeSegmentDataManager extends SegmentDataManager {
     _partitionUpsertMetadataManager = partitionUpsertMetadataManager;
     _partitionDedupMetadataManager = partitionDedupMetadataManager;
     _isReadyToConsumeData = isReadyToConsumeData;
+    _serverIngestionOomProtectionManager = realtimeTableDataManager.getServerIngestionOomProtectionManager();
     _segmentVersion = indexLoadingConfig.getSegmentVersion();
     _instanceId = _realtimeTableDataManager.getInstanceId();
     _leaseExtender = SegmentBuildTimeLeaseExtender.getLeaseExtender(_tableNameWithType);
