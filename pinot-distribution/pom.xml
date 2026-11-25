@@ -121,6 +121,7 @@
                 <configuration>
                   <finalName>apache-pinot-${project.version}-bin</finalName>
                   <appendAssemblyId>false</appendAssemblyId>
+                  <attach>false</attach>
                   <descriptors>
                     <descriptor>pinot-assembly.xml</descriptor>
                   </descriptors>
