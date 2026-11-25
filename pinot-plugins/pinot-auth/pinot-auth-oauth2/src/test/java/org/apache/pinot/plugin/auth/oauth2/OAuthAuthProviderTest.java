@@ -412,4 +412,38 @@ public class OAuthAuthProviderTest {
     assertEquals(_requests.get(0)[0], "k3y");
     assertEquals(_requests.get(0)[1], "{\"clientId\":\"pinot-service\"}");
   }
+
+  @Test
+  public void testServiceTokensForProcessesOutsidePinot() {
+    // The settings of an outbound namespace without its prefix, as Ranger Admin's lookup client passes them
+    Map<String, String> settings = new HashMap<>();
+    settings.put("source", "client_credentials");
+    settings.put("issuer", _base + "/realms/test");
+    settings.put("client.id", "pinot-service");
+    settings.put("client.secret", "s3cret");
+    assertEquals(ServiceTokens.fetch(settings), "tok-1");
+    // One token per call: nothing cached or refreshed in the calling process
+    assertEquals(ServiceTokens.fetch(settings), "tok-2");
+    assertEquals(_requests.size(), 2);
+
+    Map<String, String> http = new HashMap<>();
+    http.put("source", "http");
+    http.put("client.id", "pinot-service");
+    http.put("client.secret", "k3y");
+    http.put("request.url", _base + "/custom/token");
+    http.put("request.header.key", "X-Api-Key: ${secret:client.secret}");
+    http.put("request.body", "{\"clientId\":\"${client.id}\"}");
+    http.put("map.token", "$.data.jwt");
+    assertEquals(ServiceTokens.fetch(http), "custom-3");
+    assertEquals(_requests.get(2)[0], "k3y");
+
+    // A java source whose jars are not on this host: the message names the directory
+    Map<String, String> java = new HashMap<>();
+    java.put("source", "java");
+    java.put("class", "com.example.TokenSource");
+    java.put("jar.dir", "/nonexistent/token-source");
+    IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () -> ServiceTokens.fetch(java));
+    assertTrue(e.getMessage().contains("/nonexistent/token-source"), e.getMessage());
+    expectThrows(IllegalArgumentException.class, () -> ServiceTokens.fetch(Map.of("source", "kerberos")));
+  }
 }

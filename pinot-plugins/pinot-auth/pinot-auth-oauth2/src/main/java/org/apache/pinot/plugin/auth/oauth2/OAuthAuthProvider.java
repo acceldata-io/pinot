@@ -96,6 +96,22 @@ public class OAuthAuthProvider implements AuthProvider {
   }
 
   private static CachingTokenSource createSource(Map<String, String> settings) {
+    OAuthTokenSource source = newTokenSource(settings);
+    String name = sourceName(settings);
+    CachingTokenSource cache =
+        new CachingTokenSource(name, source, Clock.systemUTC(), INITIAL_BACKOFF_MS, OAuthAuthProvider::scheduleRefresh);
+    cache.start();
+    return cache;
+  }
+
+  private static String sourceName(Map<String, String> settings) {
+    PinotConfiguration config = new PinotConfiguration(new HashMap<>(settings));
+    return config.getProperty("name", config.getProperty("source", ClientCredentialsTokenSource.TYPE).trim());
+  }
+
+  /// A new, initialized token source for these settings (those of a namespace, without its prefix), not shared and
+  /// not cached: the caller fetches from it and closes it. Also used by [ServiceTokens].
+  static OAuthTokenSource newTokenSource(Map<String, String> settings) {
     PinotConfiguration config = new PinotConfiguration(new HashMap<>(settings));
     String type = config.getProperty("source", ClientCredentialsTokenSource.TYPE).trim();
     String name = config.getProperty("name", type);
@@ -169,10 +185,7 @@ public class OAuthAuthProvider implements AuthProvider {
     } finally {
       thread.setContextClassLoader(previous);
     }
-    CachingTokenSource cache =
-        new CachingTokenSource(name, source, Clock.systemUTC(), INITIAL_BACKOFF_MS, OAuthAuthProvider::scheduleRefresh);
-    cache.start();
-    return cache;
+    return source;
   }
 
   /// One daemon thread refreshes the tokens of all sources of the process ahead of expiry.
