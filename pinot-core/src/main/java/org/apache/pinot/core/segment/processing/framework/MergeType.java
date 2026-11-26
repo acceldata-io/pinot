@@ -36,5 +36,13 @@ public enum MergeType {
   /**
    * Deduplicates rows with the same values.
    */
-  DEDUP
+  DEDUP,
+
+  /**
+   * Keeps one row per primary key: the row with the highest version-column value.
+   * <p>
+   * A null version is older than any real version. When the version and the tie-break columns are equal, the later
+   * input row is kept. Rows are resolved only among the segments in the same task run.
+   */
+  LATEST
 }

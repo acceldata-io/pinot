@@ -149,6 +149,7 @@ public class RealtimeToOfflineSegmentsTaskExecutor extends BaseMultipleSegmentsC
       }
     }
     segmentProcessorConfigBuilder.setMergeType(mergeType);
+    MergeTaskUtils.configureLatestMerge(segmentProcessorConfigBuilder, schema, configs);
 
     // Aggregation types
     segmentProcessorConfigBuilder.setAggregationTypes(MergeTaskUtils.getAggregationTypes(configs));
@@ -183,7 +184,9 @@ public class RealtimeToOfflineSegmentsTaskExecutor extends BaseMultipleSegmentsC
       outputSegmentDirs = framework.process();
       _eventObserver.notifyProgress(pinotTaskConfig,
           "Segment processing stats - incomplete rows:" + framework.getIncompleteRowsFound() + ", dropped rows:"
-              + framework.getSkippedRowsFound() + ", sanitized rows:" + framework.getSanitizedRowsFound());
+              + framework.getSkippedRowsFound() + ", sanitized rows:" + framework.getSanitizedRowsFound()
+              + MergeTaskUtils.latestMergeSummary(segmentProcessorConfig));
+      MergeTaskUtils.reportLatestMerge(realtimeTableName, segmentProcessorConfig);
     } finally {
       for (RecordReader recordReader : recordReaders) {
         recordReader.close();

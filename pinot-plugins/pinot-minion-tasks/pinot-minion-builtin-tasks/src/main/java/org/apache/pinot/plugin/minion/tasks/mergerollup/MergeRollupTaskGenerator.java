@@ -494,6 +494,9 @@ public class MergeRollupTaskGenerator extends BaseTaskGenerator {
 
   @Override
   public void validateTaskConfigs(TableConfig tableConfig, Schema schema, Map<String, String> taskConfigs) {
+    for (Map<String, String> levelConfig : MergeRollupTaskUtils.getLevelToConfigMap(taskConfigs).values()) {
+      MergeTaskUtils.validateLatestMerge(schema, levelConfig);
+    }
     Set<String> columnNames = schema.getColumnNames();
     // check no mis-configured columns when erasing dimensions
     Set<String> dimensionsToErase = MergeRollupTaskUtils.getDimensionsToErase(taskConfigs);
@@ -770,6 +773,10 @@ public class MergeRollupTaskGenerator extends BaseTaskGenerator {
         configs.put(BatchConfigProperties.OVERWRITE_OUTPUT,
             taskConfigs.getOrDefault(BatchConfigProperties.OVERWRITE_OUTPUT, "false"));
         configs.put(MergeRollupTask.MERGE_TYPE_KEY, mergeConfigs.get(MergeTask.MERGE_TYPE_KEY));
+        MergeTaskUtils.copyIfPresent(configs, mergeConfigs, MergeTask.LATEST_VERSION_COLUMN_KEY);
+        MergeTaskUtils.copyIfPresent(configs, mergeConfigs, MergeTask.LATEST_PRIMARY_KEY_COLUMNS_KEY);
+        MergeTaskUtils.copyIfPresent(configs, mergeConfigs, MergeTask.LATEST_MAX_ROWS_IN_MEMORY_KEY);
+        MergeTaskUtils.copyIfPresent(configs, mergeConfigs, MergeTask.LATEST_MAX_MERGE_FAN_IN_KEY);
         configs.put(MergeRollupTask.MERGE_LEVEL_KEY, mergeLevel);
         configs.put(MergeTask.PARTITION_BUCKET_TIME_PERIOD_KEY, mergeConfigs.get(MergeTask.BUCKET_TIME_PERIOD_KEY));
         configs.put(MergeTask.ROUND_BUCKET_TIME_PERIOD_KEY, mergeConfigs.get(MergeTask.ROUND_BUCKET_TIME_PERIOD_KEY));

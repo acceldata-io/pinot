@@ -42,6 +42,7 @@ public final class SegmentProcessorUtils {
    * <p>For CONCAT, only include sort columns as sort fields;
    * <p>For ROLLUP, include sort columns and dimension/time columns as sort fields;
    * <p>For DEDUP, include all columns as sort fields.
+   * <p>For LATEST, do not mark sort fields. The reducer orders rows itself and spills to disk.
    */
   public static Pair<List<FieldSpec>, Integer> getFieldSpecs(Schema schema, MergeType mergeType,
       @Nullable List<String> sortOrder) {
@@ -88,6 +89,9 @@ public final class SegmentProcessorUtils {
         break;
       case DEDUP:
         numSortFields = fieldSpecs.size();
+        break;
+      case LATEST:
+        numSortFields = 0;
         break;
       default:
         throw new IllegalStateException("Unsupported merge type: " + mergeType);

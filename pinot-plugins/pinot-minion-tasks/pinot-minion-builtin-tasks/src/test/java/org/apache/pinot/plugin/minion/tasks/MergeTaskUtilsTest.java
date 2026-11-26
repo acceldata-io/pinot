@@ -140,6 +140,8 @@ public class MergeTaskUtilsTest {
         MergeType.ROLLUP);
     assertEquals(MergeTaskUtils.getMergeType(Collections.singletonMap(MergeTask.MERGE_TYPE_KEY, "DeDuP")),
         MergeType.DEDUP);
+    assertEquals(MergeTaskUtils.getMergeType(Collections.singletonMap(MergeTask.MERGE_TYPE_KEY, "latest")),
+        MergeType.LATEST);
     assertNull(MergeTaskUtils.getMergeType(Collections.emptyMap()));
 
     try {

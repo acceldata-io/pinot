@@ -27,9 +27,14 @@ import java.util.Map;
 import javax.annotation.Nullable;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.pinot.common.metadata.segment.SegmentZKMetadata;
+import org.apache.pinot.common.metrics.MinionMeter;
+import org.apache.pinot.common.metrics.MinionMetrics;
 import org.apache.pinot.core.common.MinionConstants.MergeTask;
+import org.apache.pinot.core.segment.processing.framework.LatestMergeConfig;
+import org.apache.pinot.core.segment.processing.framework.LatestMergeStats;
 import org.apache.pinot.core.segment.processing.framework.MergeType;
 import org.apache.pinot.core.segment.processing.framework.SegmentConfig;
+import org.apache.pinot.core.segment.processing.framework.SegmentProcessorConfig;
 import org.apache.pinot.core.segment.processing.partitioner.PartitionerConfig;
 import org.apache.pinot.core.segment.processing.partitioner.PartitionerFactory;
 import org.apache.pinot.core.segment.processing.timehandler.TimeHandler;
@@ -41,13 +46,76 @@ import org.apache.pinot.spi.config.table.TableConfig;
 import org.apache.pinot.spi.data.DateTimeFieldSpec;
 import org.apache.pinot.spi.data.Schema;
 import org.apache.pinot.spi.utils.TimeUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
  * Common utils for segment merge tasks.
  */
 public class MergeTaskUtils {
+  private static final Logger LOGGER = LoggerFactory.getLogger(MergeTaskUtils.class);
+
   private MergeTaskUtils() {
+  }
+
+  /**
+   * Copies a task setting when the source has it.
+   */
+  public static void copyIfPresent(Map<String, String> target, Map<String, String> source, String key) {
+    String value = source.get(key);
+    if (value != null) {
+      target.put(key, value);
+    }
+  }
+
+  /**
+   * Rejects a LATEST merge whose version column or primary key cannot be used. Other merge types are ignored.
+   */
+  public static void validateLatestMerge(Schema schema, Map<String, String> taskConfig) {
+    if (getMergeType(taskConfig) == MergeType.LATEST) {
+      LatestMergeConfig.fromTaskConfig(schema, taskConfig);
+    }
+  }
+
+  /**
+   * Attaches LATEST settings to the processor config when this task runs a LATEST merge.
+   */
+  public static void configureLatestMerge(SegmentProcessorConfig.Builder builder, Schema schema,
+      Map<String, String> taskConfig) {
+    if (getMergeType(taskConfig) == MergeType.LATEST) {
+      builder.setLatestMergeConfig(LatestMergeConfig.fromTaskConfig(schema, taskConfig));
+    }
+  }
+
+  /**
+   * Text appended to the task progress line. Empty when the task is not a LATEST merge.
+   */
+  public static String latestMergeSummary(SegmentProcessorConfig config) {
+    LatestMergeStats stats = config.getLatestMergeStats();
+    if (stats == null) {
+      return "";
+    }
+    return ", latest rows read:" + stats.getRowsRead() + ", latest rows written:" + stats.getRowsWritten()
+        + ", latest rows removed:" + stats.getRowsRemoved();
+  }
+
+  /**
+   * Logs LATEST counts and records them as Minion meters. No-op for other merge types.
+   */
+  public static void reportLatestMerge(String tableNameWithType, SegmentProcessorConfig config) {
+    LatestMergeStats stats = config.getLatestMergeStats();
+    if (stats == null) {
+      return;
+    }
+    LOGGER.info("LATEST merge for table {}: rowsRead={}, rowsWritten={}, rowsRemoved={}", tableNameWithType,
+        stats.getRowsRead(), stats.getRowsWritten(), stats.getRowsRemoved());
+    MinionMetrics minionMetrics = MinionMetrics.get();
+    minionMetrics.addMeteredTableValue(tableNameWithType, MinionMeter.LATEST_MERGE_ROWS_READ, stats.getRowsRead());
+    minionMetrics.addMeteredTableValue(tableNameWithType, MinionMeter.LATEST_MERGE_ROWS_WRITTEN,
+        stats.getRowsWritten());
+    minionMetrics.addMeteredTableValue(tableNameWithType, MinionMeter.LATEST_MERGE_ROWS_REMOVED,
+        stats.getRowsRemoved());
   }
 
   private static final int AGGREGATION_TYPE_KEY_SUFFIX_LENGTH = MergeTask.AGGREGATION_TYPE_KEY_SUFFIX.length();

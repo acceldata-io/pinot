@@ -90,6 +90,7 @@ public class MergeRollupTaskExecutor extends BaseMultipleSegmentsConversionExecu
 
     // Merge type
     segmentProcessorConfigBuilder.setMergeType(MergeTaskUtils.getMergeType(configs));
+    MergeTaskUtils.configureLatestMerge(segmentProcessorConfigBuilder, schema, configs);
 
     // Aggregation types
     segmentProcessorConfigBuilder.setAggregationTypes(MergeTaskUtils.getAggregationTypes(configs));
@@ -125,7 +126,9 @@ public class MergeRollupTaskExecutor extends BaseMultipleSegmentsConversionExecu
       outputSegmentDirs = framework.process();
       _eventObserver.notifyProgress(pinotTaskConfig,
           "Segment processing stats - incomplete rows:" + framework.getIncompleteRowsFound() + ", dropped rows:"
-              + framework.getSkippedRowsFound() + ", sanitized rows:" + framework.getSanitizedRowsFound());
+              + framework.getSkippedRowsFound() + ", sanitized rows:" + framework.getSanitizedRowsFound()
+              + MergeTaskUtils.latestMergeSummary(segmentProcessorConfig));
+      MergeTaskUtils.reportLatestMerge(tableNameWithType, segmentProcessorConfig);
     } finally {
       for (RecordReader recordReader : recordReaders) {
         recordReader.close();

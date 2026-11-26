@@ -93,6 +93,23 @@ public class MergeRollupTaskUtilsTest {
   }
 
   @Test
+  public void testLatestMergeKeysAreLevelScoped() {
+    Map<String, String> taskConfig = new HashMap<>();
+    taskConfig.put("daily.mergeType", "latest");
+    taskConfig.put("daily.latest.versionColumn", "updatedAt");
+    taskConfig.put("daily.latest.primaryKeyColumns", "id");
+    taskConfig.put("daily.latest.maxRowsInMemory", "1000");
+    taskConfig.put("daily.latest.maxMergeFanIn", "4");
+
+    Map<String, String> dailyConfig = MergeRollupTaskUtils.getLevelToConfigMap(taskConfig).get("daily");
+    assertEquals(dailyConfig.get(MergeTask.MERGE_TYPE_KEY), "latest");
+    assertEquals(dailyConfig.get(MergeTask.LATEST_VERSION_COLUMN_KEY), "updatedAt");
+    assertEquals(dailyConfig.get(MergeTask.LATEST_PRIMARY_KEY_COLUMNS_KEY), "id");
+    assertEquals(dailyConfig.get(MergeTask.LATEST_MAX_ROWS_IN_MEMORY_KEY), "1000");
+    assertEquals(dailyConfig.get(MergeTask.LATEST_MAX_MERGE_FAN_IN_KEY), "4");
+  }
+
+  @Test
   public void testBuildMergeLevelKeyPrefix() {
     Map<String, String> taskConfig = new HashMap<>();
     taskConfig.put("key", "value");
