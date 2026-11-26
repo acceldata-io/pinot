@@ -51,13 +51,16 @@ public class SegmentProcessorConfig {
   private final Consumer<Object> _progressObserver;
   private final SegmentNameGenerator _segmentNameGenerator;
   private final Long _customCreationTime;
+  private final LatestMergeConfig _latestMergeConfig;
+  private final LatestMergeStats _latestMergeStats;
 
   private SegmentProcessorConfig(TableConfig tableConfig, Schema schema, TimeHandlerConfig timeHandlerConfig,
       List<PartitionerConfig> partitionerConfigs, MergeType mergeType,
       Map<String, AggregationFunctionType> aggregationTypes,
       Map<String, Map<String, String>> aggregationFunctionParameters, SegmentConfig segmentConfig,
       Consumer<Object> progressObserver, @Nullable SegmentNameGenerator segmentNameGenerator,
-      @Nullable Long customCreationTime) {
+      @Nullable Long customCreationTime, @Nullable LatestMergeConfig latestMergeConfig,
+      @Nullable LatestMergeStats latestMergeStats) {
     TimestampIndexUtils.applyTimestampIndex(tableConfig, schema);
     _tableConfig = tableConfig;
     _schema = schema;
@@ -72,6 +75,8 @@ public class SegmentProcessorConfig {
     };
     _segmentNameGenerator = segmentNameGenerator;
     _customCreationTime = customCreationTime;
+    _latestMergeConfig = latestMergeConfig;
+    _latestMergeStats = latestMergeStats;
   }
 
   /**
@@ -142,6 +147,22 @@ public class SegmentProcessorConfig {
     return _customCreationTime != null ? _customCreationTime : System.currentTimeMillis();
   }
 
+  /**
+   * Settings for {@link MergeType#LATEST}. {@code null} for every other merge type.
+   */
+  @Nullable
+  public LatestMergeConfig getLatestMergeConfig() {
+    return _latestMergeConfig;
+  }
+
+  /**
+   * Mutable counters for a LATEST merge. {@code null} for every other merge type.
+   */
+  @Nullable
+  public LatestMergeStats getLatestMergeStats() {
+    return _latestMergeStats;
+  }
+
   @Override
   public String toString() {
     return "SegmentProcessorConfig{" + "_tableConfig=" + _tableConfig + ", _schema=" + _schema + ", _timeHandlerConfig="
@@ -165,6 +186,7 @@ public class SegmentProcessorConfig {
     private Consumer<Object> _progressObserver;
     private SegmentNameGenerator _segmentNameGenerator;
     private Long _customCreationTime;
+    private LatestMergeConfig _latestMergeConfig;
 
     public Builder setTableConfig(TableConfig tableConfig) {
       _tableConfig = tableConfig;
@@ -221,6 +243,11 @@ public class SegmentProcessorConfig {
       return this;
     }
 
+    public Builder setLatestMergeConfig(LatestMergeConfig latestMergeConfig) {
+      _latestMergeConfig = latestMergeConfig;
+      return this;
+    }
+
     public SegmentProcessorConfig build() {
       Preconditions.checkState(_tableConfig != null, "Must provide table config in SegmentProcessorConfig");
       Preconditions.checkState(_schema != null, "Must provide schema in SegmentProcessorConfig");
@@ -243,9 +270,14 @@ public class SegmentProcessorConfig {
       if (_segmentConfig == null) {
         _segmentConfig = new SegmentConfig.Builder().build();
       }
+      LatestMergeStats latestMergeStats = null;
+      if (_mergeType == MergeType.LATEST) {
+        Preconditions.checkState(_latestMergeConfig != null, "LATEST merge requires latest merge config");
+        latestMergeStats = new LatestMergeStats();
+      }
       return new SegmentProcessorConfig(_tableConfig, _schema, _timeHandlerConfig, _partitionerConfigs, _mergeType,
           _aggregationTypes, _aggregationFunctionParameters, _segmentConfig, _progressObserver,
-              _segmentNameGenerator, _customCreationTime);
+              _segmentNameGenerator, _customCreationTime, _latestMergeConfig, latestMergeStats);
     }
   }
 }

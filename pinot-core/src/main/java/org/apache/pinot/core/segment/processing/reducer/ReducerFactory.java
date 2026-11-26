@@ -42,6 +42,9 @@ public class ReducerFactory {
             processorConfig.getAggregationFunctionParameters(), reducerOutputDir);
       case DEDUP:
         return new DedupReducer(partitionId, fileManager, reducerOutputDir);
+      case LATEST:
+        return new LatestReducer(partitionId, fileManager, processorConfig.getLatestMergeConfig(),
+            processorConfig.getLatestMergeStats(), reducerOutputDir);
       default:
         throw new IllegalStateException("Unsupported merge type: " + mergeType);
     }

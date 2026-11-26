@@ -128,6 +128,27 @@ public class MinionConstants {
 
     // Merge config
     public static final String MERGE_TYPE_KEY = "mergeType";
+
+    /**
+     * Version column used when {@code mergeType} is {@code latest}. The row with the highest value is kept.
+     */
+    public static final String LATEST_VERSION_COLUMN_KEY = "latest.versionColumn";
+
+    /**
+     * Comma-separated primary-key columns used when {@code mergeType} is {@code latest}.
+     * When unset, the schema primary key is used.
+     */
+    public static final String LATEST_PRIMARY_KEY_COLUMNS_KEY = "latest.primaryKeyColumns";
+
+    /**
+     * Maximum number of rows sorted in memory by a LATEST merge. Further rows spill to disk.
+     */
+    public static final String LATEST_MAX_ROWS_IN_MEMORY_KEY = "latest.maxRowsInMemory";
+
+    /**
+     * Maximum number of sorted runs opened at once while merging a LATEST spill.
+     */
+    public static final String LATEST_MAX_MERGE_FAN_IN_KEY = "latest.maxMergeFanIn";
     public static final String AGGREGATION_TYPE_KEY_SUFFIX = ".aggregationType";
     public static final String AGGREGATION_FUNCTION_PARAMETERS_PREFIX = "aggregationFunctionParameters.";
     public static final String MODE = "mode";

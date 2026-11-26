@@ -39,6 +39,7 @@ import org.apache.pinot.core.common.MinionConstants;
 import org.apache.pinot.core.common.MinionConstants.RealtimeToOfflineSegmentsTask;
 import org.apache.pinot.core.minion.PinotTaskConfig;
 import org.apache.pinot.core.segment.processing.framework.MergeType;
+import org.apache.pinot.plugin.minion.tasks.MergeTaskUtils;
 import org.apache.pinot.plugin.minion.tasks.MinionTaskUtils;
 import org.apache.pinot.segment.spi.AggregationFunctionType;
 import org.apache.pinot.spi.annotations.minion.TaskGenerator;
@@ -224,6 +225,10 @@ public class RealtimeToOfflineSegmentsTaskGenerator extends BaseTaskGenerator {
         configs.put(RealtimeToOfflineSegmentsTask.MERGE_TYPE_KEY, mergeType);
         configs.put(RealtimeToOfflineSegmentsTask.COLLECTOR_TYPE_KEY, mergeType);
       }
+      MergeTaskUtils.copyIfPresent(configs, taskConfigs, RealtimeToOfflineSegmentsTask.LATEST_VERSION_COLUMN_KEY);
+      MergeTaskUtils.copyIfPresent(configs, taskConfigs, RealtimeToOfflineSegmentsTask.LATEST_PRIMARY_KEY_COLUMNS_KEY);
+      MergeTaskUtils.copyIfPresent(configs, taskConfigs, RealtimeToOfflineSegmentsTask.LATEST_MAX_ROWS_IN_MEMORY_KEY);
+      MergeTaskUtils.copyIfPresent(configs, taskConfigs, RealtimeToOfflineSegmentsTask.LATEST_MAX_MERGE_FAN_IN_KEY);
       for (Map.Entry<String, String> entry : taskConfigs.entrySet()) {
         if (entry.getKey().endsWith(RealtimeToOfflineSegmentsTask.AGGREGATION_TYPE_KEY_SUFFIX)) {
           configs.put(entry.getKey(), entry.getValue());
@@ -328,9 +333,11 @@ public class RealtimeToOfflineSegmentsTaskGenerator extends BaseTaskGenerator {
     TimeUtils.convertPeriodToMillis(
         taskConfigs.getOrDefault(RealtimeToOfflineSegmentsTask.ROUND_BUCKET_TIME_PERIOD_KEY, "1s"));
     // check mergeType is correct
-    Preconditions.checkState(ImmutableSet.of(MergeType.CONCAT.name(), MergeType.ROLLUP.name(), MergeType.DEDUP.name())
+    Preconditions.checkState(ImmutableSet.of(MergeType.CONCAT.name(), MergeType.ROLLUP.name(), MergeType.DEDUP.name(),
+            MergeType.LATEST.name())
         .contains(taskConfigs.getOrDefault(RealtimeToOfflineSegmentsTask.MERGE_TYPE_KEY, MergeType.CONCAT.name())
-            .toUpperCase()), "MergeType must be one of [CONCAT, ROLLUP, DEDUP]!");
+            .toUpperCase()), "MergeType must be one of [CONCAT, ROLLUP, DEDUP, LATEST]!");
+    MergeTaskUtils.validateLatestMerge(schema, taskConfigs);
     // check schema is not null
     Preconditions.checkNotNull(schema, "Schema should not be null!");
     // check no mis-configured columns
