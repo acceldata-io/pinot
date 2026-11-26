@@ -39,13 +39,14 @@ public enum MinionMeter implements AbstractMetrics.Meter {
   RECORDS_PROCESSED_COUNT("rows", false),
   RECORDS_PURGED_COUNT("rows", false),
   COMPACTED_RECORDS_COUNT("rows", false),
-  LATEST_MERGE_ROWS_READ("rows", false),
-  LATEST_MERGE_ROWS_WRITTEN("rows", false),
-  LATEST_MERGE_ROWS_REMOVED("rows", false),
   TRANSFORMATION_ERROR_COUNT("rows", false),
   DROPPED_RECORD_COUNT("rows", false),
   CORRUPTED_RECORD_COUNT("rows", false),
-  STAR_TREE_INDEX_BUILD_FAILURES("segments", false);
+  STAR_TREE_INDEX_BUILD_FAILURES("segments", false),
+  // Appended so existing meter ordinals stay stable for classes already loaded from the cluster jar.
+  LATEST_MERGE_ROWS_READ("rows", false),
+  LATEST_MERGE_ROWS_WRITTEN("rows", false),
+  LATEST_MERGE_ROWS_REMOVED("rows", false);
 
   private final String _meterName;
   private final String _unit;
