@@ -75,6 +75,7 @@
                         <exclude>jakarta/servlet/**</exclude>
                         <exclude>javax/servlet/**</exclude>
                         <exclude>org/glassfish/jersey/servlet/**</exclude>
+                        <exclude>io/netty/**</exclude>
                         <exclude>META-INF/*.SF</exclude>
                         <exclude>META-INF/*.DSA</exclude>
                         <exclude>META-INF/*.RSA</exclude>
