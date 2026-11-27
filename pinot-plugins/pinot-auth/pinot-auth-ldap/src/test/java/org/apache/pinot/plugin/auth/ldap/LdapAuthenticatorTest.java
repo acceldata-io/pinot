@@ -249,6 +249,53 @@ public class LdapAuthenticatorTest {
   }
 
   @Test
+  public void testOwnServiceAccountWithoutTheDirectory()
+      throws Exception {
+    int closed;
+    try (ServerSocket socket = new ServerSocket(0)) {
+      closed = socket.getLocalPort();
+    }
+    // The directory is unreachable from the start (a restart during an outage): nothing is cached
+    Map<String, Object> config = ldaps();
+    config.put("connect.timeout.ms", "1000");
+    config.put("urls", "ldaps://localhost:" + closed);
+    config.put("service.users", "alice");
+    config.put("service.token.alias", "ldap.service.token");
+    String token = "Basic " + Base64.getEncoder().encodeToString(("alice:" + ALICE_PASSWORD).getBytes(
+        StandardCharsets.UTF_8));
+    LdapAuthenticator authenticator = new LdapAuthenticator();
+    authenticator.init(new PinotConfiguration(config),
+        alias -> alias.equals("ldap.service.token") ? token.toCharArray() : SECRETS.resolve(alias));
+    int binds = _ldap._binds.get();
+    // Pinot's own service account with the password this process holds: accepted without the directory
+    assertTrue(authenticator.authenticate(basic("alice", ALICE_PASSWORD)).isServiceAccount());
+    assertEquals(authenticator.authenticate(basic("alice", ALICE_PASSWORD)).getUser(), "alice");
+    assertEquals(_ldap._binds.get(), binds);
+    // Another password of that account, or another user, still needs the directory
+    assertRefused(authenticator, basic("alice", "not-the-service-password"), "Directory unavailable");
+    assertRefused(authenticator, basic("alice2", "other-test-password"), "Directory unavailable");
+
+    // With the directory up, other sign-ins are checked there as before
+    Map<String, Object> up = ldaps();
+    up.put("service.users", "alice");
+    up.put("service.token.alias", "ldap.service.token");
+    LdapAuthenticator reachable = new LdapAuthenticator();
+    reachable.init(new PinotConfiguration(up),
+        alias -> alias.equals("ldap.service.token") ? token.toCharArray() : SECRETS.resolve(alias));
+    assertEquals(reachable.authenticate(basic("alice2", "other-test-password")).getUser(), "alice2");
+    assertRefused(reachable, basic("alice", "wrong-password"), "Invalid user name or password");
+
+    // The token's user must be one of the service users, and the token a Basic user:password credential
+    Map<String, Object> notService = ldaps();
+    notService.put("service.users", "svc-other");
+    notService.put("service.token.alias", "ldap.service.token");
+    expectThrows(IllegalArgumentException.class, () -> new LdapAuthenticator().init(new PinotConfiguration(
+        notService), alias -> alias.equals("ldap.service.token") ? token.toCharArray() : SECRETS.resolve(alias)));
+    expectThrows(IllegalArgumentException.class, () -> new LdapAuthenticator().init(new PinotConfiguration(config),
+        alias -> alias.equals("ldap.service.token") ? "Basic !!!".toCharArray() : SECRETS.resolve(alias)));
+  }
+
+  @Test
   public void testDnWithCommaInAValue() {
     // Pinot's configuration drops the backslash of "\," (list separator): such a DN is refused at start with a hint,
     // and the equivalent hex escape \2C works

@@ -23,6 +23,7 @@ import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.Clock;
 import java.util.Arrays;
 import java.util.Base64;
@@ -49,6 +50,11 @@ import org.slf4j.LoggerFactory;
 ///
 /// - `service.users`: comma-separated user names of Pinot's own directory service accounts (internal calls); their
 ///   principal is marked as a service account.
+/// - `service.token.alias`: credential store alias of the `Basic` credential Pinot's own calls send (the service
+///   account of `service.users` this process signs in as). A sign-in with exactly that user name and password is
+///   accepted without asking the directory, so that Pinot's internal calls keep working while the directory is
+///   unreachable, also right after a restart when nothing is cached yet. Only for a user listed in `service.users`;
+///   any other sign-in, and this user with another password, is checked against the directory as usual.
 /// - `required.group`: when set, only members of this group may sign in (compared case-insensitively).
 /// - Sign-in caching, the failure cache and the per-user throttle that protects directory accounts from lockout by
 ///   client retry loops: see [LdapSignInCache].
@@ -66,6 +72,11 @@ public class LdapAuthenticator implements PinotAuthenticator {
   @Nullable
   private String _requiredGroup;
   private LdapSignInCache _cache;
+  /// Pinot's own service account and its password, from `service.token.alias` (null: not set)
+  @Nullable
+  private String _localServiceUser;
+  @Nullable
+  private byte[] _localServicePassword;
 
   @Override
   public AuthMethod getMethod() {
@@ -88,6 +99,7 @@ public class LdapAuthenticator implements PinotAuthenticator {
       }
     }
     _serviceUsers = Set.copyOf(serviceUsers);
+    initLocalServiceAccount(config, secretResolver);
     LOGGER.info("LDAP authentication ready: urls={}, bind mode={}, group mode={}, required group={}, service users={}",
         config.getProperty("urls"), _directory.getBindMode(), config.getProperty("group.mode", "none"), _requiredGroup,
         _serviceUsers);
@@ -107,6 +119,10 @@ public class LdapAuthenticator implements PinotAuthenticator {
         if (password.length == 0) {
           // Refused before the caches too: an empty password never reaches the directory
           throw new LdapDirectory.InvalidCredentialsException("empty password");
+        }
+        if (isLocalServiceAccount(user, password)) {
+          AuthMetrics.mark(METRICS + "serviceLocal");
+          return new PinotPrincipal(user, Set.of(), AuthMethod.LDAP, true, Map.of());
         }
         LdapSignInCache.Lookup cached = _cache.lookup(user, password);
         switch (cached._verdict) {
@@ -150,6 +166,62 @@ public class LdapAuthenticator implements PinotAuthenticator {
       }
     } finally {
       Arrays.fill(decoded, '\0');
+    }
+  }
+
+  /// Pinot's own service account from `service.token.alias`: the `Basic` credential this process sends on its
+  /// internal calls (with or without the `Basic ` prefix).
+  private void initLocalServiceAccount(PinotConfiguration config, SecretResolver secretResolver) {
+    String alias = LdapDirectory.trimToNull(config.getProperty("service.token.alias"));
+    if (alias == null) {
+      return;
+    }
+    char[] token = secretResolver.resolve(alias);
+    try {
+      String value = new String(token).trim();
+      if (value.regionMatches(true, 0, "Basic ", 0, 6)) {
+        value = value.substring(6).trim();
+      }
+      char[] decoded = decode(value);
+      try {
+        int colon = indexOf(decoded, ':');
+        if (colon <= 0 || colon == decoded.length - 1) {
+          throw new IllegalArgumentException("LDAP: the credential under service.token.alias '" + alias
+              + "' is not a Basic user:password credential");
+        }
+        String user = new String(decoded, 0, colon).trim();
+        if (!_serviceUsers.contains(user)) {
+          throw new IllegalArgumentException("LDAP: the service account of service.token.alias ('" + user
+              + "') is not in service.users " + _serviceUsers);
+        }
+        ByteBuffer encoded =
+            StandardCharsets.UTF_8.encode(CharBuffer.wrap(decoded, colon + 1, decoded.length - colon - 1));
+        _localServicePassword = new byte[encoded.remaining()];
+        encoded.get(_localServicePassword);
+        _localServiceUser = user;
+      } finally {
+        Arrays.fill(decoded, '\0');
+      }
+    } catch (AuthenticationException e) {
+      throw new IllegalArgumentException("LDAP: the credential under service.token.alias '" + alias
+          + "' is not a Basic user:password credential");
+    } finally {
+      Arrays.fill(token, '\0');
+    }
+  }
+
+  /// The sign-in is Pinot's own service account with the password this process holds (constant-time comparison).
+  private boolean isLocalServiceAccount(String user, char[] password) {
+    if (_localServiceUser == null || !_localServiceUser.equals(user)) {
+      return false;
+    }
+    ByteBuffer encoded = StandardCharsets.UTF_8.encode(CharBuffer.wrap(password));
+    byte[] presented = new byte[encoded.remaining()];
+    encoded.get(presented);
+    try {
+      return MessageDigest.isEqual(presented, _localServicePassword);
+    } finally {
+      Arrays.fill(presented, (byte) 0);
     }
   }
 
