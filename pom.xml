@@ -209,7 +209,7 @@
     <spark2.version>2.4.8</spark2.version>
     <spark3.version>3.5.5.${odp.release.version}</spark3.version>
     <!-- Spark 4 publishes Scala 2.13 artifacts only and requires JDK 17. -->
-    <spark4.version>4.1.1.3.3.6.7-1005</spark4.version>
+    <spark4.version>4.1.1.${odp.release.version}</spark4.version>
     <kafka3.version>3.7.2.${odp.release.version}</kafka3.version>
     <kafka4.version>4.1.1</kafka4.version>
     <confluent.version>7.9.5</confluent.version>
