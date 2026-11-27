@@ -49,6 +49,21 @@
                   <goal>shade</goal>
                 </goals>
                 <configuration>
+                  <filters>
+                    <filter>
+                      <artifact>*:*</artifact>
+                      <excludes>
+                        <exclude>META-INF/services/jakarta.servlet.ServletContainerInitializer</exclude>
+                        <exclude>META-INF/services/javax.servlet.ServletContainerInitializer</exclude>
+                        <exclude>jakarta/servlet/**</exclude>
+                        <exclude>javax/servlet/**</exclude>
+                        <exclude>org/glassfish/jersey/servlet/**</exclude>
+                        <exclude>META-INF/*.SF</exclude>
+                        <exclude>META-INF/*.DSA</exclude>
+                        <exclude>META-INF/*.RSA</exclude>
+                      </excludes>
+                    </filter>
+                  </filters>
                   <relocations>
                     <relocation>
                       <pattern>com</pattern>
