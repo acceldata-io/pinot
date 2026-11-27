@@ -116,6 +116,14 @@
         connectors/pinot-spark-3-connector/pinot-spark-3-connector-${project.version}-shaded.jar
       </destName>
     </file>
+    <file>
+      <source>
+        ${pinot.root}/pinot-connectors/pinot-spark-4-connector/target/pinot-spark-4-connector-${project.version}-shaded.jar
+      </source>
+      <destName>
+        connectors/pinot-spark-4-connector/pinot-spark-4-connector-${project.version}-shaded.jar
+      </destName>
+    </file>
     <!-- End Include Pinot Spark connectors-->
     <!-- Start Include Pinot File System Plugins-->
     <file>
